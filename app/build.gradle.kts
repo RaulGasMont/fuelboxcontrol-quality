@@ -2,14 +2,13 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-//    alias(libs.plugins.hilt)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.gasmonsoft.fuelboxcontrol"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.gasmonsoft.fuelboxcontrol"
@@ -37,13 +36,14 @@ android {
     buildFeatures {
         compose = true
     }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-
-    implementation(platform("androidx.compose:compose-bom:2023.03.00"))
 
     //DI
     implementation(libs.hilt.android)
@@ -52,6 +52,8 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     //Retrofit Gson
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")

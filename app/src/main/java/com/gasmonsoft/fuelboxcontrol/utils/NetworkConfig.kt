@@ -1,8 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.utils
 
-import com.rfz.proyectofsc.presentation.ui.homecheckin.asesor.viewmodel.UserCardType
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 
 object NetworkConfig {

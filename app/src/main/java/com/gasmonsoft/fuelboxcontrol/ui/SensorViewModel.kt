@@ -254,7 +254,7 @@ class SensorViewModel @Inject constructor(
             val ssidUuid = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb")
             val passwordUuid = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb")
             val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
-
+//
             sensorReceiveManager.data.collect { result ->
 
 //                val location = getLastKnownLocation()

@@ -10,13 +10,10 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
-import com.rfz.proyectofsc.core.network.NetworkConfig
-import com.rfz.proyectofsc.core.network.NetworkConfig.configuracion
-import com.rfz.proyectofsc.core.network.NetworkConfig.nombreconfiguracion
-import com.rfz.proyectofsc.core.util.Resource
-import com.rfz.proyectofsc.data.model.ble.response.SensorResult
+import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
+import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.configuracion
+import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
+import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow

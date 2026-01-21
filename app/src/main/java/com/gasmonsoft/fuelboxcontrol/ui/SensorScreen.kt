@@ -60,6 +60,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.R
@@ -92,12 +93,10 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SensorScreen(
-    idvehcaja: Int,
-    mac: String,
     nameWifi: String,
     passWifi: String,
-    onBluetoothStateChanged: () -> Unit,
-    viewModelSensor: SensorViewModel
+//    onBluetoothStateChanged: () -> Unit,
+    viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
 
     val permissionState = rememberMultiplePermissionsState(
@@ -123,7 +122,7 @@ fun SensorScreen(
         SystemBroadcastReceiver(systemAction = BluetoothAdapter.ACTION_STATE_CHANGED) { bluetoothState ->
             val action = bluetoothState?.action ?: return@SystemBroadcastReceiver
             if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-                onBluetoothStateChanged()
+//                onBluetoothStateChanged()
             }
         }
     }
