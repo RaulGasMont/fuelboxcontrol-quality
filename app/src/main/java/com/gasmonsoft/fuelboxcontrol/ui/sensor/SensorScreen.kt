@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui
+package com.gasmonsoft.fuelboxcontrol.ui.sensor
 
 import android.Manifest
 import android.app.DatePickerDialog
@@ -989,7 +989,7 @@ fun SensorScreen(
 
         item {
             Row(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(2.dp)
                     .wrapContentSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1052,7 +1052,7 @@ fun SensorScreen(
 
         item {
             Row(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(2.dp)
                     .wrapContentSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1117,7 +1117,7 @@ fun SensorScreen(
 
         item {
             Row(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(2.dp)
                     .wrapContentSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1179,7 +1179,7 @@ fun SensorScreen(
 
         item {
             Row(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(2.dp)
                     .wrapContentSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1242,7 +1242,7 @@ fun SensorScreen(
 
         item {
             Row(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(2.dp)
                     .wrapContentSize(),
                 horizontalArrangement = Arrangement.SpaceBetween

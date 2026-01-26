@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui
+package com.gasmonsoft.fuelboxcontrol.ui.sensor
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui
+package com.gasmonsoft.fuelboxcontrol.ui.sensor
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -55,6 +55,7 @@ import kotlin.NumberFormatException
 import kotlin.String
 import kotlin.Unit
 import kotlin.apply
+import kotlin.text.iterator
 import kotlin.with
 
 @HiltViewModel

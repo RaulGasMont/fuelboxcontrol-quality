@@ -4,11 +4,11 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.gasmonsoft.fuelboxcontrol.ui.encryptData
-import com.gasmonsoft.fuelboxcontrol.ui.fetchFileFromServer
-import com.gasmonsoft.fuelboxcontrol.ui.reduceData
-import com.gasmonsoft.fuelboxcontrol.ui.saveFileToAppWifi
-import com.gasmonsoft.fuelboxcontrol.ui.showToastOnMain
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.encryptData
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.fetchFileFromServer
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.reduceData
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.saveFileToAppWifi
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.showToastOnMain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

@@ -45,6 +45,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
 
+    implementation("androidx.navigation:navigation-compose:2.9.6")
     //DI
     implementation(libs.hilt.android)
     implementation(libs.play.services.location)

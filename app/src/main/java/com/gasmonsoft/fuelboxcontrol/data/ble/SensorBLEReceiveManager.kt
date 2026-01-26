@@ -17,6 +17,8 @@ import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.lang.Float.parseFloat
 import java.time.LocalDateTime
@@ -44,6 +46,8 @@ class SensorBLEReceiveManager @Inject constructor(
 
     private var currentCharacteristicIndex = 0
     override val data: MutableSharedFlow<Resource<SensorResult>> = MutableSharedFlow()
+    override val discoveredDevices: MutableStateFlow<Set<Device>> =
+        MutableStateFlow(emptySet())
     private var subscriptionIndex = 0
     private var batteryLevel = 0
     private val bleScanner by lazy {
@@ -64,6 +68,14 @@ class SensorBLEReceiveManager @Inject constructor(
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
 
+            discoveredDevices.update { devices ->
+                devices + Device(
+                    mac = device.address,
+                    name = device.name,
+                    rssi = result.rssi
+                )
+            }
+
             // Escanea los dispositivos en busca de la MAC correspondiente a la caja
             val shouldConnect = when (configuracion) {
                 "mac" -> device.address == nombreconfiguracion.trim()
@@ -71,6 +83,8 @@ class SensorBLEReceiveManager @Inject constructor(
             }
 
             if (shouldConnect && isScanning) {
+                discoveredDevices.update { emptySet() }
+
                 bleScanner.stopScan(this)
 
                 isScanning = false
@@ -504,7 +518,6 @@ class SensorBLEReceiveManager @Inject constructor(
     }
 
     override fun startReceiving() {
-
         coroutineScope.launch {
             data.emit(Resource.Loading(message = "Escaneando dispositivo BLE..."))
         }
