@@ -12,6 +12,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -95,10 +96,16 @@ import java.util.Locale
 fun SensorScreen(
     nameWifi: String,
     passWifi: String,
+    onBack: () -> Unit,
 //    onBluetoothStateChanged: () -> Unit,
     viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
+    BackHandler {
+        onBack()
+        viewModelSensor.disconnect()
+    }
 
+    val bleConnectionState = viewModelSensor.connectionState.collectAsState().value
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
             Manifest.permission.BLUETOOTH_SCAN,
@@ -122,7 +129,7 @@ fun SensorScreen(
         SystemBroadcastReceiver(systemAction = BluetoothAdapter.ACTION_STATE_CHANGED) { bluetoothState ->
             val action = bluetoothState?.action ?: return@SystemBroadcastReceiver
             if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-//                onBluetoothStateChanged()
+                viewModelSensor.reconnect()
             }
         }
     }
@@ -131,7 +138,6 @@ fun SensorScreen(
 
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    val bleConnectionState = viewModelSensor.connectionState.collectAsState().value
     val sensorMessage: String by viewModelSensor.Message.observeAsState(initial = "")
 
     val volumen1: String by viewModelSensor.volumen1.observeAsState(initial = "")
@@ -270,7 +276,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray), // Ocupa todo el ancho de la columna
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -377,6 +384,7 @@ fun SensorScreen(
                                 onClick = {
                                     if (permissionState.allPermissionsGranted) {
                                         viewModelSensor.disconnect()
+                                        onBack()
                                     }
                                 }, modifier = Modifier
                                     .wrapContentSize()
@@ -446,18 +454,16 @@ fun SensorScreen(
                                 )
                             )
                         }
-
-
                     }
                 }
             }
-
         }
 
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -473,13 +479,17 @@ fun SensorScreen(
         item {
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 OutlinedTextField(
                     value = ssid.value,
                     onValueChange = { if (it.length <= 4) ssid.value = it },
                     label = { Text("SSID (4 caracteres)") },
-                    modifier = Modifier.fillMaxWidth().padding(4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -487,7 +497,9 @@ fun SensorScreen(
                     onValueChange = { if (it.length <= 8) password.value = it },
                     label = { Text("Contraseña (8 caracteres)") },
                     visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth().padding(4.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row {
@@ -515,7 +527,8 @@ fun SensorScreen(
                             )
                         },
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(4.dp)
                     ) {
                         Text("Crear HostPost")
@@ -526,7 +539,8 @@ fun SensorScreen(
 
 
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .background(Color.DarkGray),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -545,9 +559,14 @@ fun SensorScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Button(
-                        onClick = { viewModelSensor.disconnect() },
+                        onClick = {
+                            viewModelSensor.disconnect()
+                            onBack()
+                        },
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth().padding(4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(4.dp)
                     ) {
                         Text("Desconectar Bluetooth")
 
@@ -560,7 +579,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -579,20 +599,26 @@ fun SensorScreen(
                 value = ip,
                 onValueChange = { ip = it },
                 label = { Text("IP Address") },
-                modifier = Modifier.fillMaxWidth().padding(6.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             TextField(
                 value = port,
                 onValueChange = { port = it },
                 label = { Text("Port") },
-                modifier = Modifier.fillMaxWidth().padding(6.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             TextField(
                 value = message,
                 onValueChange = { message = it },
-                label = { Text("Mensaje") }, modifier = Modifier.fillMaxWidth().padding(6.dp)
+                label = { Text("Mensaje") }, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -601,7 +627,9 @@ fun SensorScreen(
                     connectToEsp32(ip, port, message, context, { isConnected = it })
                 },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Conectar Wifi y enviar MSG")
             }
@@ -616,7 +644,9 @@ fun SensorScreen(
             TextField(
                 value = messagestatus,
                 onValueChange = { messagestatus = it },
-                label = { Text("Valor") }, modifier = Modifier.fillMaxWidth().padding(6.dp)
+                label = { Text("Valor") }, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -626,7 +656,9 @@ fun SensorScreen(
                     sendValorToESP32(ip, port, context, messagestatus)
                 },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar valor rst")
             }
@@ -653,13 +685,17 @@ fun SensorScreen(
                     }
                 },
                 label = { Text("Límite (1-4)") },
-                modifier = Modifier.fillMaxWidth().padding(6.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp)
             )
 
             Button(
                 onClick = { sendLimits(ip, port, limit.toString(), context) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar archivo límites")
             }
@@ -675,10 +711,13 @@ fun SensorScreen(
                 textAlign = TextAlign.Center
             )
 
-            Button(onClick = { launcher.launch("application/json") },
+            Button(
+                onClick = { launcher.launch("application/json") },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-                    .padding(4.dp)) {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            ) {
                 Text("Seleccionar archivo JSON")
             }
 
@@ -703,7 +742,9 @@ fun SensorScreen(
             Button(
                 onClick = { sendConfigToESP32(ip, port, context, jsonConfig) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar configuración")
             }
@@ -718,10 +759,13 @@ fun SensorScreen(
                 textAlign = TextAlign.Center
             )
 
-            Button(onClick = { launcheract.launch(arrayOf("text/x-python", "text/mpy")) },
+            Button(
+                onClick = { launcheract.launch(arrayOf("text/x-python", "text/mpy")) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-                    .padding(4.dp)) {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            ) {
                 Text("Seleccionar archivo")
             }
 
@@ -745,16 +789,20 @@ fun SensorScreen(
             Button(
                 onClick = { sendaCTToESP32(ip, port, context, act, fileNameWithExtension) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar actFW")
             }
 
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "------LECTURA--------",fontWeight = FontWeight.Bold,
-                color = Color.Red,modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center)
+            Text(
+                text = "------LECTURA--------", fontWeight = FontWeight.Bold,
+                color = Color.Red, modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
             Text(
                 text = "------SELECCIONAR RANGO DE FECHAS------",
                 fontWeight = FontWeight.Bold,
@@ -776,9 +824,7 @@ fun SensorScreen(
             TextField(
                 value = filePath,
                 onValueChange = { filePath = it },
-                label = { Text("Ruta de archivo para leer") }
-
-                ,
+                label = { Text("Ruta de archivo para leer") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -808,7 +854,8 @@ fun SensorScreen(
                                     val fecha = LocalDate.parse(date, formatter)
 
                                     val dia = fecha.dayOfMonth.toString()
-                                    val uri = readFile(ip, port, filePath, "${date}.bin", context,dia)
+                                    val uri =
+                                        readFile(ip, port, filePath, "${date}.bin", context, dia)
 
                                     uri?.let {
                                         processedFiles.add(it)
@@ -847,7 +894,7 @@ fun SensorScreen(
                                 processedFiles.forEachIndexed { index, uri ->
                                     sendValorToESP32(ip, port, context, "1")
                                     delay(2000)
-                                    viewModelSensor.onSendRead(context, uri,"2025/03/02","1")
+                                    viewModelSensor.onSendRead(context, uri, "2025/03/02", "1")
 
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
@@ -888,7 +935,9 @@ fun SensorScreen(
                     }
                 },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Leer y enviar archivos")
             }
@@ -915,7 +964,9 @@ fun SensorScreen(
             Button(
                 onClick = { sendDelToESP32(ip, port, context, filePathDel) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar DEL")
             }
@@ -926,15 +977,14 @@ fun SensorScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
 
-
-
         }
 
 
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -965,7 +1015,9 @@ fun SensorScreen(
             Button(
                 onClick = { viewModelSensor.onwriteEinc(textValueEINC) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             ) {
                 Text("Enviar EINC")
             }
@@ -974,7 +1026,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1037,7 +1090,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1102,7 +1156,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1164,7 +1219,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1227,7 +1283,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1289,7 +1346,8 @@ fun SensorScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(Color.DarkGray),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -1656,7 +1714,6 @@ fun sendValorToESP32(ip: String, port: String, context: Context, valor: String) 
 }
 
 
-
 private fun sendLimits(ip: String, port: String, limitId: String, context: Context) {
     val formattedData = createFormattedData()
     connectAndSendLimite(ip, port, "SEND limite $limitId", context, formattedData)
@@ -1881,9 +1938,6 @@ fun sendDelToESP32(ip: String, port: String, context: Context, path: String) {
 }
 
 
-
-
-
 @RequiresApi(Build.VERSION_CODES.O)
 fun encryptData(reducedData: String): ByteArray {
     return try {
@@ -1921,6 +1975,7 @@ fun reduceData(decryptedData: ByteArray): String {
 
     return resultS.toString()
 }
+
 fun saveFileToAppWifi(context: Context, fileData: ByteArray, fileName: String): Uri? {
     return try {
         val contentUri = MediaStore.Files.getContentUri("external")
@@ -1931,7 +1986,10 @@ fun saveFileToAppWifi(context: Context, fileData: ByteArray, fileName: String): 
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/AppWifi")
+                put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    Environment.DIRECTORY_DOCUMENTS + "/AppWifi"
+                )
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
 
@@ -1966,6 +2024,7 @@ fun saveFileToAppWifi(context: Context, fileData: ByteArray, fileName: String): 
         null
     }
 }
+
 fun fetchFileFromServer(
     ip: String,
     port: Int,
@@ -1988,7 +2047,10 @@ fun fetchFileFromServer(
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/AppWifi")
+                put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    Environment.DIRECTORY_DOCUMENTS + "/AppWifi"
+                )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }

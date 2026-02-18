@@ -1,7 +1,14 @@
 package com.gasmonsoft.fuelboxcontrol.data.ble
 
 import android.annotation.SuppressLint
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -23,7 +30,7 @@ import kotlinx.coroutines.launch
 import java.lang.Float.parseFloat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
 import javax.inject.Inject
 
 
@@ -48,6 +55,7 @@ class SensorBLEReceiveManager @Inject constructor(
     override val data: MutableSharedFlow<Resource<SensorResult>> = MutableSharedFlow()
     override val discoveredDevices: MutableStateFlow<Set<Device>> =
         MutableStateFlow(emptySet())
+    override val connectionState: MutableSharedFlow<ConnectionState> = MutableSharedFlow()
     private var subscriptionIndex = 0
     private var batteryLevel = 0
     private val bleScanner by lazy {
@@ -66,12 +74,14 @@ class SensorBLEReceiveManager @Inject constructor(
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            if (result.device.name != "DIESEL") return
+
             val device = result.device
 
             discoveredDevices.update { devices ->
                 devices + Device(
                     mac = device.address,
-                    name = device.name,
+                    name = device.name ?: "Dispositivo desconocido",
                     rssi = result.rssi
                 )
             }
@@ -91,10 +101,16 @@ class SensorBLEReceiveManager @Inject constructor(
 
                 // Envia al resto de la App el estado de conexión
                 coroutineScope.launch {
-                    data.emit(Resource.Loading(message = "Conectándose a dispositivo ${result.device.name}"))
+                    connectionState.emit(ConnectionState.CurrentlyInitializing)
+                    data.emit(Resource.Loading(message = "Conectándose a dispositivo ${result.device.name ?: "desconocido"}"))
                 }
 
                 // Establece la conexión Bluetooth con la MAC especificada
+//                val bluetoothManager =
+//                    context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+//                val bluetoothAdapter = bluetoothManager.adapter
+//                bluetoothAdapter.getRemoteDevice(mac)
+//                    .connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
                 result.device.connectGatt(
                     context,
                     false,
@@ -103,6 +119,9 @@ class SensorBLEReceiveManager @Inject constructor(
                 )
 
             } else if (isScanning) {
+                coroutineScope.launch {
+                    connectionState.emit(ConnectionState.Disconnected)
+                }
                 scanAttempts++
 
                 if (scanAttempts >= MAX_SCAN_ATTEMPTS) {
@@ -132,6 +151,7 @@ class SensorBLEReceiveManager @Inject constructor(
 
                     // Confirma la conexión con el dispositivo, alertando sobre la busqueda de sus servicios
                     coroutineScope.launch {
+                        connectionState.emit(ConnectionState.Connected)
                         data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
                     }
 
@@ -165,12 +185,14 @@ class SensorBLEReceiveManager @Inject constructor(
                 currentConnectionAttempt++
                 if (currentConnectionAttempt <= MAXIMUM_CONNECTION_ATTEMPTS) {
                     coroutineScope.launch {
+                        connectionState.emit(ConnectionState.CurrentlyInitializing)
                         data.emit(Resource.Loading(message = "Intentando conectarse $currentConnectionAttempt/$MAXIMUM_CONNECTION_ATTEMPTS"))
                     }
                     startReceiving()
                 } else {
                     currentConnectionAttempt = 0
                     coroutineScope.launch {
+                        connectionState.emit(ConnectionState.Disconnected)
                         data.emit(Resource.Error(errorMessage = "No se pudo conectar al dispositivo BLE"))
                     }
                 }
@@ -237,29 +259,29 @@ class SensorBLEReceiveManager @Inject constructor(
         private fun handleCharacteristic(uuid: UUID, value: ByteArray, gatt: BluetoothGatt) {
             val hexValue = value.joinToString("") { byte -> "%02x".format(byte) }
             val resultado = hexValue
-            val sensorResult = when (uuid) {
-                UUID.fromString(NetworkConfig.Volumen1_CHARACTERISTICS_UUID),
-                UUID.fromString("0fe0e4d2-724e-4e1a-bebe-79e29f621b15"),
-                UUID.fromString("80c4c443-2128-4570-b0da-6b3dbced01a6"),
-                UUID.fromString(NetworkConfig.Temperatura1_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Constante1_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Fecha1_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Alertas1_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Volumen2_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Temperatura2_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Constante2_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Fecha2_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Alertas2_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Volumen3_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Temperatura3_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Constante3_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Fecha3_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Alertas3_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Volumen4_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Temperatura4_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Constante4_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Fecha4_CHARACTERISTICS_UUID),
-                UUID.fromString(NetworkConfig.Alertas4_CHARACTERISTICS_UUID),
+            val sensorResult = when (uuid.toString()) {
+                NetworkConfig.Volumen1_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                "0fe0e4d2-724e-4e1a-bebe-79e29f621b15",
+                "80c4c443-2128-4570-b0da-6b3dbced01a6",
+                NetworkConfig.Temperatura1_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Constante1_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Fecha1_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Alertas1_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Volumen2_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Temperatura2_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Constante2_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Fecha2_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Alertas2_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Volumen3_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Temperatura3_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Constante3_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Fecha3_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Alertas3_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Volumen4_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Temperatura4_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Constante4_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Fecha4_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
+                NetworkConfig.Alertas4_CHARACTERISTICS_UUID.takeIf { it.isNotEmpty() },
                     -> {
                     SensorResult(
                         uuid.toString(),
@@ -483,16 +505,20 @@ class SensorBLEReceiveManager @Inject constructor(
 
             while (subscriptionIndex < filteredCharacteristics.size) {
                 val characteristic = filteredCharacteristics[subscriptionIndex]
-                val descriptor =
-                    characteristic.getDescriptor(UUID.fromString(NetworkConfig.Notificacion1_DESCRIPTOR_UUID))
+                if (NetworkConfig.Notificacion1_DESCRIPTOR_UUID.isNotEmpty()) {
+                    val descriptor =
+                        characteristic.getDescriptor(UUID.fromString(NetworkConfig.Notificacion1_DESCRIPTOR_UUID))
 
-                if (descriptor != null) {
-                    gatt.setCharacteristicNotification(characteristic, true)
-                    descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    if (descriptor != null) {
+                        gatt.setCharacteristicNotification(characteristic, true)
+                        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
 
-                    gatt.writeDescriptor(descriptor)
+                        gatt.writeDescriptor(descriptor)
 
-                    break
+                        break
+                    } else {
+                        subscriptionIndex++
+                    }
                 } else {
                     subscriptionIndex++
                 }
@@ -532,6 +558,8 @@ class SensorBLEReceiveManager @Inject constructor(
     }
 
     override fun disconnect() {
+        nombreconfiguracion = ""
+        configuracion = ""
         gatt?.disconnect()
         gatt?.close()
         gatt = null
@@ -1110,6 +1138,14 @@ class SensorBLEReceiveManager @Inject constructor(
         gatt?.close()
     }
 
+//    override fun connect(mac: String) {
+////        val bluetoothManager =
+////            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+////        val bluetoothAdapter = bluetoothManager.adapter
+////        bluetoothAdapter.getRemoteDevice(mac)
+////            .connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+//    }
+
     private fun getBatteryLevel(context: Context): Int {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
@@ -1156,4 +1192,3 @@ class SensorBLEReceiveManager @Inject constructor(
 
     }
 }
-

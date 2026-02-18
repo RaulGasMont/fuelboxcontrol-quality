@@ -55,20 +55,19 @@ import kotlin.NumberFormatException
 import kotlin.String
 import kotlin.Unit
 import kotlin.apply
-import kotlin.text.iterator
 import kotlin.with
 
 @HiltViewModel
 class SensorViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager
 ) : ViewModel() {
-
     private val _shouldReconnect = MutableStateFlow(true)
     val shouldReconnect: StateFlow<Boolean> = _shouldReconnect.asStateFlow()
 
     fun disableAutoReconnect() {
         _shouldReconnect.value = false
     }
+
 
     fun enableAutoReconnect() {
         _shouldReconnect.value = true
