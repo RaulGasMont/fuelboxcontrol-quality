@@ -1057,7 +1057,7 @@ class SensorBLEReceiveManager @Inject constructor(
         }
     }
 
-    private suspend fun writeNextCharacteristic(
+    private fun writeNextCharacteristic(
         gatt: BluetoothGatt?,
         characteristicsToWrite: List<BluetoothGattCharacteristic>,
         currentCharacteristicIndex: Int
@@ -1138,14 +1138,6 @@ class SensorBLEReceiveManager @Inject constructor(
         gatt?.close()
     }
 
-//    override fun connect(mac: String) {
-////        val bluetoothManager =
-////            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-////        val bluetoothAdapter = bluetoothManager.adapter
-////        bluetoothAdapter.getRemoteDevice(mac)
-////            .connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-//    }
-
     private fun getBatteryLevel(context: Context): Int {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
@@ -1153,32 +1145,6 @@ class SensorBLEReceiveManager @Inject constructor(
 
     interface RssiCallback {
         fun onRssiReceived(rssi: Int)
-    }
-
-    fun getBluetoothSignalStrength(callback: RssiCallback) {
-        val bluetoothManager =
-            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter = bluetoothManager.adapter
-
-        val deviceAddress = gatt?.device?.address
-
-        if (deviceAddress != null) {
-            val bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)
-            val bluetoothGatt =
-                bluetoothDevice.connectGatt(context, false, object : BluetoothGattCallback() {
-                    override fun onReadRemoteRssi(gatt: BluetoothGatt?, rssi: Int, status: Int) {
-                        super.onReadRemoteRssi(gatt, rssi, status)
-                        if (status == BluetoothGatt.GATT_SUCCESS) {
-                            callback.onRssiReceived(rssi)
-                        } else {
-                            Log.e("Bluetooth", "Error al obtener RSSI")
-                            callback.onRssiReceived(0)
-                        }
-                    }
-                })
-
-            bluetoothGatt.readRemoteRssi()
-        }
     }
 
 
