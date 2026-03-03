@@ -231,10 +231,6 @@ fun SensorScreen(
             }
         }
 
-
-
-
-
     DisposableEffect(
         key1 = lifecycleOwner,
         effect = {

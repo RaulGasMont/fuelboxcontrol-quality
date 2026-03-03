@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
@@ -17,6 +16,11 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_1
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_2
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_3
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_4
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.SensorData
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.configuracion
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
@@ -25,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.lang.Float.parseFloat
@@ -55,6 +60,9 @@ class SensorBLEReceiveManager @Inject constructor(
     override val data: MutableSharedFlow<Resource<SensorResult>> = MutableSharedFlow()
     override val discoveredDevices: MutableStateFlow<Set<Device>> =
         MutableStateFlow(emptySet())
+
+    private var _sensorInfoState = MutableStateFlow<MutableList<SensorData>?>(null)
+    val sensorInfoState = _sensorInfoState.asStateFlow()
     override val connectionState: MutableSharedFlow<ConnectionState> = MutableSharedFlow()
     private var subscriptionIndex = 0
     private var batteryLevel = 0
@@ -344,7 +352,26 @@ class SensorBLEReceiveManager @Inject constructor(
 
 
             val sensorResult = when (characteristic.uuid) {
-                UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb"),
+                CHAR_UUID_SENSOR_1 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    getSensorData(sensorData)
+
+                }
+
+                CHAR_UUID_SENSOR_2 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    getSensorData(sensorData)
+                }
+
+                CHAR_UUID_SENSOR_3 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    getSensorData(sensorData)
+                }
+
+                CHAR_UUID_SENSOR_4 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    getSensorData(sensorData)
+                }
 
                 UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb"),
 
@@ -383,6 +410,18 @@ class SensorBLEReceiveManager @Inject constructor(
 
             }
 
+        }
+
+        private fun getSensorData(sensorData: List<String>): SensorData {
+            val temp = sensorData[0].toDoubleOrNull() ?: -555
+            val vol = sensorData[1].toDoubleOrNull() ?: -555
+            val cal = sensorData[2].toDoubleOrNull() ?: -555
+            return SensorData(
+                posSensor = 1,
+                temperatura = temp.toDouble(),
+                volumen = vol.toDouble(),
+                calidad = cal.toDouble()
+            )
         }
 
         private fun subscribeToDiscoveredCharacteristics(
