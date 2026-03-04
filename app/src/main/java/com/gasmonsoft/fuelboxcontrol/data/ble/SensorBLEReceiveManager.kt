@@ -16,11 +16,6 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_1
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_2
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_3
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.CHAR_UUID_SENSOR_4
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.SensorData
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.configuracion
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
@@ -61,8 +56,6 @@ class SensorBLEReceiveManager @Inject constructor(
     override val discoveredDevices: MutableStateFlow<Set<Device>> =
         MutableStateFlow(emptySet())
 
-    private var _sensorInfoState = MutableStateFlow<MutableList<SensorData>?>(null)
-    val sensorInfoState = _sensorInfoState.asStateFlow()
     override val connectionState: MutableSharedFlow<ConnectionState> = MutableSharedFlow()
     private var subscriptionIndex = 0
     private var batteryLevel = 0
@@ -70,6 +63,9 @@ class SensorBLEReceiveManager @Inject constructor(
         bluetoothAdapter.bluetoothLeScanner
     }
     val characteristicsToWrite = mutableListOf<BluetoothGattCharacteristic>()
+
+    private var _sensorState = MutableStateFlow(SensorState())
+    override val sensorData = _sensorState.asStateFlow()
 
     private var gatt: BluetoothGatt? = null
     private var isScanning = false
@@ -350,29 +346,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 }
             }
 
-
             val sensorResult = when (characteristic.uuid) {
-                CHAR_UUID_SENSOR_1 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    getSensorData(sensorData)
-
-                }
-
-                CHAR_UUID_SENSOR_2 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    getSensorData(sensorData)
-                }
-
-                CHAR_UUID_SENSOR_3 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    getSensorData(sensorData)
-                }
-
-                CHAR_UUID_SENSOR_4 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    getSensorData(sensorData)
-                }
-
                 UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb"),
 
                 UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb"),
@@ -398,10 +372,68 @@ class SensorBLEReceiveManager @Inject constructor(
                 else -> return
             }
 
+            when (characteristic.uuid) {
+                CHAR_UUID_SENSOR_1 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size < 2) return
+                    _sensorState.update { current ->
+                        current.copy(
+                            sensor1 = getSensorData(sensorData)
+                        )
+                    }
+                }
+
+                CHAR_UUID_SENSOR_2 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size < 2) return
+                    _sensorState.update { current ->
+                        current.copy(
+                            sensor2 = getSensorData(sensorData)
+                        )
+                    }
+                }
+
+                CHAR_UUID_SENSOR_3 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size < 2) return
+                    _sensorState.update { current ->
+                        current.copy(
+                            sensor3 = getSensorData(sensorData)
+                        )
+                    }
+                }
+
+                CHAR_UUID_SENSOR_4 -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size < 2) return
+                    _sensorState.update { current ->
+                        current.copy(
+                            sensor4 = getSensorData(sensorData)
+                        )
+                    }
+                }
+
+                CHAR_UUID_ACELEROMETRO -> {
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8)
+                    _sensorState.update { current ->
+                        current.copy(
+                            acelerometro = sensorData
+                        )
+                    }
+                }
+
+                CHAR_UUID_ALERTAS_GLOBALES ->{
+                    val sensorData = characteristic.value.toString(Charsets.UTF_8)
+                    _sensorState.update { current ->
+                        current.copy(
+                            alertas = sensorData
+                        )
+                    }
+                }
+            }
+
             coroutineScope.launch {
                 data.emit(Resource.Success(data = sensorResult))
-
-
             }
             if (characteristic.uuid == UUID.fromString("463290d6-431e-416a-b303-6564bec8800f")) {
 
@@ -413,14 +445,13 @@ class SensorBLEReceiveManager @Inject constructor(
         }
 
         private fun getSensorData(sensorData: List<String>): SensorData {
-            val temp = sensorData[0].toDoubleOrNull() ?: -555
-            val vol = sensorData[1].toDoubleOrNull() ?: -555
-            val cal = sensorData[2].toDoubleOrNull() ?: -555
+            val date = "${sensorData[0]} ${sensorData[1]}"
+            val data = sensorData.drop(2)
             return SensorData(
-                posSensor = 1,
-                temperatura = temp.toDouble(),
-                volumen = vol.toDouble(),
-                calidad = cal.toDouble()
+                date = date,
+                temperatura = data[2],
+                volumen = data[0],
+                calidad = data[1]
             )
         }
 

@@ -160,6 +160,8 @@ class SensorViewModel @Inject constructor(
     private val _discoveredServices = MutableStateFlow("")
     val discoveredServices: StateFlow<String> = _discoveredServices
 
+    val sensorInfoState = sensorReceiveManager.sensorData
+
     var isAutoconsumo by mutableStateOf(false)
         private set
 
@@ -197,7 +199,7 @@ class SensorViewModel @Inject constructor(
         _Message.value = ""
         _bateria.value = ""
     }
-
+    
     @ApplicationContext
     @Inject
     lateinit var context: Context

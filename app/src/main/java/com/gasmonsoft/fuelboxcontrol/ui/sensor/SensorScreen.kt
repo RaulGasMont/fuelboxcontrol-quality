@@ -55,10 +55,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -66,10 +68,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
+import com.gasmonsoft.fuelboxcontrol.data.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.EncriptarBin
 import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.ReducirDatosSensor
 import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.readFile
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -100,12 +106,9 @@ fun SensorScreen(
 //    onBluetoothStateChanged: () -> Unit,
     viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
-    BackHandler {
-        onBack()
-        viewModelSensor.disconnect()
-    }
-
     val bleConnectionState = viewModelSensor.connectionState.collectAsState().value
+    val sensorInfoState by viewModelSensor.sensorInfoState.collectAsState()
+
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
             Manifest.permission.BLUETOOTH_SCAN,
@@ -113,6 +116,123 @@ fun SensorScreen(
             Manifest.permission.ACCESS_FINE_LOCATION
         )
     )
+
+    val sensorMessage: String by viewModelSensor.Message.observeAsState(initial = "")
+    val constante1: String by viewModelSensor.constante1.observeAsState("")
+    val fecha1: String by viewModelSensor.fecha1.observeAsState("")
+    val alerta1: String by viewModelSensor.alerta1.observeAsState("")
+
+    val constante2: String by viewModelSensor.constante2.observeAsState("")
+    val fecha2: String by viewModelSensor.fecha2.observeAsState("")
+    val alerta2: String by viewModelSensor.alerta2.observeAsState("")
+
+    val constante3: String by viewModelSensor.constante3.observeAsState("")
+    val alerta3: String by viewModelSensor.alerta3.observeAsState("")
+
+    val constante4: String by viewModelSensor.constante4.observeAsState("")
+    val fecha4: String by viewModelSensor.fecha4.observeAsState("")
+    val alerta4: String by viewModelSensor.alerta4.observeAsState("")
+    val bateria: String by viewModelSensor.bateria.observeAsState("")
+
+    val sendingState by viewModelSensor.sendingState.collectAsState()
+
+    SensorScreenContent(
+        nameWifi = nameWifi,
+        passWifi = passWifi,
+        onBack = onBack,
+        bleConnectionState = bleConnectionState,
+        sensorInfoState = sensorInfoState,
+        permissionState = permissionState,
+        sensorMessage = sensorMessage,
+        constante1 = constante1,
+        fecha1 = fecha1,
+        alerta1 = alerta1,
+        constante2 = constante2,
+        fecha2 = fecha2,
+        alerta2 = alerta2,
+        constante3 = constante3,
+        alerta3 = alerta3,
+        constante4 = constante4,
+        fecha4 = fecha4,
+        alerta4 = alerta4,
+        bateria = bateria,
+        initializingMessage = viewModelSensor.initializingMessage,
+        errorMessage = viewModelSensor.errorMessage,
+        sensoruno = viewModelSensor.sensoruno,
+        sendingState = sendingState,
+        onDisconnect = { viewModelSensor.disconnect() },
+        onReconnect = { viewModelSensor.reconnect() },
+        onInitializeConnection = { viewModelSensor.initializeConnection() },
+        onWritesDataHostPost = { ssid, pass, enabled ->
+            viewModelSensor.writesDataHostPost(
+                ssid,
+                pass,
+                enabled
+            )
+        },
+        onWrite = { viewModelSensor.onwrite(it) },
+        onWriteEinc = { viewModelSensor.onwriteEinc(it) },
+        onWriteRTC = { viewModelSensor.onwriteRTC(it) },
+        onWriteEemo = { viewModelSensor.onwriteEemo(it) },
+        onWriteElmo = { viewModelSensor.onwriteElmo(it) },
+        onWriteSace = { viewModelSensor.onwritesace(it) },
+        onClearValores = { viewModelSensor.clearvalores() },
+        onSendRead = { context, uri, date, idcaja ->
+            viewModelSensor.onSendRead(
+                context,
+                uri,
+                date,
+                idcaja
+            )
+        }
+    )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun SensorScreenContent(
+    nameWifi: String,
+    passWifi: String,
+    onBack: () -> Unit,
+    bleConnectionState: ConnectionState,
+    sensorInfoState: SensorState,
+    permissionState: MultiplePermissionsState,
+    sensorMessage: String,
+    constante1: String,
+    fecha1: String,
+    alerta1: String,
+    constante2: String,
+    fecha2: String,
+    alerta2: String,
+    constante3: String,
+    alerta3: String,
+    constante4: String,
+    fecha4: String,
+    alerta4: String,
+    bateria: String,
+    initializingMessage: String?,
+    errorMessage: String?,
+    sensoruno: String,
+    sendingState: String,
+    onDisconnect: () -> Unit,
+    onReconnect: () -> Unit,
+    onInitializeConnection: () -> Unit,
+    onWritesDataHostPost: (String, String, Boolean) -> Unit,
+    onWrite: (String) -> Unit,
+    onWriteEinc: (String) -> Unit,
+    onWriteRTC: (String) -> Unit,
+    onWriteEemo: (String) -> Unit,
+    onWriteElmo: (String) -> Unit,
+    onWriteSace: (String) -> Unit,
+    onClearValores: () -> Unit,
+    onSendRead: (Context, Uri, String, String) -> Unit
+) {
+    BackHandler {
+        onBack()
+        onDisconnect()
+    }
+
 
     LaunchedEffect(permissionState) {
         if (!permissionState.allPermissionsGranted) {
@@ -129,7 +249,7 @@ fun SensorScreen(
         SystemBroadcastReceiver(systemAction = BluetoothAdapter.ACTION_STATE_CHANGED) { bluetoothState ->
             val action = bluetoothState?.action ?: return@SystemBroadcastReceiver
             if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-                viewModelSensor.reconnect()
+                onReconnect()
             }
         }
     }
@@ -138,34 +258,6 @@ fun SensorScreen(
 
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    val sensorMessage: String by viewModelSensor.Message.observeAsState(initial = "")
-
-    val volumen1: String by viewModelSensor.volumen1.observeAsState(initial = "")
-    val temperatura1: String by viewModelSensor.temperatura1.observeAsState(initial = "")
-    val constante1: String by viewModelSensor.constante1.observeAsState("")
-    val fecha1: String by viewModelSensor.fecha1.observeAsState("")
-    val alerta1: String by viewModelSensor.alerta1.observeAsState("")
-
-    val volumen2: String by viewModelSensor.volumen2.observeAsState("")
-    val temperatura2: String by viewModelSensor.temperatura2.observeAsState("")
-    val constante2: String by viewModelSensor.constante2.observeAsState("")
-    val fecha2: String by viewModelSensor.fecha2.observeAsState("")
-    val alerta2: String by viewModelSensor.alerta2.observeAsState("")
-
-    val volumen3: String by viewModelSensor.volumen3.observeAsState("")
-    val temperatura3: String by viewModelSensor.temperatura3.observeAsState("")
-    val constante3: String by viewModelSensor.constante3.observeAsState("")
-    val fecha3: String by viewModelSensor.fecha3.observeAsState("")
-    val alerta3: String by viewModelSensor.alerta3.observeAsState("")
-    val volumen4: String by viewModelSensor.volumen4.observeAsState("")
-    val temperatura4: String by viewModelSensor.temperatura4.observeAsState("")
-    val constante4: String by viewModelSensor.constante4.observeAsState("")
-    val fecha4: String by viewModelSensor.fecha4.observeAsState("")
-    val alerta4: String by viewModelSensor.alerta4.observeAsState("")
-    val senial: String by viewModelSensor.senial.observeAsState("")
-    val bateria: String by viewModelSensor.bateria.observeAsState("")
-    var isLoading by remember { mutableStateOf(false) }
-    var isFinished by remember { mutableStateOf(false) }
 
     var textValue by remember { mutableStateOf("") }
     var textValueEemo by remember { mutableStateOf("") }
@@ -177,9 +269,6 @@ fun SensorScreen(
     val ssid = remember { mutableStateOf(nameWifi) }
     val password = remember { mutableStateOf(passWifi) }
     val isWifiEnabled = remember { mutableStateOf(false) }
-    val connectionState = viewModelSensor.connectionStates.collectAsState()
-    val sendingState = viewModelSensor.sendingState.collectAsState()
-    val discoveredServices = viewModelSensor.discoveredServices.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
 
@@ -238,12 +327,12 @@ fun SensorScreen(
                 if (event == Lifecycle.Event.ON_START) {
                     permissionState.launchMultiplePermissionRequest()
                     if (permissionState.allPermissionsGranted && bleConnectionState == ConnectionState.Disconnected) {
-                        viewModelSensor.reconnect()
+                        onReconnect()
                     }
                 }
                 if (event == Lifecycle.Event.ON_STOP) {
                     if (bleConnectionState == ConnectionState.Connected) {
-                        viewModelSensor.disconnect()
+                        onDisconnect()
                     }
                 }
             }
@@ -258,7 +347,7 @@ fun SensorScreen(
     LaunchedEffect(key1 = permissionState.allPermissionsGranted) {
         if (permissionState.allPermissionsGranted) {
             if (bleConnectionState == ConnectionState.Uninitialized) {
-                viewModelSensor.initializeConnection()
+                onInitializeConnection()
             }
         }
     }
@@ -266,7 +355,6 @@ fun SensorScreen(
         modifier = Modifier
             .wrapContentSize()
             .background(Color.White)
-            .padding(0.dp)
     ) {
 
 
@@ -308,9 +396,9 @@ fun SensorScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator()
-                            if (viewModelSensor.initializingMessage != null) {
+                            if (initializingMessage != null) {
                                 Text(
-                                    text = viewModelSensor.initializingMessage!!,
+                                    text = initializingMessage,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Magenta
                                 )
@@ -323,12 +411,12 @@ fun SensorScreen(
                             modifier = Modifier.padding(2.dp),
                             textAlign = TextAlign.Center
                         )
-                    } else if (viewModelSensor.errorMessage != null) {
+                    } else if (errorMessage != null) {
 
                         Text(
                             text = sensorMessage,
                             style = TextStyle(
-                                color = Color(R.color.purple_500),
+                                color = colorResource(id = R.color.purple_500),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -342,16 +430,16 @@ fun SensorScreen(
                         ) {
                             Text(
                                 style = TextStyle(
-                                    color = Color(R.color.purple_500),
+                                    color = colorResource(id = R.color.purple_500),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 ),
-                                text = viewModelSensor.errorMessage!!
+                                text = errorMessage
                             )
                             Button(
                                 onClick = {
                                     if (permissionState.allPermissionsGranted) {
-                                        viewModelSensor.initializeConnection()
+                                        onInitializeConnection()
                                     }
                                 }, shape = RoundedCornerShape(8.dp)
                             ) {
@@ -368,9 +456,9 @@ fun SensorScreen(
                             verticalArrangement = Arrangement.Top
                         ) {
                             Text(
-                                text = "  ${viewModelSensor.sensoruno}",
+                                text = "  $sensoruno",
                                 style = TextStyle(
-                                    color = Color(R.color.purple_500),
+                                    color = colorResource(id = R.color.purple_500),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -379,7 +467,7 @@ fun SensorScreen(
                             Button(
                                 onClick = {
                                     if (permissionState.allPermissionsGranted) {
-                                        viewModelSensor.disconnect()
+                                        onDisconnect()
                                         onBack()
                                     }
                                 }, modifier = Modifier
@@ -387,8 +475,8 @@ fun SensorScreen(
                                     .padding(10.dp)
                                     .height(60.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    contentColor = Color(R.color.purple_500),
-                                    disabledContentColor = Color(R.color.purple_500),
+                                    containerColor = colorResource(id = R.color.purple_500),
+                                    contentColor = Color.White,
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
@@ -406,15 +494,15 @@ fun SensorScreen(
                     } else if (bleConnectionState == ConnectionState.Disconnected) {
                         Button(
                             onClick = {
-                                viewModelSensor.initializeConnection()
+                                onInitializeConnection()
                             },
                             modifier = Modifier
                                 .wrapContentSize()
                                 .padding(20.dp)
                                 .height(60.dp),
                             colors = ButtonDefaults.buttonColors(
-                                contentColor = Color(R.color.purple_500),
-                                disabledContentColor = Color(R.color.purple_500),
+                                containerColor = colorResource(id = R.color.purple_500),
+                                contentColor = Color.White,
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -427,8 +515,6 @@ fun SensorScreen(
                             )
                         }
 
-                        val context = LocalContext.current
-
                         Button(
                             onClick = {
 //                                viewModelSensor.omemvio(context)
@@ -437,8 +523,8 @@ fun SensorScreen(
                                 .padding(20.dp)
                                 .height(60.dp),
                             colors = ButtonDefaults.buttonColors(
-                                contentColor = Color(R.color.purple_500),
-                                disabledContentColor = Color(R.color.purple_500),
+                                containerColor = colorResource(id = R.color.purple_500),
+                                contentColor = Color.White,
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -516,7 +602,7 @@ fun SensorScreen(
                 ) {
                     Button(
                         onClick = {
-                            viewModelSensor.writesDataHostPost(
+                            onWritesDataHostPost(
                                 ssid.value,
                                 password.value,
                                 isWifiEnabled.value
@@ -530,7 +616,7 @@ fun SensorScreen(
                         Text("Crear HostPost")
                     }
                 }
-                Text(text = sendingState.value)
+                Text(text = sendingState)
                 Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -556,7 +642,7 @@ fun SensorScreen(
                 ) {
                     Button(
                         onClick = {
-                            viewModelSensor.disconnect()
+                            onDisconnect()
                             onBack()
                         },
                         shape = RoundedCornerShape(8.dp),
@@ -620,7 +706,7 @@ fun SensorScreen(
 
             Button(
                 onClick = {
-                    connectToEsp32(ip, port, message, context, { isConnected = it })
+                    connectToEsp32(ip, port, message, context) { isConnected = it }
                 },
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
@@ -687,7 +773,7 @@ fun SensorScreen(
             )
 
             Button(
-                onClick = { sendLimits(ip, port, limit.toString(), context) },
+                onClick = { sendLimits(ip, port, limit, context) },
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -843,7 +929,7 @@ fun SensorScreen(
                                 val processedFiles = mutableListOf<Uri>()
 
                                 delay(1000)
-                                viewModelSensor.onwrite("1")
+                                onWrite("1")
                                 dateRange.forEachIndexed { index, date ->
                                     filePath = "/sd/muestras/$date.bin"
                                     val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
@@ -890,7 +976,7 @@ fun SensorScreen(
                                 processedFiles.forEachIndexed { index, uri ->
                                     sendValorToESP32(ip, port, context, "1")
                                     delay(2000)
-                                    viewModelSensor.onSendRead(context, uri, "2025/03/02", "1")
+                                    onSendRead(context, uri, "2025/03/02", "1")
 
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
@@ -1009,7 +1095,7 @@ fun SensorScreen(
                 singleLine = true,
             )
             Button(
-                onClick = { viewModelSensor.onwriteEinc(textValueEINC) },
+                onClick = { onWriteEinc(textValueEINC) },
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1060,12 +1146,12 @@ fun SensorScreen(
                 Button(
                     onClick = {
                         val enteredText = textValueRTC
-                        viewModelSensor.onwriteRTC(enteredText)
+                        onWriteRTC(enteredText)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        contentColor = Color(R.color.purple_500),
-                        disabledContentColor = Color(R.color.purple_500),
+                        containerColor = colorResource(id = R.color.purple_500),
+                        contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -1124,12 +1210,12 @@ fun SensorScreen(
                 Button(
                     onClick = {
                         val enteredText = textValue
-                        viewModelSensor.onwrite(enteredText)
+                        onWrite(enteredText)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        contentColor = Color(R.color.purple_500),
-                        disabledContentColor = Color(R.color.purple_500),
+                        containerColor = colorResource(id = R.color.purple_500),
+                        contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -1190,12 +1276,12 @@ fun SensorScreen(
                 Button(
                     onClick = {
                         val enteredText = textValueEemo
-                        viewModelSensor.onwriteEemo(enteredText)
+                        onWriteEemo(enteredText)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        contentColor = Color(R.color.purple_500),
-                        disabledContentColor = Color(R.color.purple_500),
+                        containerColor = colorResource(id = R.color.purple_500),
+                        contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -1254,12 +1340,12 @@ fun SensorScreen(
                 Button(
                     onClick = {
                         val enteredText = textValueElmo
-                        viewModelSensor.onwriteElmo(enteredText)
+                        onWriteElmo(enteredText)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        contentColor = Color(R.color.purple_500),
-                        disabledContentColor = Color(R.color.purple_500),
+                        containerColor = colorResource(id = R.color.purple_500),
+                        contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -1318,12 +1404,12 @@ fun SensorScreen(
                     onClick = {
 
                         val enteredText = textValueSACE
-                        viewModelSensor.onwritesace(enteredText)
+                        onWriteSace(enteredText)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        contentColor = Color(R.color.purple_500),
-                        disabledContentColor = Color(R.color.purple_500),
+                        containerColor = colorResource(id = R.color.purple_500),
+                        contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -1356,34 +1442,66 @@ fun SensorScreen(
             }
         }
         item {
-            Text(
-                text = volumen1,
-                style = TextStyle(
-                    color = Color(R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
+            Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                Spacer(modifier = Modifier.height(8.dp))
+                if (bateria.isNotEmpty()) {
+                    Text(
+                        text = bateria,
+                        style = TextStyle(
+                            color = colorResource(id = R.color.gray),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
 
+
+                if (constante1.isNotEmpty()) {
+                    Text(
+                        text = sensorMessage,
+                        style = TextStyle(
+                            color = colorResource(id = R.color.purple_500),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         item {
-            Text(
-                text = temperatura1,
-                style = TextStyle(
-                    color = Color(R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            SensorDataCard(
+                numSensor = "1",
+                sensorData = sensorInfoState.sensor1,
             )
-
+            Spacer(modifier = Modifier.height(8.dp))
+            SensorDataCard(
+                numSensor = "2",
+                sensorData = sensorInfoState.sensor2,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SensorDataCard(
+                numSensor = "3",
+                sensorData = sensorInfoState.sensor3,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SensorDataCard(
+                numSensor = "4",
+                sensorData = sensorInfoState.sensor4,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SingleSensorDataCard(title = "Acelerómetro", value = sensorInfoState.acelerometro)
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         item {
+            if (constante1.isEmpty()) return@item
             Text(
                 text = constante1,
                 style = TextStyle(
-                    color = Color(R.color.purple_500),
+                    color = colorResource(id = R.color.purple_500),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1393,10 +1511,11 @@ fun SensorScreen(
 
 
         item {
+            if (alerta1.isEmpty()) return@item
             Text(
                 text = alerta1,
                 style = TextStyle(
-                    color = Color(R.color.purple_500),
+                    color = colorResource(id = R.color.purple_500),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1405,33 +1524,11 @@ fun SensorScreen(
         }
 
         item {
-            Text(
-                text = volumen2,
-                style = TextStyle(
-                    color = Color(R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            Text(
-                text = temperatura2,
-                style = TextStyle(
-                    color = Color(R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-        item {
+            if (constante2.isEmpty()) return@item
             Text(
                 text = constante2,
                 style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1440,21 +1537,11 @@ fun SensorScreen(
         }
 
         item {
+            if (alerta2.isEmpty()) return@item
             Text(
                 text = alerta2,
                 style = TextStyle(
-                    color = Color(R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-        item {
-            Text(
-                text = volumen3,
-                style = TextStyle(
-                    color = Color(R.color.purple_500),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1463,22 +1550,11 @@ fun SensorScreen(
         }
 
         item {
-            Text(
-                text = temperatura3,
-                style = TextStyle(
-                    color = Color(R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
+            if (constante3.isEmpty()) return@item
             Text(
                 text = constante3,
                 style = TextStyle(
-                    color = Color(R.color.purple_500),
+                    color = colorResource(id = R.color.purple_500),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1488,33 +1564,11 @@ fun SensorScreen(
 
 
         item {
+            if (alerta3.isEmpty()) return@item
             Text(
                 text = alerta3,
                 style = TextStyle(
-                    color = Color(R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-        item {
-
-            Text(
-                text = volumen4,
-                style = TextStyle(
-                    color = Color(R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-        item {
-            Text(
-                text = temperatura4,
-                style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.purple_500),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1523,10 +1577,11 @@ fun SensorScreen(
         }
 
         item {
+            if (constante4.isEmpty()) return@item
             Text(
                 text = constante4,
                 style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1536,30 +1591,33 @@ fun SensorScreen(
 
 
         item {
+            if (alerta4.isEmpty()) return@item
             Text(
                 text = alerta4,
                 style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
         }
         item {
+            if (fecha1.isEmpty()) return@item
             Text(
                 text = fecha1,
                 style = TextStyle(
-                    color = Color(R.color.purple_500),
+                    color = colorResource(id = R.color.purple_500),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
         }
         item {
+            if (fecha4.isEmpty()) return@item
             Text(
                 text = fecha4,
                 style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1568,34 +1626,12 @@ fun SensorScreen(
 
 
         item {
-
+            if (fecha2.isEmpty()) return@item
             Text(
                 text = fecha2,
                 style = TextStyle(
-                    color = Color(R.color.gray),
+                    color = colorResource(id = R.color.gray),
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            Text(
-                text = bateria,
-                style = TextStyle(
-                    color = Color(R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-
-            Text(
-                text = sensorMessage,
-                style = TextStyle(
-                    color = Color(R.color.purple_500),
-                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -1603,13 +1639,13 @@ fun SensorScreen(
         item {
             Button(
                 onClick = {
-                    viewModelSensor.clearvalores()
+                    onClearValores()
                 },
 
 
                 colors = ButtonDefaults.buttonColors(
-                    contentColor = Color(R.color.purple_500),
-                    disabledContentColor = Color(R.color.purple_500),
+                    containerColor = colorResource(id = R.color.purple_500),
+                    contentColor = Color.White,
                 ),
                 shape = RoundedCornerShape(8.dp)
 
@@ -2133,4 +2169,64 @@ fun generateDateRange(startDate: String, endDate: String): List<String> {
     }
 
     return dates
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+fun SensorScreenPreview() {
+    FuelBoxControlTheme {
+        SensorScreenContent(
+            nameWifi = "MyWifi",
+            passWifi = "12345678",
+            onBack = {},
+            bleConnectionState = ConnectionState.Connected,
+            sensorInfoState = SensorState(
+                sensor1 = SensorData("2024-01-01", "25°C", "100L", "Good"),
+                sensor2 = SensorData("2024-01-01", "26°C", "150L", "Normal"),
+                sensor3 = SensorData("2024-01-01", "24°C", "200L", "Good"),
+                sensor4 = SensorData("2024-01-01", "27°C", "50L", "Bad"),
+                acelerometro = "100"
+            ),
+            permissionState = object : MultiplePermissionsState {
+                override val allPermissionsGranted: Boolean = true
+                override val permissions: List<com.google.accompanist.permissions.PermissionState> =
+                    emptyList()
+                override val revokedPermissions: List<com.google.accompanist.permissions.PermissionState> =
+                    emptyList()
+                override val shouldShowRationale: Boolean = false
+                override fun launchMultiplePermissionRequest() {}
+            },
+            sensorMessage = "Test Message",
+            constante1 = "Const 1",
+            fecha1 = "2024-01-01",
+            alerta1 = "None",
+            constante2 = "Const 2",
+            fecha2 = "2024-01-01",
+            alerta2 = "None",
+            constante3 = "Const 3",
+            alerta3 = "None",
+            constante4 = "Const 4",
+            fecha4 = "2024-01-01",
+            alerta4 = "None",
+            bateria = "80%",
+            initializingMessage = null,
+            errorMessage = null,
+            sensoruno = "Sensor 01",
+            sendingState = "Idle",
+            onDisconnect = {},
+            onReconnect = {},
+            onInitializeConnection = {},
+            onWritesDataHostPost = { _, _, _ -> },
+            onWrite = {},
+            onWriteEinc = {},
+            onWriteRTC = {},
+            onWriteEemo = {},
+            onWriteElmo = {},
+            onWriteSace = {},
+            onClearValores = {},
+            onSendRead = { _, _, _, _ -> }
+        )
+    }
 }
