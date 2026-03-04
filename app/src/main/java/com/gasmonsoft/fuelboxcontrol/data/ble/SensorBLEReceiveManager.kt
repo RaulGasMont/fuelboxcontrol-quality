@@ -309,7 +309,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 }
 
                 CHAR_UUID_SENSOR_3 -> {
-                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
+                    val sensorData = value.t9oString(Charsets.UTF_8).trim().split(" ")
                     if (sensorData.size == 5) {
                         _sensorState.update { current ->
                             current.copy(

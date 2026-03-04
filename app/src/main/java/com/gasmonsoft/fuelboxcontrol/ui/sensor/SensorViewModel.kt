@@ -363,33 +363,33 @@ class SensorViewModel @Inject constructor(
                                             binaryValues.append("$character binario: $binaryValue\n")
                                         }
 
-                                        val hexValueSubset = hexValue.substring(4, 6)
-                                        val binaryValueSubset = hexValueSubset.toInt(16).toString(2)
-                                        val bit4_1Result =
-                                            if (binaryValueSubset[0] == '1') "Sensor activo" else "Sensor inactivo"
-                                        val bit4_3Result =
-                                            if (binaryValueSubset[2] == '1') "No está Funcionando" else "Funcionando"
-                                        val bit4_4Result =
-                                            if (binaryValueSubset[3] == '1') "Tanque menor del 5 porciento" else "Tanque mayor al 5% porciento"
-                                        val bit4_5Result =
-                                            if (binaryValueSubset[4] == '1') "Tanque a mayor de 95%" else "El tanque no está a mayor de 95%"
-                                        val bit5_2Result =
-                                            if (binaryValueSubset[5] == '1') "Cambio de temperatura si" else "Cambio de temperatura no"
-                                        val bit5_3Result =
-                                            if (binaryValueSubset[6] == '1') "Cambio de combustible si" else "Calidad de combustible no"
-                                        val bit5_4Result =
-                                            if (binaryValueSubset[7] == '1') "Cambio de nivel si" else "Cambio de nivel no"
-
-
-                                        val finalResults =
-                                            "Valor binario Sensor1:$binaryValueSubset \n" +
-                                                    ", Primer Posición: $bit4_1Result\n" +
-                                                    ",  Tercera Posición Funcionado: $bit4_3Result\n" +
-                                                    ",  Cuarta Posicion: $bit4_4Result\n" +
-                                                    ", - Quinta Posicion Tanque 95%: $bit4_5Result\n" +
-                                                    " Sexta Posicion  Temperatura: $bit5_2Result\n" +
-                                                    ", Séptima Combustible: $bit5_3Result\n" +
-                                                    ",  Octava Nivel: $bit5_4Result\n\n\n\n"
+//                                        val hexValueSubset = hexValue.substring(4, 6)
+//                                        val binaryValueSubset = hexValueSubset.toInt(16).toString(2)
+//                                        val bit4_1Result =
+//                                            if (binaryValueSubset[0] == '1') "Sensor activo" else "Sensor inactivo"
+//                                        val bit4_3Result =
+//                                            if (binaryValueSubset[2] == '1') "No está Funcionando" else "Funcionando"
+//                                        val bit4_4Result =
+//                                            if (binaryValueSubset[3] == '1') "Tanque menor del 5 porciento" else "Tanque mayor al 5% porciento"
+//                                        val bit4_5Result =
+//                                            if (binaryValueSubset[4] == '1') "Tanque a mayor de 95%" else "El tanque no está a mayor de 95%"
+//                                        val bit5_2Result =
+//                                            if (binaryValueSubset[5] == '1') "Cambio de temperatura si" else "Cambio de temperatura no"
+//                                        val bit5_3Result =
+//                                            if (binaryValueSubset[6] == '1') "Cambio de combustible si" else "Calidad de combustible no"
+//                                        val bit5_4Result =
+//                                            if (binaryValueSubset[7] == '1') "Cambio de nivel si" else "Cambio de nivel no"
+//
+//
+//                                        val finalResults =
+//                                            "Valor binario Sensor1:$binaryValueSubset \n" +
+//                                                    ", Primer Posición: $bit4_1Result\n" +
+//                                                    ",  Tercera Posición Funcionado: $bit4_3Result\n" +
+//                                                    ",  Cuarta Posicion: $bit4_4Result\n" +
+//                                                    ", - Quinta Posicion Tanque 95%: $bit4_5Result\n" +
+//                                                    " Sexta Posicion  Temperatura: $bit5_2Result\n" +
+//                                                    ", Séptima Combustible: $bit5_3Result\n" +
+//                                                    ",  Octava Nivel: $bit5_4Result\n\n\n\n"
 
                                         val hexValueSubsets = hexValue.substring(6, 8)
 
@@ -428,11 +428,11 @@ class SensorViewModel @Inject constructor(
                                             "Sensor 2  \n- Sensor: $bit4_1Results\n  Funcionando: $bit4_3Results\n  Tanque: $bit4_4Results\nNovena Posicion\n - Tanque 95%: $bit4_5Results\n" +
                                                     "   Temperatura: $bit5_2Results\n  Combustible: $bit5_3Results\n  Nivel: $bit5_4Results\n"
 
-                                        val message =
-                                            "Alertas Globales: sin convertir ${result.data.Volumen}" +
-                                                    ",\n hexadecimal: $hexValue\n$binaryValues\n$finalResults\n" +
-                                                    "$finalResultss"
-                                        _fecha2.value = message
+//                                        val message =
+//                                            "Alertas Globales: sin convertir ${result.data.Volumen}" +
+//                                                    ",\n hexadecimal: $hexValue\n$binaryValues\n$finalResults\n" +
+//                                                    "$finalResultss"
+                                        _fecha2.value = ""
                                     }
 
                                     NetworkConfig.Alertas2_CHARACTERISTICS_UUID -> {
