@@ -74,7 +74,7 @@ fun SensorDataCard(numSensor: String, sensorData: SensorData?, modifier: Modifie
                     modifier = Modifier.weight(1f)
                 )
                 SensorDataRow(
-                    title = "Temperatura",
+                    title = "Temp.",
                     data = sensorData.temperatura,
                     modifier = Modifier.weight(1f)
                 )

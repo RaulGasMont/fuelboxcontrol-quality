@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -115,13 +116,13 @@ class SensorBLEReceiveManager @Inject constructor(
 //                val bluetoothAdapter = bluetoothManager.adapter
 //                bluetoothAdapter.getRemoteDevice(mac)
 //                    .connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-                result.device.connectGatt(
+                val newGatt = result.device.connectGatt(
                     context,
                     false,
                     gattCallback,
                     BluetoothDevice.TRANSPORT_LE
                 )
-
+                this@SensorBLEReceiveManager.gatt = newGatt
             } else if (isScanning) {
                 coroutineScope.launch {
                     connectionState.emit(ConnectionState.Disconnected)
@@ -146,23 +147,25 @@ class SensorBLEReceiveManager @Inject constructor(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            // Guarda SIEMPRE el gatt que te da Android
+            this@SensorBLEReceiveManager.gatt = gatt
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.i(
-                        "SensorBLEReceiverManager.kt",
-                        "Estado del Perfil Bluetooth como Conectado."
-                    )
 
-                    // Confirma la conexión con el dispositivo, alertando sobre la busqueda de sus servicios
+                    // Limpia estado de descubrimiento por si vienes de reconexión
+                    subscriptionIndex = 0
+                    characteristicsWithNotifications.clear()
+                    writeableCharacteristics.clear()
+                    characteristicsToWrite.clear()
+                    currentCharacteristicIndex = 0
+
+                    gatt.requestMtu(517)
+
                     coroutineScope.launch {
                         connectionState.emit(ConnectionState.Connected)
                         data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
                     }
-
-                    // Realiza la busqueda de los servicios
-                    gatt.discoverServices()
-                    this@SensorBLEReceiveManager.gatt = gatt
-                    gatt.readRemoteRssi()
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     coroutineScope.launch {
                         data.emit(
@@ -179,12 +182,10 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         )
                     }
-
-                    // Metodo encargado de la reconexión
                     reconnect()
                 }
             } else {
-                Log.i("SensorBLEReceiverManager.kt", "Estado de BluetoothGatt No Conectado.")
+                Log.i("SensorBLEReceiverManager.kt", "Gatt status error: $status")
                 gatt.close()
                 currentConnectionAttempt++
                 if (currentConnectionAttempt <= MAXIMUM_CONNECTION_ATTEMPTS) {
@@ -247,6 +248,28 @@ class SensorBLEReceiveManager @Inject constructor(
             }
         }
 
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (gatt == null) return
+
+                Log.i(
+                    "SensorBLEReceiverManager.kt",
+                    "Estado del Perfil Bluetooth como Conectado."
+                )
+
+                // Confirma la conexión con el dispositivo, alertando sobre la busqueda de sus servicios
+                coroutineScope.launch {
+                    data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
+                }
+
+                // Realiza la busqueda de los servicios
+
+                gatt.discoverServices()
+                gatt.readRemoteRssi()
+            }
+        }
+
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -261,6 +284,74 @@ class SensorBLEReceiveManager @Inject constructor(
         }
 
         private fun handleCharacteristic(uuid: UUID, value: ByteArray, gatt: BluetoothGatt) {
+            when (uuid) {
+                CHAR_UUID_SENSOR_1 -> {
+                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size == 5) {
+                        _sensorState.update { current ->
+                            current.copy(
+                                sensor1 = getSensorData(sensorData)
+                            )
+                        }
+                    }
+                }
+
+                CHAR_UUID_SENSOR_2 -> {
+                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size == 5) {
+                        _sensorState.update { current ->
+                            current.copy(
+                                sensor2 = getSensorData(sensorData)
+                            )
+                        }
+                    }
+
+                }
+
+                CHAR_UUID_SENSOR_3 -> {
+                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size == 5) {
+                        _sensorState.update { current ->
+                            current.copy(
+                                sensor3 = getSensorData(sensorData)
+                            )
+                        }
+                    }
+
+                }
+
+                CHAR_UUID_SENSOR_4 -> {
+                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
+                    if (sensorData.size == 5) {
+                        _sensorState.update { current ->
+                            current.copy(
+                                sensor4 = getSensorData(sensorData)
+                            )
+                        }
+                    }
+                }
+
+                CHAR_UUID_ACELEROMETRO -> {
+                    val sensorData = value.toString(Charsets.UTF_8).split(" ")
+                    if (sensorData.size == 3) {
+                        _sensorState.update { current ->
+                            current.copy(
+                                acelerometro = sensorData.last()
+                            )
+                        }
+                    }
+                }
+
+                CHAR_UUID_ALERTAS_GLOBALES -> {
+                    val sensorData = value.toString(Charsets.UTF_8)
+                    _sensorState.update { current ->
+                        current.copy(
+                            alertas = sensorData
+                        )
+                    }
+                }
+            }
+
             val hexValue = value.joinToString("") { byte -> "%02x".format(byte) }
             val resultado = hexValue
             val sensorResult = when (uuid.toString()) {
@@ -306,142 +397,29 @@ class SensorBLEReceiveManager @Inject constructor(
             }
         }
 
-        override fun onCharacteristicWrite(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic,
-            status: Int
-        ) {
+        override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
             super.onCharacteristicWrite(gatt, characteristic, status)
-            var valor = ""
 
-            Log.d("SensorBLEReceiveManager", "${characteristic.uuid}")
+            // Guarda gatt por si acaso
+            this@SensorBLEReceiveManager.gatt = gatt
 
-            // Estatus 133 representa que no hubo tiempo de concretar la operacion
-            if (status == 0 || status == 133) {
-                valor = "Se realizo con éxito$text"
-                if (characteristic.uuid == UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb") || characteristic.uuid == UUID.fromString(
-                        "00002a25-0000-1000-8000-00805f9b34fb"
-                    ) || characteristic.uuid == UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                // OK -> avanza cadena si aplica
+                if (
+                    characteristic.uuid == UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb") ||
+                    characteristic.uuid == UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb") ||
+                    characteristic.uuid == UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
                 ) {
-                    valor = "Se realizo con éxito"
                     currentCharacteristicIndex++
                     coroutineScope.launch {
-                        Log.d("SensorBLEReceiveManager", "$characteristicsToWrite")
-                        writeNextCharacteristic(
-                            gatt!!,
-                            characteristicsToWrite,
-                            currentCharacteristicIndex
-                        )
+                        writeNextCharacteristic(gatt, characteristicsToWrite, currentCharacteristicIndex)
                     }
                 }
-            } else if (status == 1) {
-                valor = "No se realizó$text"
-
-                if (characteristic.uuid == UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb") || characteristic.uuid == UUID.fromString(
-                        "00002a25-0000-1000-8000-00805f9b34fb"
-                    ) || characteristic.uuid == UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
-                ) {
-
-                    resetWriteState()
-                }
+            } else {
+                // Error real -> resetea o reintenta
+                Log.e("SensorBLEReceiveManager", "Write FAIL uuid=${characteristic.uuid} status=$status")
+                resetWriteState()
             }
-
-            val sensorResult = when (characteristic.uuid) {
-                UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb"),
-
-                UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb"),
-
-                UUID.fromString("95b3b0f2-d277-4690-8e2a-691e1ebd927d"),
-
-                UUID.fromString("463290d6-431e-416a-b303-6564bec8800f"),
-
-                UUID.fromString("66169bab-d567-4388-b634-357ff0dac5f1"),
-                    -> {
-
-                    SensorResult(
-                        characteristic.uuid.toString(),
-                        valor,
-                        valor,
-                        valor,
-                        valor,
-                        valor,
-                        ConnectionState.Connected
-                    )
-                }
-
-                else -> return
-            }
-
-            when (characteristic.uuid) {
-                CHAR_UUID_SENSOR_1 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    if (sensorData.size < 2) return
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor1 = getSensorData(sensorData)
-                        )
-                    }
-                }
-
-                CHAR_UUID_SENSOR_2 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    if (sensorData.size < 2) return
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor2 = getSensorData(sensorData)
-                        )
-                    }
-                }
-
-                CHAR_UUID_SENSOR_3 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    if (sensorData.size < 2) return
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor3 = getSensorData(sensorData)
-                        )
-                    }
-                }
-
-                CHAR_UUID_SENSOR_4 -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8).trim().split(" ")
-                    if (sensorData.size < 2) return
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor4 = getSensorData(sensorData)
-                        )
-                    }
-                }
-
-                CHAR_UUID_ACELEROMETRO -> {
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8)
-                    _sensorState.update { current ->
-                        current.copy(
-                            acelerometro = sensorData
-                        )
-                    }
-                }
-
-                CHAR_UUID_ALERTAS_GLOBALES ->{
-                    val sensorData = characteristic.value.toString(Charsets.UTF_8)
-                    _sensorState.update { current ->
-                        current.copy(
-                            alertas = sensorData
-                        )
-                    }
-                }
-            }
-
-            coroutineScope.launch {
-                data.emit(Resource.Success(data = sensorResult))
-            }
-            if (characteristic.uuid == UUID.fromString("463290d6-431e-416a-b303-6564bec8800f")) {
-
-            }
-            if (characteristic.uuid == UUID.fromString("95b3b0f2-d277-4690-8e2a-691e1ebd927d")) {
-
-            }
-
         }
 
         private fun getSensorData(sensorData: List<String>): SensorData {
@@ -569,32 +547,66 @@ class SensorBLEReceiveManager @Inject constructor(
 
         private fun subscribeToCharacteristics(
             gatt: BluetoothGatt,
-            characteristics: MutableSet<BluetoothGattCharacteristic>,
+            characteristics: Set<BluetoothGattCharacteristic>,
         ) {
-            val filteredCharacteristics = characteristics.toList()
+            // 1) Usa el UUID configurado si es válido, si no usa CCCD (0x2902)
+            val descriptorUuid =
+                safeUuidOrNull(NetworkConfig.Notificacion1_DESCRIPTOR_UUID) ?: CCCD_UUID
 
-            while (subscriptionIndex < filteredCharacteristics.size) {
-                val characteristic = filteredCharacteristics[subscriptionIndex]
-                if (NetworkConfig.Notificacion1_DESCRIPTOR_UUID.isNotEmpty()) {
-                    val descriptor =
-                        characteristic.getDescriptor(UUID.fromString(NetworkConfig.Notificacion1_DESCRIPTOR_UUID))
+            // 2) Filtra solo características que soporten NOTIFY o INDICATE
+            val list = characteristics
+                .filter { ch ->
+                    val props = ch.properties
+                    (props and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0) ||
+                            (props and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0)
+                }
+                .toList()
 
-                    if (descriptor != null) {
-                        gatt.setCharacteristicNotification(characteristic, true)
-                        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            while (subscriptionIndex < list.size) {
+                val ch = list[subscriptionIndex]
 
-                        gatt.writeDescriptor(descriptor)
+                // 3) Obtén el descriptor (preferido: configurado; fallback: CCCD)
+                val descriptor =
+                    ch.getDescriptor(descriptorUuid)
+                        ?: ch.getDescriptor(CCCD_UUID)
 
-                        break
-                    } else {
-                        subscriptionIndex++
-                    }
-                } else {
+                if (descriptor == null) {
                     subscriptionIndex++
+                    continue
                 }
 
-            }
+                // 4) Activa notificación a nivel GATT
+                val notificationSet = gatt.setCharacteristicNotification(ch, true)
+                if (!notificationSet) {
+                    subscriptionIndex++
+                    continue
+                }
 
+                // 5) El valor depende si es NOTIFY o INDICATE
+                val enableValue =
+                    if (ch.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0)
+                        BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+                    else
+                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+
+                // 6) Escribe descriptor (Android 13+ vs legacy)
+                val writeStarted = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                    // writeDescriptor(descriptor, value) -> int
+                    gatt.writeDescriptor(descriptor, enableValue) == BluetoothStatusCodes.SUCCESS
+                } else {
+                    descriptor.value = enableValue
+                    gatt.writeDescriptor(descriptor)
+                }
+
+                if (writeStarted) {
+                    // IMPORTANTE: no incrementes aquí.
+                    // Incrementa en onDescriptorWrite cuando sea SUCCESS y luego llama de nuevo a subscribeToCharacteristics().
+                    return
+                } else {
+                    // Si no pudo iniciar, intenta la siguiente para evitar quedarte atorado.
+                    subscriptionIndex++
+                }
+            }
         }
 
         override fun onDescriptorWrite(
@@ -1070,109 +1082,122 @@ class SensorBLEReceiveManager @Inject constructor(
 
     override fun writesDataHostPost(ssid: String, password: String, isWifiEnabled: Boolean) {
         coroutineScope.launch {
+            val g = this@SensorBLEReceiveManager.gatt
+            if (g == null) {
+                data.emit(Resource.Error(errorMessage = "Gatt es null, no se puede escribir. ¿Ya conectaste?"))
+                return@launch
+            }
+
+            // Reset correcto antes de armar la lista
+            resetWriteState()
+
             val ssidUuid = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb")
             val passwordUuid = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb")
             val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
 
-
-
-            writeableCharacteristics.forEach { characteristic ->
-                when (characteristic.uuid) {
+            writeableCharacteristics.forEach { ch ->
+                when (ch.uuid) {
                     ssidUuid -> {
-                        val value = ssid.trim()
-                        characteristic.setValue(value.toByteArray())
-                        textw = value
-                        characteristicsToWrite.add(characteristic)
-
+                        val value = ssid.trim().toByteArray()
+                        ch.value = value
+                        characteristicsToWrite.add(ch)
                     }
 
                     passwordUuid -> {
-                        val value = password.trim()
-                        textw = value
-                        characteristic.setValue(value.toByteArray())
-                        characteristicsToWrite.add(characteristic)
-
+                        val value = password.trim().toByteArray()
+                        ch.value = value
+                        characteristicsToWrite.add(ch)
                     }
 
                     wifiEnabledUuid -> {
-                        val value = (if (isWifiEnabled) '1' else '0').toString()
-
-                        characteristic.setValue(value.toString().toByteArray())
-                        characteristicsToWrite.add(characteristic)
-
+                        val value = (if (isWifiEnabled) "1" else "0").toByteArray()
+                        ch.value = value
+                        characteristicsToWrite.add(ch)
                     }
                 }
             }
 
             if (characteristicsToWrite.isNotEmpty()) {
-                writeNextCharacteristic(gatt, characteristicsToWrite, currentCharacteristicIndex)
+                writeNextCharacteristic(g, characteristicsToWrite, currentCharacteristicIndex)
             } else {
-                coroutineScope.launch {
-                    data.emit(
-                        Resource.Success(
-                            data = SensorResult(
-                                ssidUuid.toString(),
-                                "No se encontraron características válidas para escribir.",
-                                "",
-                                "",
-                                "",
-                                "",
-                                ConnectionState.Connected
-                            )
+                data.emit(
+                    Resource.Success(
+                        data = SensorResult(
+                            ssidUuid.toString(),
+                            "No se encontraron características válidas para escribir.",
+                            "", "", "", "",
+                            ConnectionState.Connected
                         )
                     )
-                }
-
+                )
             }
         }
     }
 
+    private fun writeCharacteristicCompat(
+        gatt: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic,
+        payload: ByteArray
+    ): Boolean {
+        val supportsNoResp =
+            (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0
+
+        val writeType =
+            if (supportsNoResp) BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+
+        return if (Build.VERSION.SDK_INT >= 33) {
+            gatt.writeCharacteristic(
+                characteristic,
+                payload,
+                writeType
+            ) == BluetoothStatusCodes.SUCCESS
+        } else {
+            characteristic.writeType = writeType
+            characteristic.value = payload
+            gatt.writeCharacteristic(characteristic)
+        }
+    }
+
     private fun writeNextCharacteristic(
-        gatt: BluetoothGatt?,
+        gatt: BluetoothGatt,
         characteristicsToWrite: List<BluetoothGattCharacteristic>,
         currentCharacteristicIndex: Int
     ) {
-
         val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
 
         if (currentCharacteristicIndex < characteristicsToWrite.size) {
-            val characteristic = characteristicsToWrite[currentCharacteristicIndex]
-            val success = gatt?.writeCharacteristic(characteristic)
+            val ch = characteristicsToWrite[currentCharacteristicIndex]
 
-            if (success == true) {
+            val payload = ch.value ?: byteArrayOf()
+            val started = writeCharacteristicCompat(gatt, ch, payload)
+
+            if (started) {
                 coroutineScope.launch {
                     data.emit(
                         Resource.Success(
                             data = SensorResult(
-                                characteristic.uuid.toString(),
-                                "Escribiendo ${characteristic.uuid}",
-                                "",
-                                "",
-                                "",
-                                "",
+                                ch.uuid.toString(),
+                                "Escribiendo ${ch.uuid}",
+                                "", "", "", "",
                                 ConnectionState.Connected
                             )
                         )
                     )
                 }
-
             } else {
                 coroutineScope.launch {
                     data.emit(
                         Resource.Success(
                             data = SensorResult(
-                                characteristic.uuid.toString(),
-                                "Error al escribir ${characteristic.uuid}",
-                                "",
-                                "",
-                                "",
-                                "",
+                                ch.uuid.toString(),
+                                "No se pudo iniciar write (GATT busy o char inválida) ${ch.uuid}",
+                                "", "", "", "",
                                 ConnectionState.Disconnected
                             )
                         )
                     )
                 }
-
                 resetWriteState()
             }
         } else {
@@ -1182,16 +1207,12 @@ class SensorBLEReceiveManager @Inject constructor(
                         data = SensorResult(
                             wifiEnabledUuid.toString(),
                             "Todos los datos enviados correctamente.",
-                            "",
-                            "",
-                            "",
-                            "",
+                            "", "", "", "",
                             ConnectionState.Connected
                         )
                     )
                 )
             }
-
             resetWriteState()
         }
     }

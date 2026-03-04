@@ -1771,9 +1771,6 @@ private fun connectAndSendLimite(
             out.println(data)
             out.println(" ok")
             val response = input.readLine()
-
-
-
             out.close()
             input.close()
             socket.close()
