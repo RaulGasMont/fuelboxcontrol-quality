@@ -163,6 +163,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     gatt.requestMtu(517)
 
                     coroutineScope.launch {
+                        _sensorState.value = SensorState()
                         connectionState.emit(ConnectionState.Connected)
                         data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
                     }
@@ -309,7 +310,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 }
 
                 CHAR_UUID_SENSOR_3 -> {
-                    val sensorData = value.t9oString(Charsets.UTF_8).trim().split(" ")
+                    val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
                     if (sensorData.size == 5) {
                         _sensorState.update { current ->
                             current.copy(
@@ -397,7 +398,11 @@ class SensorBLEReceiveManager @Inject constructor(
             }
         }
 
-        override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            status: Int
+        ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
             // Guarda gatt por si acaso
@@ -412,12 +417,19 @@ class SensorBLEReceiveManager @Inject constructor(
                 ) {
                     currentCharacteristicIndex++
                     coroutineScope.launch {
-                        writeNextCharacteristic(gatt, characteristicsToWrite, currentCharacteristicIndex)
+                        writeNextCharacteristic(
+                            gatt,
+                            characteristicsToWrite,
+                            currentCharacteristicIndex
+                        )
                     }
                 }
             } else {
                 // Error real -> resetea o reintenta
-                Log.e("SensorBLEReceiveManager", "Write FAIL uuid=${characteristic.uuid} status=$status")
+                Log.e(
+                    "SensorBLEReceiveManager",
+                    "Write FAIL uuid=${characteristic.uuid} status=$status"
+                )
                 resetWriteState()
             }
         }
