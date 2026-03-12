@@ -16,9 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
@@ -84,7 +84,10 @@ fun SensorDataCard(numSensor: String, sensorData: SensorData?, modifier: Modifie
 }
 
 @Composable
-fun SingleSensorDataCard(title: String, value: String, modifier: Modifier = Modifier) {
+fun SingleSensorDataCard(accelerometerData: AccelerometerData?, modifier: Modifier = Modifier) {
+    if (accelerometerData == null) return
+    val localModifier = Modifier
+        .fillMaxWidth()
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -93,15 +96,38 @@ fun SingleSensorDataCard(title: String, value: String, modifier: Modifier = Modi
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
         border = BorderStroke(width = 4.dp, color = MaterialTheme.colorScheme.primary)
     ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = localModifier.padding(16.dp)
         ) {
-            Text(text = "$title: ", color = Color.Black)
-            Text(text = value, color = Color.Black)
+            Row(
+                modifier = localModifier,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Acelerometro",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black,
+                )
+                Column() {
+                    Text(
+                        "Actualizado",
+                        color = Color.Black,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                    Text(accelerometerData.date, color = Color.Black)
+                }
+            }
+
+            HorizontalDivider(thickness = 4.dp, color = MaterialTheme.colorScheme.primary)
+            Column(
+                modifier = modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = accelerometerData.value, color = Color.Black, style = MaterialTheme.typography.headlineMedium)
+            }
         }
+
     }
 }
 

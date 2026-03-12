@@ -337,7 +337,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     if (sensorData.size == 3) {
                         _sensorState.update { current ->
                             current.copy(
-                                acelerometro = sensorData.last()
+                                acelerometro = getAcelerometroData(sensorData)
                             )
                         }
                     }
@@ -432,6 +432,14 @@ class SensorBLEReceiveManager @Inject constructor(
                 )
                 resetWriteState()
             }
+        }
+
+        private fun getAcelerometroData(sensorData: List<String>): AccelerometerData {
+            val date = "${sensorData[0]} ${sensorData[1]}"
+            return AccelerometerData(
+                date = date,
+                value = sensorData.drop(2).last()
+            )
         }
 
         private fun getSensorData(sensorData: List<String>): SensorData {
@@ -602,7 +610,7 @@ class SensorBLEReceiveManager @Inject constructor(
                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
 
                 // 6) Escribe descriptor (Android 13+ vs legacy)
-                val writeStarted = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                val writeStarted = if (Build.VERSION.SDK_INT >= 33) {
                     // writeDescriptor(descriptor, value) -> int
                     gatt.writeDescriptor(descriptor, enableValue) == BluetoothStatusCodes.SUCCESS
                 } else {

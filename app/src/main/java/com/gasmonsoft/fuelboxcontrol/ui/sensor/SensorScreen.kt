@@ -19,25 +19,20 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -57,8 +52,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,19 +62,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.R
+import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorState
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.EncriptarBin
 import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.ReducirDatosSensor
-import com.gasmonsoft.fuelboxcontrol.utils.dataprocessing.readFile
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
@@ -91,19 +86,15 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.Socket
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 
 @OptIn(ExperimentalPermissionsApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SensorScreen(
     nameWifi: String,
     passWifi: String,
     onBack: () -> Unit,
-//    onBluetoothStateChanged: () -> Unit,
     viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
     val bleConnectionState = viewModelSensor.connectionState.collectAsState().value
@@ -189,7 +180,6 @@ fun SensorScreen(
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SensorScreenContent(
     nameWifi: String,
@@ -356,269 +346,24 @@ fun SensorScreenContent(
             .wrapContentSize()
             .background(Color.White)
     ) {
-
-
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray), // Ocupa todo el ancho de la columna
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)) {
                 Text(
-                    text = "------CONEXIÓN AUTOMÁTICA BLE-------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
+                    text = "DATOS DE CAJA DE COMUNICACIONES",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
-
         item {
-
-            Box(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .wrapContentSize(),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (bleConnectionState == ConnectionState.CurrentlyInitializing) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .wrapContentSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            if (initializingMessage != null) {
-                                Text(
-                                    text = initializingMessage,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Magenta
-                                )
-                            }
-                        }
-
-                    } else if (!permissionState.allPermissionsGranted) {
-                        Text(
-                            text = "Vaya a la configuración de la aplicación y permita los permisos que faltan.",
-                            modifier = Modifier.padding(2.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    } else if (errorMessage != null) {
-
-                        Text(
-                            text = sensorMessage,
-                            style = TextStyle(
-                                color = colorResource(id = R.color.purple_500),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-
-                        Column(
-                            modifier = Modifier
-                                .wrapContentSize(),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                style = TextStyle(
-                                    color = colorResource(id = R.color.purple_500),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                text = errorMessage
-                            )
-                            Button(
-                                onClick = {
-                                    if (permissionState.allPermissionsGranted) {
-                                        onInitializeConnection()
-                                    }
-                                }, shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    "Intentar otra vez"
-                                )
-                            }
-                        }
-                    } else if (bleConnectionState == ConnectionState.Connected) {
-                        Column(
-                            modifier = Modifier
-                                .wrapContentSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Top
-                        ) {
-                            Text(
-                                text = "  $sensoruno",
-                                style = TextStyle(
-                                    color = colorResource(id = R.color.purple_500),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                // style = MaterialTheme.typography.h6
-                            )
-                            Button(
-                                onClick = {
-                                    if (permissionState.allPermissionsGranted) {
-                                        onDisconnect()
-                                        onBack()
-                                    }
-                                }, modifier = Modifier
-                                    .wrapContentSize()
-                                    .padding(10.dp)
-                                    .height(60.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colorResource(id = R.color.purple_500),
-                                    contentColor = Color.White,
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    "Desconectar", style = TextStyle(
-                                        color = Color.White,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
-
-
-                        }
-                    } else if (bleConnectionState == ConnectionState.Disconnected) {
-                        Button(
-                            onClick = {
-                                onInitializeConnection()
-                            },
-                            modifier = Modifier
-                                .wrapContentSize()
-                                .padding(20.dp)
-                                .height(60.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorResource(id = R.color.purple_500),
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "Inicializar de nuevo", style = TextStyle(
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-//                                viewModelSensor.omemvio(context)
-                            }, modifier = Modifier
-                                .wrapContentSize()
-                                .padding(20.dp)
-                                .height(60.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorResource(id = R.color.purple_500),
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "Enviar Datos", style = TextStyle(
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "------CREAR PUNTO DE ACCESO-------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-        }
-
-        item {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(4.dp)
             ) {
-                OutlinedTextField(
-                    value = ssid.value,
-                    onValueChange = { if (it.length <= 4) ssid.value = it },
-                    label = { Text("SSID (4 caracteres)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = password.value,
-                    onValueChange = { if (it.length <= 8) password.value = it },
-                    label = { Text("Contraseña (8 caracteres)") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    Text("Activar:")
-                    Switch(
-                        checked = isWifiEnabled.value,
-                        onCheckedChange = { isWifiEnabled.value = it }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.Top,
-
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Button(
-                        onClick = {
-                            onWritesDataHostPost(
-                                ssid.value,
-                                password.value,
-                                isWifiEnabled.value
-                            )
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp)
-                    ) {
-                        Text("Crear HostPost")
-                    }
-                }
-                Text(text = sendingState)
-                Spacer(modifier = Modifier.height(16.dp))
-
 
                 Column(
                     modifier = Modifier
@@ -658,411 +403,6 @@ fun SensorScreenContent(
             }
         }
 
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "---------ENVÍO INFORMACIÓN HOSTPOST-----",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-        }
-
-        item {
-            TextField(
-                value = ip,
-                onValueChange = { ip = it },
-                label = { Text("IP Address") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(
-                value = port,
-                onValueChange = { port = it },
-                label = { Text("Port") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(
-                value = message,
-                onValueChange = { message = it },
-                label = { Text("Mensaje") }, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    connectToEsp32(ip, port, message, context) { isConnected = it }
-                },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Conectar Wifi y enviar MSG")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "------VALOR RST--------",
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(), // Ocupa todo el ancho disponible
-                textAlign = TextAlign.Center
-            )
-            TextField(
-                value = messagestatus,
-                onValueChange = { messagestatus = it },
-                label = { Text("Valor") }, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-
-                    sendValorToESP32(ip, port, context, messagestatus)
-                },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Enviar valor rst")
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(text = if (isConnected) "Conectado" else "No conectado")
-
-            Text(
-                text = "------LÍMITE--------",
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(), // Ocupa todo el ancho disponible
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-
-            TextField(
-                value = limit,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() } && newValue.length <= 1) {
-                        limit = newValue
-                    }
-                },
-                label = { Text("Límite (1-4)") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp)
-            )
-
-            Button(
-                onClick = { sendLimits(ip, port, limit, context) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Enviar archivo límites")
-            }
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "------CONFIGURACIÓN--------",
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(), // Ocupa todo el ancho disponible
-                textAlign = TextAlign.Center
-            )
-
-            Button(
-                onClick = { launcher.launch("application/json") },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Seleccionar archivo JSON")
-            }
-
-
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            TextField(
-                value = jsonConfig,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Contenido del archivo JSON") },
-                textStyle = LocalTextStyle.current.copy(fontSize = 10.sp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp)
-            )
-
-
-
-            Button(
-                onClick = { sendConfigToESP32(ip, port, context, jsonConfig) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Enviar configuración")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "------SEND actFw--------",
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-
-            Button(
-                onClick = { launcheract.launch(arrayOf("text/x-python", "text/mpy")) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Seleccionar archivo")
-            }
-
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            TextField(
-                value = act,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Contenido del archivo ") },
-                textStyle = LocalTextStyle.current.copy(fontSize = 10.sp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp)
-            )
-
-
-
-            Button(
-                onClick = { sendaCTToESP32(ip, port, context, act, fileNameWithExtension) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Enviar actFW")
-            }
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "------LECTURA--------", fontWeight = FontWeight.Bold,
-                color = Color.Red, modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "------SELECCIONAR RANGO DE FECHAS------",
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                style = TextStyle(fontSize = 16.sp)
-            )
-
-            DateSelector("Fecha de Inicio") { date ->
-                startDate = date
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            DateSelector("Fecha de Fin") { date ->
-                endDate = date
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(
-                value = filePath,
-                onValueChange = { filePath = it },
-                label = { Text("Ruta de archivo para leer") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    if (startDate.isNotEmpty() && endDate.isNotEmpty()) {
-                        coroutineScope.launch {
-                            try {
-
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(
-                                        context,
-                                        "Procesando archivos...",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-
-
-                                val dateRange = generateDateRange(startDate, endDate)
-                                val processedFiles = mutableListOf<Uri>()
-
-                                delay(1000)
-                                onWrite("1")
-                                dateRange.forEachIndexed { index, date ->
-                                    filePath = "/sd/muestras/$date.bin"
-                                    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
-                                    val fecha = LocalDate.parse(date, formatter)
-
-                                    val dia = fecha.dayOfMonth.toString()
-                                    val uri =
-                                        readFile(ip, port, filePath, "${date}.bin", context, dia)
-
-                                    uri?.let {
-                                        processedFiles.add(it)
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(
-                                                context,
-                                                "Procesado ${index + 1} de ${dateRange.size}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-
-
-                                withContext(Dispatchers.Main) {
-                                    if (processedFiles.isEmpty()) {
-                                        Toast.makeText(
-                                            context,
-                                            "No se encontraron archivos en el rango de fechas",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        return@withContext
-                                    }
-
-                                    Toast.makeText(
-                                        context,
-                                        "${processedFiles.size} archivos listos para enviar",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-
-
-                                delay(2000)
-
-
-                                processedFiles.forEachIndexed { index, uri ->
-                                    sendValorToESP32(ip, port, context, "1")
-                                    delay(2000)
-                                    onSendRead(context, uri, "2025/03/02", "1")
-
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            context,
-                                            "Enviando archivo ${index + 1}/${processedFiles.size}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-
-                                    delay(500)
-                                }
-
-
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(
-                                        context,
-                                        "✅ ${processedFiles.size} archivos enviados correctamente",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(
-                                        context,
-                                        "❌ Error: ${e.localizedMessage ?: "Falló el proceso"}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            }
-                        }
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Seleccione ambas fechas primero",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Leer y enviar archivos")
-            }
-
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "------DEL--------",
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-            TextField(
-                value = filePathDel,
-                onValueChange = { filePathDel = it },
-                label = { Text("Ruta de archivo DEL") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-            Button(
-                onClick = { sendDelToESP32(ip, port, context, filePathDel) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            ) {
-                Text("Enviar DEL")
-            }
-
-
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-
-        }
-
-
-
         item {
             Column(
                 modifier = Modifier
@@ -1080,29 +420,45 @@ fun SensorScreenContent(
             }
         }
 
-
         item {
-            TextField(
-                value = textValueEINC,
-
-                onValueChange = {
-
-                    textValueEINC = it
-                },
-                modifier = Modifier
-
-                    .padding(end = 8.dp),
-                singleLine = true,
-            )
-            Button(
-                onClick = { onWriteEinc(textValueEINC) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Enviar EINC")
+
+                Text(
+                    text = "El comando EINC calibra el acelerometro con base a la posicion actual del vehiculo.",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic
+                    )
+                )
+                Text(
+                    text = "Los valores aceptados son: x, y, z",
+                    fontStyle = FontStyle.Italic
+                )
+                TextField(
+                    value = textValueEINC,
+                    onValueChange = {
+
+                        textValueEINC = it
+                    },
+                    modifier = Modifier
+
+                        .padding(end = 8.dp),
+                    singleLine = true,
+                )
+                Button(
+                    onClick = { onWriteEinc(textValueEINC) },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp)
+                ) {
+                    Text("Enviar EINC")
+                }
             }
+
         }
 //// RTC
 
@@ -1123,6 +479,19 @@ fun SensorScreenContent(
         }
 
         item {
+            Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)) {
+                Text(
+                    text = "El comando RTC actualiza con la fecha y hora actual la caja de comunicaciones.",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic
+                    )
+                )
+                Text(
+                    text = "Enviar 0 para calibrar fecha y 1 para calibrar hora.",
+                    fontStyle = FontStyle.Italic
+                )
+            }
             Row(
                 modifier = Modifier
                     .padding(2.dp)
@@ -1163,266 +532,6 @@ fun SensorScreenContent(
                         )
                     )
                 }
-
-
-            }
-        }
-
-
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "------------ENVÍO COMM------------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .wrapContentSize(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-
-                TextField(
-                    value = textValue,
-
-                    onValueChange = {
-                        textValue = it
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = {
-                        val enteredText = textValue
-                        onWrite(enteredText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = R.color.purple_500),
-                        contentColor = Color.White,
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        "Enviar COMM", style = TextStyle(
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-
-            }
-        }
-
-
-
-
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "------------ENVÍO EEMO------------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .wrapContentSize(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-
-                TextField(
-                    value = textValueEemo,
-
-                    onValueChange = {
-                        textValueEemo = it
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = {
-                        val enteredText = textValueEemo
-                        onWriteEemo(enteredText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = R.color.purple_500),
-                        contentColor = Color.White,
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        "Enviar EEMO", style = TextStyle(
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-
-            }
-        }
-
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "------------ENVÍO ELMO------------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .wrapContentSize(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // TextField
-
-                TextField(
-                    value = textValueElmo,
-
-                    onValueChange = {
-
-                        textValueElmo = it
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = {
-                        val enteredText = textValueElmo
-                        onWriteElmo(enteredText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = R.color.purple_500),
-                        contentColor = Color.White,
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        "Enviar ELMO", style = TextStyle(
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-
-            }
-        }
-
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.DarkGray),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "------------ENVÍO SACE------------",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 16.sp)
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .wrapContentSize(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-
-                TextField(
-                    value = textValueSACE,
-
-                    onValueChange = {
-                        textValueSACE = it
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = {
-
-                        val enteredText = textValueSACE
-                        onWriteSace(enteredText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = R.color.purple_500),
-                        contentColor = Color.White,
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        "Enviar SACE", style = TextStyle(
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-
             }
         }
 
@@ -1445,18 +554,33 @@ fun SensorScreenContent(
             Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
                 if (bateria.isNotEmpty()) {
-                    Text(
-                        text = bateria,
-                        style = TextStyle(
-                            color = colorResource(id = R.color.gray),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                    Row() {
+                        Text(
+                            text = "Carga de Bateria: ",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                        Text(
+                            text = bateria,
+                            style = TextStyle(
+                                color = colorResource(id = R.color.gray),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+
                 }
 
 
                 if (constante1.isNotEmpty()) {
+                    Text(
+                        text = "Mensaje de comando",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                     Text(
                         text = sensorMessage,
                         style = TextStyle(
@@ -1492,174 +616,11 @@ fun SensorScreenContent(
                 sensorData = sensorInfoState.sensor4,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            SingleSensorDataCard(title = "Acelerómetro", value = sensorInfoState.acelerometro)
+            SingleSensorDataCard(
+                accelerometerData = sensorInfoState.acelerometro,
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
-
-        item {
-            if (constante1.isEmpty()) return@item
-            Text(
-                text = constante1,
-                style = TextStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-
-        item {
-            if (alerta1.isEmpty()) return@item
-            Text(
-                text = alerta1,
-                style = TextStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            if (constante2.isEmpty()) return@item
-            Text(
-                text = constante2,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            if (alerta2.isEmpty()) return@item
-            Text(
-                text = alerta2,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            if (constante3.isEmpty()) return@item
-            Text(
-                text = constante3,
-                style = TextStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-
-        item {
-            if (alerta3.isEmpty()) return@item
-            Text(
-                text = alerta3,
-                style = TextStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-        item {
-            if (constante4.isEmpty()) return@item
-            Text(
-                text = constante4,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        }
-
-
-        item {
-            if (alerta4.isEmpty()) return@item
-            Text(
-                text = alerta4,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-        item {
-            if (fecha1.isEmpty()) return@item
-            Text(
-                text = fecha1,
-                style = TextStyle(
-                    color = colorResource(id = R.color.purple_500),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-        item {
-            if (fecha4.isEmpty()) return@item
-            Text(
-                text = fecha4,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-
-
-        item {
-            if (fecha2.isEmpty()) return@item
-            Text(
-                text = fecha2,
-                style = TextStyle(
-                    color = colorResource(id = R.color.gray),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-        item {
-            Button(
-                onClick = {
-                    onClearValores()
-                },
-
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(id = R.color.purple_500),
-                    contentColor = Color.White,
-                ),
-                shape = RoundedCornerShape(8.dp)
-
-            ) {
-                Text(
-                    text = "Limpiar", style = TextStyle(
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-        }
-
     }
 
 }
@@ -1792,37 +753,44 @@ private fun connectAndSendLimite(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateSelector(label: String, onDateSelected: (String) -> Unit) {
+fun DateSelector(
+    label: String,
+    onDateSelected: (String) -> Unit
+) {
     val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    val year = calendar.get(Calendar.YEAR)
-    val month = calendar.get(Calendar.MONTH)
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-
+    val calendar = remember { Calendar.getInstance() }
     var selectedDate by remember { mutableStateOf("") }
 
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _, selectedYear, selectedMonth, selectedDay ->
-            val formattedDate = "$selectedYear/${selectedMonth + 1}/$selectedDay"
-            selectedDate = formattedDate
-            onDateSelected(formattedDate)
-        },
-        year,
-        month,
-        day
-    )
+    val datePickerDialog = remember {
+        DatePickerDialog(
+            context,
+            { _, selectedYear, selectedMonth, selectedDay ->
+                val formattedDate = "%04d/%02d/%02d".format(
+                    selectedYear,
+                    selectedMonth + 1,
+                    selectedDay
+                )
+                selectedDate = formattedDate
+                onDateSelected(formattedDate)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
 
     TextField(
         value = selectedDate,
         onValueChange = {},
         label = { Text(label) },
+        readOnly = true,
+        enabled = true,
         modifier = Modifier
             .fillMaxWidth()
             .padding(6.dp)
-            .clickable { datePickerDialog.show() },
-        readOnly = true,
-        enabled = false
+            .clickable {
+                datePickerDialog.show()
+            }
     )
 }
 
@@ -2184,13 +1152,13 @@ fun SensorScreenPreview() {
                 sensor2 = SensorData("2024-01-01", "26°C", "150L", "Normal"),
                 sensor3 = SensorData("2024-01-01", "24°C", "200L", "Good"),
                 sensor4 = SensorData("2024-01-01", "27°C", "50L", "Bad"),
-                acelerometro = "100"
+                acelerometro = AccelerometerData("2024-01-01", "100")
             ),
             permissionState = object : MultiplePermissionsState {
                 override val allPermissionsGranted: Boolean = true
-                override val permissions: List<com.google.accompanist.permissions.PermissionState> =
+                override val permissions: List<PermissionState> =
                     emptyList()
-                override val revokedPermissions: List<com.google.accompanist.permissions.PermissionState> =
+                override val revokedPermissions: List<PermissionState> =
                     emptyList()
                 override val shouldShowRationale: Boolean = false
                 override fun launchMultiplePermissionRequest() {}
