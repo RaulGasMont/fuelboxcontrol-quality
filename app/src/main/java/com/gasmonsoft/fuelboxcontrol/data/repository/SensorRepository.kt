@@ -1,6 +1,5 @@
 package com.gasmonsoft.fuelboxcontrol.data.repository
 
-import com.gasmonsoft.fuelboxcontrol.data.service.SensorService
 import com.gasmonsoft.fuelboxcontrol.model.SensorResponse
 import javax.inject.Inject
 
