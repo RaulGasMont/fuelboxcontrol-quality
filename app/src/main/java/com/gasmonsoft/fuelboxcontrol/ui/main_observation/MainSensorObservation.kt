@@ -19,7 +19,8 @@ import com.gasmonsoft.fuelboxcontrol.ui.navigation.rememberAppState
 
 @Composable
 fun MainSensorObservation(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit
 ) {
     val navController = rememberNavController()
     val appState = rememberAppState(navController)
@@ -33,7 +34,8 @@ fun MainSensorObservation(
     ) { innerPadding ->
         AppNavHost(
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            onGeneralBack = onBack
         )
     }
 }

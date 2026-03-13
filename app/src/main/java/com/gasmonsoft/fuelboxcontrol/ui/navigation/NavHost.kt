@@ -21,24 +21,27 @@ data object VehiculoRoot
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onGeneralBack: () -> Unit
 ) {
     NavHost(
         navController = navController,
         startDestination = SensoresRoot,
         modifier = modifier
     ) {
-        sensoresGraph(navController)
+        sensoresGraph(navController, onGeneralBack)
+        vehiculosGraph(navController)
     }
 }
 
-private fun NavGraphBuilder.sensoresGraph(navController: NavHostController) {
+private fun NavGraphBuilder.sensoresGraph(
+    navController: NavHostController,
+    onGeneralBack: () -> Unit
+) {
     navigation<SensoresRoot>(startDestination = SensoresRoot) {
         composable<SensoresRoot> {
             SensorRoute(
-                onBack = {
-                    //navController.navigate(FuelBoxControlRoute.Home.route)
-                },
+                onBack = onGeneralBack,
             )
         }
     }
