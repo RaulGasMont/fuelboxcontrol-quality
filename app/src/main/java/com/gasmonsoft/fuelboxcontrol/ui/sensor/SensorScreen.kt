@@ -91,9 +91,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun SensorScreen(
-    nameWifi: String,
-    passWifi: String,
+fun SensorRoute(
     onBack: () -> Unit,
     viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
@@ -128,8 +126,6 @@ fun SensorScreen(
     val sendingState by viewModelSensor.sendingState.collectAsState()
 
     SensorScreenContent(
-        nameWifi = nameWifi,
-        passWifi = passWifi,
         onBack = onBack,
         bleConnectionState = bleConnectionState,
         sensorInfoState = sensorInfoState,
@@ -169,21 +165,19 @@ fun SensorScreen(
         onWriteSace = { viewModelSensor.onwritesace(it) },
         onClearValores = { viewModelSensor.clearvalores() },
         onSendRead = { context, uri, date, idcaja ->
-            viewModelSensor.onSendRead(
-                context,
-                uri,
-                date,
-                idcaja
-            )
-        }
+//            viewModelSensor.onSendRead(
+//                context,
+//                uri,
+//                date,
+//                idcaja
+//            )
+        },
     )
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SensorScreenContent(
-    nameWifi: String,
-    passWifi: String,
     onBack: () -> Unit,
     bleConnectionState: ConnectionState,
     sensorInfoState: SensorState,
@@ -256,8 +250,6 @@ fun SensorScreenContent(
     var textValueRTC by remember { mutableStateOf("") }
     var textValueEINC by remember { mutableStateOf("") }
     //puntowifi
-    val ssid = remember { mutableStateOf(nameWifi) }
-    val password = remember { mutableStateOf(passWifi) }
     val isWifiEnabled = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -1143,8 +1135,6 @@ fun generateDateRange(startDate: String, endDate: String): List<String> {
 fun SensorScreenPreview() {
     FuelBoxControlTheme {
         SensorScreenContent(
-            nameWifi = "MyWifi",
-            passWifi = "12345678",
             onBack = {},
             bleConnectionState = ConnectionState.Connected,
             sensorInfoState = SensorState(

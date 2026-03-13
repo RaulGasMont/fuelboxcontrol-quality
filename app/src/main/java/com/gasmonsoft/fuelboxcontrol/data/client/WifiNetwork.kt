@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.service
+package com.gasmonsoft.fuelboxcontrol.data.client
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,7 +9,8 @@ import android.os.Build
 
 object WifiNetwork {
     fun isConnected(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 

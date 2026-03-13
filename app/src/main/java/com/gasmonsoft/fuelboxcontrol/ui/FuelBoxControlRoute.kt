@@ -10,7 +10,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.home.HomeScreen
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.BluetoothPermissionScreen
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.LocationPermissionScreen
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionResultScreen
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.SensorScreen
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.SensorRoute
 
 sealed class FuelBoxControlRoute(val route: String) {
     object Welcome : FuelBoxControlRoute("welcome")
@@ -63,12 +63,10 @@ fun FuelBoxControlFlowNav() {
         }
 
         composable(FuelBoxControlRoute.Sensor.route) {
-            SensorScreen(
+            SensorRoute(
                 onBack = {
                     navController.navigate(FuelBoxControlRoute.Home.route)
                 },
-                nameWifi = "MDIESEL",
-                passWifi = "12345678",
             )
         }
     }

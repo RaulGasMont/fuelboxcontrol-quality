@@ -3,11 +3,10 @@ package com.gasmonsoft.fuelboxcontrol.di
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.content.SharedPreferences
 import com.gasmonsoft.fuelboxcontrol.BuildConfig
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorBLEReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
-import com.gasmonsoft.fuelboxcontrol.data.service.FuelSoftwareService
+import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

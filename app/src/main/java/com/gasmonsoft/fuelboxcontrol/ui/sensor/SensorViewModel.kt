@@ -59,7 +59,8 @@ import kotlin.with
 
 @HiltViewModel
 class SensorViewModel @Inject constructor(
-    private val sensorReceiveManager: SensorReceiveManager
+    private val sensorReceiveManager: SensorReceiveManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _shouldReconnect = MutableStateFlow(true)
     val shouldReconnect: StateFlow<Boolean> = _shouldReconnect.asStateFlow()
@@ -199,10 +200,6 @@ class SensorViewModel @Inject constructor(
         _Message.value = ""
         _bateria.value = ""
     }
-    
-    @ApplicationContext
-    @Inject
-    lateinit var context: Context
 
 //    @SuppressLint("MissingPermission")
 //    suspend fun getLastKnownLocation(): Location? {
