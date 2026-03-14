@@ -20,8 +20,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
+import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
@@ -42,11 +51,43 @@ fun VehiculosRoute(
     modifier: Modifier = Modifier,
     viewModel: VehiculosViewModel = hiltViewModel()
 ) {
-    VehiculosScreen(modifier = modifier)
+    val uiState = viewModel.uiState.collectAsState()
+    var usuario by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        VehiculosScreen(
+            username = usuario,
+            password = password,
+            modifier = modifier,
+            onLoginUsername = { usuario = it },
+            onLoginPassword = { password = it },
+            onLogin = {
+                viewModel.doLogin(
+                    username = usuario,
+                    password = password
+                )
+                usuario = ""
+                password = ""
+            }
+        )
+        if (uiState.value.loginEvent == NetworkEvent.Loading) {
+            LoadingDialog()
+        }
+
+    }
 }
 
 @Composable
-fun VehiculosScreen(modifier: Modifier = Modifier) {
+fun VehiculosScreen(
+    username: String,
+    password: String,
+    onLoginUsername: (username: String) -> Unit,
+    onLoginPassword: (password: String) -> Unit,
+    onLogin: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -56,7 +97,7 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SectionCard(cornerRadius = 32.dp, padding = 12.dp) {
+        SectionCard(padding = 12.dp) {
             Text(
                 text = stringResource(R.string.conexion_servidor),
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -67,12 +108,11 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        SectionCard(cornerRadius = 64.dp, padding = 24.dp) {
+        SectionCard(padding = 24.dp) {
             Text(
                 text = stringResource(R.string.credenciales),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
                 ),
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -83,38 +123,55 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                Text(
-                    text = stringResource(R.string.usuario),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "9611111111",
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = {
+                        onLoginUsername(it)
+                    },
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 34.sp
                     ),
-                    color = Color.Black
+                    label = {
+                        Text(
+                            text = stringResource(R.string.usuario),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray,
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                    ),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.contrasenia),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "1234",
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        onLoginPassword(it)
+                    },
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 34.sp
                     ),
-                    color = Color.Black
+                    label = {
+                        Text(
+                            text = stringResource(R.string.contrasenia),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray,
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                    ),
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Card(
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(2.dp, Color.Black),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Box(
@@ -122,42 +179,42 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
                         .padding(vertical = 12.dp, horizontal = 48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.iniciar_sesion),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
-                    )
+                    TextButton(onClick = onLogin) {
+                        Text(
+                            text = stringResource(R.string.iniciar_sesion),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = Color.Black
+                        )
+                    }
+
                 }
             }
         }
 
-        SectionCard(cornerRadius = 64.dp, padding = 24.dp) {
+        SectionCard(padding = 24.dp) {
             Text(
                 text = stringResource(R.string.vehiculo),
                 style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
+                    fontWeight = FontWeight.Bold
                 ),
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(2.dp, Color.Black),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                        .padding(horizontal = 24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "H100",
-                        style = MaterialTheme.typography.displayMedium.copy(
+                        style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 68.sp
                         ),
                         color = Color.Black,
                         modifier = Modifier.weight(1f),
@@ -166,14 +223,14 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_drop_down),
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(48.dp),
                         tint = Color.Black
                     )
                 }
             }
         }
 
-        SectionCard(cornerRadius = 32.dp, padding = 12.dp) {
+        SectionCard(padding = 12.dp) {
             Text(
                 text = stringResource(R.string.estatus_envio),
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -184,7 +241,7 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        SectionCard(cornerRadius = 64.dp, padding = 32.dp) {
+        SectionCard(padding = 32.dp) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(32.dp)
@@ -210,7 +267,8 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = stringResource(R.string.alertas_generales),
@@ -235,16 +293,15 @@ fun VehiculosScreen(modifier: Modifier = Modifier) {
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 32.dp,
     padding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(cornerRadius),
-        border = BorderStroke(4.dp, Color.Black),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(0.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(4.dp, MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(
             modifier = Modifier
@@ -261,6 +318,12 @@ fun SectionCard(
 @Composable
 fun VehiculosRoutePreview() {
     FuelBoxControlTheme {
-        VehiculosScreen()
+        VehiculosScreen(
+            username = "",
+            password = "",
+            onLoginUsername = {},
+            onLoginPassword = {},
+            onLogin = {}
+        )
     }
 }

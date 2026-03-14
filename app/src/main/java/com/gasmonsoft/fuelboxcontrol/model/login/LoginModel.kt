@@ -9,18 +9,16 @@ data class LoginDto(
 )
 
 data class Login(
-    val usuario: String,
+    val username: String,
     val password: String,
     val token: String
 )
 
-fun Login.toDto(): LoginDto {
-    return LoginDto(
-        username = usuario,
-        password = password,
-        fbToken = token
-    )
-}
+fun Login.toDto(): LoginDto = LoginDto(
+    username = username,
+    password = password,
+    fbToken = token
+)
 
 data class LoginResponse(
     @SerializedName("id") var id: Int,
@@ -50,6 +48,16 @@ data class LoginResponse(
         )
     }
 }
+
+data class UserData(
+    val token: String,
+    val vehiculos: String
+)
+
+fun LoginResponse.toEntity() = UserData(
+    token = token,
+    vehiculos = vehiculos
+)
 
 data class LoginResult(
     val valueResponse: Int,

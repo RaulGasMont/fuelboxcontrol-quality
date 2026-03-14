@@ -2,8 +2,8 @@ package com.gasmonsoft.fuelboxcontrol.data.repository
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
 import com.gasmonsoft.fuelboxcontrol.model.SensorResponse
-import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse
+import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.toDto
 import retrofit2.Response
 import javax.inject.Inject

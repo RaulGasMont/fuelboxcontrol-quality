@@ -16,7 +16,7 @@ import retrofit2.http.Query
 interface FuelSoftwareService {
 
     @POST("api/authenticate")
-    fun login(@Body loginDto: LoginDto): Response<List<LoginResponse>>
+    suspend fun login(@Body loginDto: LoginDto): Response<List<LoginResponse>>
 
     @POST("api/SensorCajaApi/AddSensorDataList")
     suspend fun addSensorDatosUnitariaList(
