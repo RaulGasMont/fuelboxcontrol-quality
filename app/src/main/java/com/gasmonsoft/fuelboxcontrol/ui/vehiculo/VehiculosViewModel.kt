@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.vehiculo
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.domain.ConfigVehicleUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class VehiculosViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
+    private val configVehicle: ConfigVehicleUseCase
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(VehiculoUiState())
     val uiState: StateFlow<VehiculoUiState> = _uiState.asStateFlow()
 
@@ -55,6 +56,21 @@ class VehiculosViewModel @Inject constructor(
                     }
                 }
             )
+        }
+    }
+
+    fun dismissLoginDialog() {
+        _uiState.update {
+            it.copy(
+                loginEvent = null
+            )
+        }
+    }
+
+    fun getVehicleData(idVehicle: Int) {
+        viewModelScope.launch {
+            val token = _uiState.value.userData?.token ?: return@launch
+            configVehicle(token, idVehicle)
         }
     }
 

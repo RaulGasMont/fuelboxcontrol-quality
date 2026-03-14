@@ -14,12 +14,18 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
 
     suspend fun addSensorDatosUnitariaList(token: String, body: List<SensorDataUnitario>) =
         networkRequestHelper {
-            fscService.addSensorDatosUnitariaList(token, body)
+            fscService.addSensorDatosUnitariaList("Bearer $token", body)
         }
 
     suspend fun addSensorAlertasData(token: String, body: SensorAlertasUnitarioRequest) =
         networkRequestHelper {
-            fscService.addSensorAlertasData(token, body)
+            fscService.addSensorAlertasData("Bearer $token", body)
         }
 
+    suspend fun getVehicleData(token: String, idVehiculo: Int) = networkRequestHelper {
+        fscService.doConfVehicle(
+            token = "Bearer $token",
+            idVehiculo = idVehiculo
+        )
+    }
 }

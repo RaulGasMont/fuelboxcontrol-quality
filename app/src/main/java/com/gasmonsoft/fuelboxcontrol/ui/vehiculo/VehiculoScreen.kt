@@ -43,7 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
-import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog.LoadingDialog
+import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
@@ -54,7 +55,6 @@ fun VehiculosRoute(
     val uiState = viewModel.uiState.collectAsState()
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         VehiculosScreen(
@@ -72,10 +72,17 @@ fun VehiculosRoute(
                 password = ""
             }
         )
-        if (uiState.value.loginEvent == NetworkEvent.Loading) {
-            LoadingDialog()
-        }
+        when (uiState.value.loginEvent) {
+            NetworkEvent.Loading -> LoadingDialog()
+            is NetworkEvent.Error -> {
+                ErrorDialog(
+                    message = (uiState.value.loginEvent as NetworkEvent.Error).message,
+                    onDismiss = { viewModel.dismissLoginDialog() }
+                )
+            }
 
+            else -> {}
+        }
     }
 }
 

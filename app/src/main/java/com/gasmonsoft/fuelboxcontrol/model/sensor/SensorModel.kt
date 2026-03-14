@@ -34,6 +34,16 @@ data class ConfigVehiculo(
     val totalSensor: Int
 )
 
+data class SensorInfo(
+    val token: String,
+    val data: SensorDataUnitario
+)
+
+data class AlertasInfo(
+    val token: String,
+    val data: SensorAlertasUnitarioRequest
+)
+
 data class SensorDataUnitario(
     @SerializedName("id_datosSensor")
     val idDatosSensor: Int = 0,
