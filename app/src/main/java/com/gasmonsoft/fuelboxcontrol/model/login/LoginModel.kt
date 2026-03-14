@@ -14,6 +14,14 @@ data class Login(
     val token: String
 )
 
+fun Login.toDto(): LoginDto {
+    return LoginDto(
+        username = usuario,
+        password = password,
+        fbToken = token
+    )
+}
+
 data class LoginResponse(
     @SerializedName("id") var id: Int,
     @SerializedName("message") var message: String,

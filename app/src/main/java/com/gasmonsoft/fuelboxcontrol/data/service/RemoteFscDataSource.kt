@@ -1,6 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.data.service
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
+import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario

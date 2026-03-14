@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.service
+package com.gasmonsoft.fuelboxcontrol.data.service.utils
 sealed class DataError : Exception() {
     data class Network(override val cause: Throwable) : DataError()
      open class Local : DataError() {

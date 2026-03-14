@@ -1,10 +1,11 @@
-package com.gasmonsoft.fuelboxcontrol.data.service
+package com.gasmonsoft.fuelboxcontrol.data.service.utils
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import retrofit2.Response
+import java.io.IOException
 
 suspend fun <T> networkRequestHelper(request: suspend () -> Response<T>): Result<T> =
     withContext(Dispatchers.IO) {
@@ -15,7 +16,7 @@ suspend fun <T> networkRequestHelper(request: suspend () -> Response<T>): Result
             } else {
                 Result.failure(DataError.Http(res.code(), res.errorBody()?.string()))
             }
-        } catch (e: java.io.IOException) {
+        } catch (e: IOException) {
             Result.failure(DataError.Network(e))
         } catch (e: HttpException) {
             Result.failure(DataError.Http(e.code(), e.message()))
