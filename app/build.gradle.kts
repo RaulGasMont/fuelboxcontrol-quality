@@ -75,6 +75,8 @@ dependencies {
 
     // Dependency Injection - Hilt
     implementation(libs.hilt.android)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.ui.graphics)
     ksp(libs.hilt.compiler)
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.hilt:hilt-work:1.3.0")
@@ -87,9 +89,13 @@ dependencies {
     // Networking
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.okhttp.logging)
 
     // Glance (Widgets)
     implementation("androidx.glance:glance:1.1.1")
+
+    implementation("androidx.compose.material:material-icons-extended")
+
 
     // Testing
     testImplementation(libs.junit)

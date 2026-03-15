@@ -19,28 +19,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Login
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,7 +59,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -216,7 +216,6 @@ fun VehiculosScreen(
                     },
                     label = { Text(stringResource(R.string.contrasenia)) },
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    visualTransformation = PasswordVisualTransformation(),
                     colors = outlinedFieldColors()
                 )
 
@@ -232,7 +231,7 @@ fun VehiculosScreen(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Login,
+                        imageVector = Icons.AutoMirrored.Rounded.Login,
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(10.dp))
@@ -295,7 +294,11 @@ fun VehiculosScreen(
                             icon = Icons.Rounded.Sensors
                         )
 
-                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+                        HorizontalDivider(
+                            Modifier,
+                            DividerDefaults.Thickness,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+                        )
 
                         InfoRow(
                             title = "Estado",
@@ -303,12 +306,16 @@ fun VehiculosScreen(
                             icon = Icons.Rounded.CloudDone
                         )
 
-                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+                        HorizontalDivider(
+                            Modifier,
+                            DividerDefaults.Thickness,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+                        )
 
                         InfoRow(
                             title = "Última trama",
                             value = "${sensorData.date} ${sensorData.data}".trim(),
-                            icon = Icons.Rounded.ReceiptLong
+                            icon = Icons.AutoMirrored.Rounded.ReceiptLong
                         )
                     }
                 }
@@ -339,7 +346,7 @@ fun DropdownVehicleMenu(
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             readOnly = true,
             singleLine = true,
             shape = RoundedCornerShape(18.dp),
@@ -611,7 +618,7 @@ fun InfoRow(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (value.isBlank()) "---" else value,
+                text = value.ifBlank { "---" },
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium
                 ),

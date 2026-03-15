@@ -26,7 +26,7 @@ val destinations = listOf(
     ),
     ScreenDestination(
         route = ScreenRoute.DatosVehiculos,
-        title = "Datos Vehiculos",
+        title = "Servidor",
         icon = R.drawable.ic_datos_vehiculos
     )
 )
