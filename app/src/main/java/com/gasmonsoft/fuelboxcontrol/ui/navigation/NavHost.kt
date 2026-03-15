@@ -12,11 +12,10 @@ import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.VehiculosRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object SensoresRoot
+data object SensoresNavGraph
 
 @Serializable
-data object VehiculoRoot
-
+data object VehiculosNavGraph
 
 @Composable
 fun AppNavHost(
@@ -26,7 +25,7 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = SensoresRoot,
+        startDestination = SensoresNavGraph,
         modifier = modifier
     ) {
         sensoresGraph(navController, onGeneralBack)
@@ -38,8 +37,8 @@ private fun NavGraphBuilder.sensoresGraph(
     navController: NavHostController,
     onGeneralBack: () -> Unit
 ) {
-    navigation<SensoresRoot>(startDestination = SensoresRoot) {
-        composable<SensoresRoot> {
+    navigation<SensoresNavGraph>(startDestination = ScreenRoute.Sensores) {
+        composable<ScreenRoute.Sensores> {
             SensorRoute(
                 onBack = onGeneralBack,
             )
@@ -48,8 +47,8 @@ private fun NavGraphBuilder.sensoresGraph(
 }
 
 private fun NavGraphBuilder.vehiculosGraph(navController: NavHostController) {
-    navigation<VehiculoRoot>(startDestination = VehiculoRoot) {
-        composable<VehiculoRoot> {
+    navigation<VehiculosNavGraph>(startDestination = ScreenRoute.DatosVehiculos) {
+        composable<ScreenRoute.DatosVehiculos> {
             VehiculosRoute()
         }
     }

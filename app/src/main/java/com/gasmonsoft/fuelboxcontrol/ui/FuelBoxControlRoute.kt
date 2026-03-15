@@ -1,8 +1,15 @@
 package com.gasmonsoft.fuelboxcontrol.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -25,14 +32,27 @@ sealed class FuelBoxControlRoute(val route: String) {
 fun FuelBoxControlFlowNav() {
     val navController = rememberNavController()
     val modifier = Modifier.safeContentPadding()
-
+    val currentContext = LocalContext.current
+    
     NavHost(
         navController = navController,
         startDestination = FuelBoxControlRoute.Welcome.route
     ) {
         composable(FuelBoxControlRoute.Welcome.route) {
-            WelcomeScreen {
-                navController.navigate(FuelBoxControlRoute.Bluetooth.route)
+            val hasAllPermissions = hasAllPermissions(currentContext)
+            
+            LaunchedEffect(hasAllPermissions) {
+                if (hasAllPermissions) {
+                    navController.navigate(FuelBoxControlRoute.Home.route) {
+                        popUpTo(FuelBoxControlRoute.Welcome.route) { inclusive = true }
+                    }
+                }
+            }
+
+            if (!hasAllPermissions) {
+                WelcomeScreen {
+                    navController.navigate(FuelBoxControlRoute.Bluetooth.route)
+                }
             }
         }
 
@@ -51,7 +71,9 @@ fun FuelBoxControlFlowNav() {
         composable(FuelBoxControlRoute.Result.route) {
             PermissionResultScreen(
                 onFinish = {
-                    navController.navigate(FuelBoxControlRoute.Home.route)
+                    navController.navigate(FuelBoxControlRoute.Home.route) {
+                        popUpTo(FuelBoxControlRoute.Result.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -64,8 +86,28 @@ fun FuelBoxControlFlowNav() {
 
         composable(FuelBoxControlRoute.Sensor.route) {
             MainSensorObservation(
-                onBack = { navController.navigate(FuelBoxControlRoute.Home.route) }
+                onBack = { 
+                    navController.navigate(FuelBoxControlRoute.Home.route) {
+                        popUpTo(FuelBoxControlRoute.Sensor.route) { inclusive = true }
+                    }
+                }
             )
         }
+    }
+}
+
+
+private fun hasAllPermissions(context: Context): Boolean {
+    val requiredPermission = mutableListOf(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        requiredPermission.add(Manifest.permission.BLUETOOTH_CONNECT)
+        requiredPermission.add(Manifest.permission.BLUETOOTH_SCAN)
+    }
+
+    return requiredPermission.all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
     }
 }

@@ -8,9 +8,10 @@ import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
 import javax.inject.Inject
 
 class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwareService) {
-    suspend fun login(body: LoginDto) = networkRequestHelper {
-        fscService.login(body)
-    }
+    suspend fun login(body: LoginDto) =
+        networkRequestHelper {
+            fscService.login(body)
+        }
 
     suspend fun addSensorDatosUnitariaList(token: String, body: List<SensorDataUnitario>) =
         networkRequestHelper {

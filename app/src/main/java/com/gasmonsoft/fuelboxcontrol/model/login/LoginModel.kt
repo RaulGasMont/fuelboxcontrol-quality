@@ -1,11 +1,12 @@
 package com.gasmonsoft.fuelboxcontrol.model.login
 
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.google.gson.annotations.SerializedName
 
 data class LoginDto(
-    @SerializedName("fld_usuario") val username: String,
     @SerializedName("fld_password") val password: String,
-    @SerializedName("fld_id") val fbToken: String = ""
+    @SerializedName("fld_usuario") val username: String,
+    @SerializedName("fld_id") val fbToken: String
 )
 
 data class Login(
@@ -51,12 +52,14 @@ data class LoginResponse(
 
 data class UserData(
     val token: String,
-    val vehiculos: String
+    val idUser: Int,
+    val vehiculos: List<VehicleInfo>
 )
 
-fun LoginResponse.toEntity() = UserData(
+fun LoginResponse.toEntity(vehicles: List<VehicleInfo>) = UserData(
     token = token,
-    vehiculos = vehiculos
+    idUser = id_usuario,
+    vehiculos = vehicles
 )
 
 data class LoginResult(

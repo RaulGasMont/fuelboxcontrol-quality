@@ -17,14 +17,17 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.gasmonsoft.fuelboxcontrol.domain.SensorDataType
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.configuracion
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,6 +37,28 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 
+data class SensorEvent(
+    val type: SensorDataType? = null,
+    val value: ByteArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SensorEvent
+
+        if (type != other.type) return false
+        if (!value.contentEquals(other.value)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = type?.hashCode() ?: 0
+        result = 31 * result + value.contentHashCode()
+        return result
+    }
+}
 
 @SuppressLint("MissingPermission")
 
@@ -47,7 +72,12 @@ class SensorBLEReceiveManager @Inject constructor(
 
     private var RSSI = 0
 
-
+    private val _sensorEvents = MutableSharedFlow<SensorEvent>(
+        replay = 1,
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val sensorEvents = _sensorEvents.asSharedFlow()
     private val MAXIMUM_CONNECTION_ATTEMPTS = 6
     private var text = ""
     private var textw = ""
@@ -124,13 +154,12 @@ class SensorBLEReceiveManager @Inject constructor(
                 )
                 this@SensorBLEReceiveManager.gatt = newGatt
             } else if (isScanning) {
-                coroutineScope.launch {
-                    connectionState.emit(ConnectionState.Disconnected)
-                }
+
                 scanAttempts++
 
                 if (scanAttempts >= MAX_SCAN_ATTEMPTS) {
                     coroutineScope.launch {
+                        connectionState.emit(ConnectionState.Disconnected)
                         data.emit(Resource.Error(errorMessage = "No se encontró el dispositivo $nombreconfiguracion después de $MAX_SCAN_ATTEMPTS intentos"))
                     }
 
@@ -169,6 +198,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     }
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     coroutineScope.launch {
+                        connectionState.emit(ConnectionState.Disconnected)
                         data.emit(
                             Resource.Success(
                                 data = SensorResult(
@@ -295,6 +325,7 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     }
+                    _sensorEvents.tryEmit(SensorEvent(SensorDataType.FIRST, value))
                 }
 
                 CHAR_UUID_SENSOR_2 -> {
@@ -306,6 +337,7 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     }
+                    _sensorEvents.tryEmit(SensorEvent(SensorDataType.SECOND, value))
 
                 }
 
@@ -318,7 +350,7 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     }
-
+                    _sensorEvents.tryEmit(SensorEvent(SensorDataType.THIRD, value))
                 }
 
                 CHAR_UUID_SENSOR_4 -> {
@@ -330,6 +362,7 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     }
+                    _sensorEvents.tryEmit(SensorEvent(SensorDataType.FOURTH, value))
                 }
 
                 CHAR_UUID_ACELEROMETRO -> {
@@ -341,6 +374,7 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     }
+                    _sensorEvents.tryEmit(SensorEvent(SensorDataType.ACCELEROMETER, value))
                 }
 
                 CHAR_UUID_ALERTAS_GLOBALES -> {

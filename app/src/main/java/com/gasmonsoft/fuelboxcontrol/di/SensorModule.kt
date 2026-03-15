@@ -3,6 +3,7 @@ package com.gasmonsoft.fuelboxcontrol.di
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.SharedPreferences
 import com.gasmonsoft.fuelboxcontrol.BuildConfig
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorBLEReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
@@ -13,6 +14,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -25,7 +27,11 @@ object SensorModule {
     @Singleton
     @Provides
     fun provideOkHttpClient(): OkHttpClient {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
         return OkHttpClient.Builder()
+            .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
             .writeTimeout(55, TimeUnit.SECONDS)
@@ -62,5 +68,11 @@ object SensorModule {
     fun provideBluetoothAdapter(@ApplicationContext context: Context): BluetoothAdapter {
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         return manager.adapter
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("misPreferenciasFSC", Context.MODE_PRIVATE)
     }
 }

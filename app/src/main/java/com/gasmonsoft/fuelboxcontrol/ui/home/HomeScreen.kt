@@ -34,14 +34,14 @@ fun HomeScreen(
 ) {
     // Collect the state from the ViewModel
     val devices by viewModel.availableDevices.collectAsState()
-    val connectionStatus by viewModel.connectionStatus.collectAsState(ConnectionState.Uninitialized)
+    val connectionStatus by viewModel.connectionStatus.collectAsState(ConnectionState.Disconnected)
 
     LaunchedEffect(Unit) {
         viewModel.scanDevices()
     }
 
-    LaunchedEffect(connectionStatus, NetworkConfig.nombreconfiguracion) {
-        if (connectionStatus == ConnectionState.Connected && NetworkConfig.nombreconfiguracion != "") {
+    LaunchedEffect(connectionStatus) {
+        if (connectionStatus == ConnectionState.Connected && NetworkConfig.nombreconfiguracion.isNotEmpty()) {
             onNavToSensorView()
         }
     }

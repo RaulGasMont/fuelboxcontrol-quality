@@ -3,6 +3,7 @@ package com.gasmonsoft.fuelboxcontrol.data.ble
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 data class Device(
@@ -27,6 +28,7 @@ interface SensorReceiveManager {
     val connectionState: MutableSharedFlow<ConnectionState>
 
     val sensorData: StateFlow<SensorState>
+    val sensorEvents: SharedFlow<SensorEvent>
 
     fun reconnect()
 

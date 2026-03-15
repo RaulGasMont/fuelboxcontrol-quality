@@ -13,16 +13,37 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Login
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.ReceiptLong
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,17 +53,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
+import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
@@ -53,14 +75,25 @@ fun VehiculosRoute(
     viewModel: VehiculosViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState.collectAsState()
+    val sensorData = viewModel.sensorData.collectAsState(SensorPackage("", ""))
+    val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingStatus.NOT_SENT)
+
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
         VehiculosScreen(
+            sensorData = sensorData.value,
+            dataSendingStatus = sendingStatus.value,
+            isLogged = uiState.value.isLoggedIn,
             username = usuario,
             password = password,
+            vehicles = uiState.value.userData?.vehiculos ?: emptyList(),
             modifier = modifier,
+            currentVehicle = uiState.value.vehicleInfo,
             onLoginUsername = { usuario = it },
             onLoginPassword = { password = it },
             onLogin = {
@@ -70,8 +103,12 @@ fun VehiculosRoute(
                 )
                 usuario = ""
                 password = ""
+            },
+            onSelectVehicle = {
+                viewModel.getVehicleData(it)
             }
         )
+
         when (uiState.value.loginEvent) {
             NetworkEvent.Loading -> LoadingDialog()
             is NetworkEvent.Error -> {
@@ -83,215 +120,267 @@ fun VehiculosRoute(
 
             else -> {}
         }
+
+        when (uiState.value.vehicleEvent) {
+            NetworkEvent.Loading -> LoadingDialog()
+            is NetworkEvent.Error -> {
+                ErrorDialog(
+                    message = (uiState.value.vehicleEvent as NetworkEvent.Error).message,
+                    onDismiss = { viewModel.dismissLoginDialog() }
+                )
+            }
+
+            else -> {}
+        }
     }
 }
 
 @Composable
 fun VehiculosScreen(
+    sensorData: SensorPackage,
+    dataSendingStatus: SensorSendingStatus,
+    isLogged: Boolean,
     username: String,
     password: String,
+    vehicles: List<VehicleInfo>,
     onLoginUsername: (username: String) -> Unit,
     onLoginPassword: (password: String) -> Unit,
     onLogin: () -> Unit,
-    modifier: Modifier = Modifier
+    onSelectVehicle: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    currentVehicle: VehicleInfo?,
 ) {
-    Column(
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+        )
+    )
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(backgroundBrush)
     ) {
-        SectionCard(padding = 12.dp) {
-            Text(
-                text = stringResource(R.string.conexion_servidor),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
-                ),
-                color = Color.Black
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            ScreenHeaderCard(
+                title = stringResource(R.string.conexion_servidor),
+                subtitle = "Acceso, selección de unidad y monitoreo del envío"
             )
-        }
 
-        SectionCard(padding = 24.dp) {
-            Text(
-                text = stringResource(R.string.credenciales),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
+            SectionCard {
+                SectionTitle(
+                    title = stringResource(R.string.credenciales),
+                    subtitle = "Ingresa tu usuario y contraseña para continuar"
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 OutlinedTextField(
                     value = username,
-                    onValueChange = {
-                        onLoginUsername(it)
-                    },
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    label = {
-                        Text(
-                            text = stringResource(R.string.usuario),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray,
+                    onValueChange = onLoginUsername,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(18.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null
                         )
                     },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                    ),
+                    label = { Text(stringResource(R.string.usuario)) },
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    colors = outlinedFieldColors()
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(14.dp))
+
                 OutlinedTextField(
                     value = password,
-                    onValueChange = {
-                        onLoginPassword(it)
-                    },
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    label = {
-                        Text(
-                            text = stringResource(R.string.contrasenia),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray,
-                        )
-                    },
+                    onValueChange = onLoginPassword,
+                    modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                    ),
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp, horizontal = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    TextButton(onClick = onLogin) {
-                        Text(
-                            text = stringResource(R.string.iniciar_sesion),
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = Color.Black
+                    shape = RoundedCornerShape(18.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Lock,
+                            contentDescription = null
                         )
-                    }
+                    },
+                    label = { Text(stringResource(R.string.contrasenia)) },
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    visualTransformation = PasswordVisualTransformation(),
+                    colors = outlinedFieldColors()
+                )
 
-                }
-            }
-        }
+                Spacer(modifier = Modifier.height(20.dp))
 
-        SectionCard(padding = 24.dp) {
-            Text(
-                text = stringResource(R.string.vehiculo),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Row(
+                Button(
+                    onClick = onLogin,
+                    enabled = username.isNotBlank() && password.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                 ) {
-                    Text(
-                        text = "H100",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        color = Color.Black,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_drop_down),
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = Color.Black
+                        imageVector = Icons.Rounded.Login,
+                        contentDescription = null
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = stringResource(R.string.iniciar_sesion),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+
+                if (isLogged) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SessionChip(text = "Sesión iniciada correctamente")
                 }
             }
-        }
 
-        SectionCard(padding = 12.dp) {
-            Text(
-                text = stringResource(R.string.estatus_envio),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
-                ),
-                color = Color.Black
-            )
-        }
+            SectionCard {
+                SectionTitle(
+                    title = stringResource(R.string.vehiculo),
+                    subtitle = "Selecciona la unidad que deseas consultar"
+                )
 
-        SectionCard(padding = 32.dp) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+                Spacer(modifier = Modifier.height(18.dp))
+
+                DropdownVehicleMenu(
+                    vehicles = vehicles,
+                    currentVehicle = currentVehicle
                 ) {
-                    Text(
-                        text = stringResource(R.string.sensores),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = stringResource(R.string.enviando),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
+                    onSelectVehicle(it)
                 }
-                Row(
+            }
+
+            SectionCard {
+                SectionTitle(
+                    title = stringResource(R.string.estatus_envio),
+                    subtitle = "Resumen del último envío de sensores"
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                StatusPill(status = dataSendingStatus.message)
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                 ) {
-                    Text(
-                        text = stringResource(R.string.alertas_generales),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = stringResource(R.string.transfiriendo),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        InfoRow(
+                            title = "Evento",
+                            value = stringResource(R.string.sensores),
+                            icon = Icons.Rounded.Sensors
+                        )
+
+                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+
+                        InfoRow(
+                            title = "Estado",
+                            value = dataSendingStatus.message,
+                            icon = Icons.Rounded.CloudDone
+                        )
+
+                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
+
+                        InfoRow(
+                            title = "Última trama",
+                            value = "${sensorData.date} ${sensorData.data}".trim(),
+                            icon = Icons.Rounded.ReceiptLong
+                        )
+                    }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DropdownVehicleMenu(
+    vehicles: List<VehicleInfo>,
+    currentVehicle: VehicleInfo?,
+    modifier: Modifier = Modifier,
+    onSelectVehicle: (Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = currentVehicle?.description ?: "Seleccione un vehículo",
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            readOnly = true,
+            singleLine = true,
+            shape = RoundedCornerShape(18.dp),
+            label = { Text(stringResource(R.string.vehiculo)) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.DirectionsCar,
+                    contentDescription = null
+                )
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = outlinedFieldColors()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(18.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            vehicles.forEach { vehicle ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = vehicle.description,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.DirectionsCar,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelectVehicle(vehicle.id.toInt())
+                    }
+                )
             }
         }
     }
@@ -300,37 +389,272 @@ fun VehiculosScreen(
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
-    padding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(4.dp, MaterialTheme.colorScheme.primaryContainer),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        elevation = CardDefaults.cardElevation(8.dp)
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+        ),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(padding)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(20.dp)
         ) {
             content()
         }
     }
 }
 
+@Composable
+fun ScreenHeaderCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(22.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Dns,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionTitle(
+    title: String,
+    subtitle: String
+) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun SessionChip(
+    text: String
+) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun StatusPill(
+    status: String
+) {
+    val normalized = status.lowercase()
+    val containerColor = when {
+        "error" in normalized || "fall" in normalized || "fail" in normalized ->
+            MaterialTheme.colorScheme.errorContainer
+
+        "ok" in normalized || "enviado" in normalized || "success" in normalized ->
+            MaterialTheme.colorScheme.tertiaryContainer
+
+        else ->
+            MaterialTheme.colorScheme.secondaryContainer
+    }
+
+    val contentColor = when {
+        "error" in normalized || "fall" in normalized || "fail" in normalized ->
+            MaterialTheme.colorScheme.onErrorContainer
+
+        "ok" in normalized || "enviado" in normalized || "success" in normalized ->
+            MaterialTheme.colorScheme.onTertiaryContainer
+
+        else ->
+            MaterialTheme.colorScheme.onSecondaryContainer
+    }
+
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = containerColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = status,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = contentColor
+            )
+        }
+    }
+}
+
+@Composable
+fun InfoRow(
+    title: String,
+    value: String,
+    icon: ImageVector
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (value.isBlank()) "---" else value,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun outlinedFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+    disabledContainerColor = MaterialTheme.colorScheme.surface,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+    cursorColor = MaterialTheme.colorScheme.primary
+)
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VehiculosRoutePreview() {
     FuelBoxControlTheme {
         VehiculosScreen(
+            isLogged = true,
             username = "",
             password = "",
             onLoginUsername = {},
             onLoginPassword = {},
-            onLogin = {}
+            onLogin = {},
+            vehicles = emptyList(),
+            onSelectVehicle = {},
+            currentVehicle = VehicleInfo(
+                id = "",
+                description = "",
+                mac = ""
+            ),
+            sensorData = SensorPackage("2025/04/24", "-555,-555,-555"),
+            dataSendingStatus = SensorSendingStatus.SENT,
         )
     }
 }

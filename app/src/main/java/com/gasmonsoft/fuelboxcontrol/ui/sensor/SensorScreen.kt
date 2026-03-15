@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -546,13 +547,11 @@ fun SensorScreenContent(
             Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
                 if (bateria.isNotEmpty()) {
-                    Row() {
-                        Text(
-                            text = "Carga de Bateria: ",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
                         Text(
                             text = bateria,
                             style = TextStyle(
@@ -568,18 +567,15 @@ fun SensorScreenContent(
 
                 if (constante1.isNotEmpty()) {
                     Text(
-                        text = "Mensaje de comando",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    Text(
                         text = sensorMessage,
                         style = TextStyle(
                             color = colorResource(id = R.color.purple_500),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
-                        )
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
                     )
                 }
             }

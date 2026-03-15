@@ -1,6 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.ui.main_observation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -9,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.rememberNavController
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppNavHost
@@ -57,7 +59,8 @@ fun AppBottomBar(appState: AppState) {
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
-                        contentDescription = destination.title
+                        contentDescription = destination.title,
+                        modifier = Modifier.size(16.dp)
                     )
                 },
                 label = { Text(destination.title) }
