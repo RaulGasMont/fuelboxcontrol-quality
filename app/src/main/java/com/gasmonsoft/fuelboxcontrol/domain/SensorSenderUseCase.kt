@@ -4,8 +4,8 @@ import com.gasmonsoft.fuelboxcontrol.data.repository.FuelSoftwareControlReposito
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.SensorSendingStatus
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -13,8 +13,8 @@ import javax.inject.Inject
 class SensorSenderUseCase @Inject constructor(
     private val repository: FuelSoftwareControlRepository
 ) {
-    private var _sensorSenderStatus = MutableSharedFlow<SensorSendingStatus>()
-    val sensorSenderStatus = _sensorSenderStatus.asSharedFlow()
+    private var _sensorSenderStatus = MutableStateFlow(SensorSendingStatus.NOT_SENT)
+    val sensorSenderStatus = _sensorSenderStatus.asStateFlow()
 
     val sensorInfo = repository.sensorPackages
 
@@ -24,7 +24,7 @@ class SensorSenderUseCase @Inject constructor(
         idCaja: String,
         data: SensorPackage
     ) {
-        _sensorSenderStatus.emit(SensorSendingStatus.SENDING)
+        _sensorSenderStatus.value = SensorSendingStatus.SENDING
         val idCajaComunicaciones = idCaja.toIntOrNull() ?: return
         repository.sendSensorData(
             SensorInfo(
@@ -43,10 +43,10 @@ class SensorSenderUseCase @Inject constructor(
             )
         ).fold(
             onSuccess = {
-                _sensorSenderStatus.emit(SensorSendingStatus.SENT)
+                _sensorSenderStatus.value = SensorSendingStatus.SENT
             },
             onFailure = {
-                _sensorSenderStatus.emit(SensorSendingStatus.ERROR)
+                _sensorSenderStatus.value = SensorSendingStatus.ERROR
             }
         )
     }
@@ -57,9 +57,8 @@ class SensorSenderUseCase @Inject constructor(
         convertFormat: String = "dd/MM/yyyy HH:mm:ss"
     ): String {
         val sdf = SimpleDateFormat(initialFormat, Locale.getDefault())
-        val date = sdf.parse(date)!!
+        val dateValue = sdf.parse(date)!!
         val outDate = SimpleDateFormat(convertFormat, Locale.getDefault())
-        return outDate.format(date)
+        return outDate.format(dateValue)
     }
 }
-

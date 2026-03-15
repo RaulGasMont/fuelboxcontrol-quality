@@ -34,6 +34,10 @@ fun FuelBoxControlFlowNav() {
     val modifier = Modifier.safeContentPadding()
     val currentContext = LocalContext.current
     
+    // Recuperar última MAC para ver si debemos saltar a Sensores tras Process Death
+    val sharedPrefs = currentContext.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
+    val lastMac = sharedPrefs.getString("last_mac", "")
+    
     NavHost(
         navController = navController,
         startDestination = FuelBoxControlRoute.Welcome.route
@@ -43,7 +47,13 @@ fun FuelBoxControlFlowNav() {
             
             LaunchedEffect(hasAllPermissions) {
                 if (hasAllPermissions) {
-                    navController.navigate(FuelBoxControlRoute.Home.route) {
+                    val targetRoute = if (!lastMac.isNullOrBlank()) {
+                        FuelBoxControlRoute.Sensor.route
+                    } else {
+                        FuelBoxControlRoute.Home.route
+                    }
+                    
+                    navController.navigate(targetRoute) {
                         popUpTo(FuelBoxControlRoute.Welcome.route) { inclusive = true }
                     }
                 }
@@ -71,7 +81,12 @@ fun FuelBoxControlFlowNav() {
         composable(FuelBoxControlRoute.Result.route) {
             PermissionResultScreen(
                 onFinish = {
-                    navController.navigate(FuelBoxControlRoute.Home.route) {
+                    val targetRoute = if (!lastMac.isNullOrBlank()) {
+                        FuelBoxControlRoute.Sensor.route
+                    } else {
+                        FuelBoxControlRoute.Home.route
+                    }
+                    navController.navigate(targetRoute) {
                         popUpTo(FuelBoxControlRoute.Result.route) { inclusive = true }
                     }
                 }
@@ -87,9 +102,7 @@ fun FuelBoxControlFlowNav() {
         composable(FuelBoxControlRoute.Sensor.route) {
             MainSensorObservation(
                 onBack = { 
-                    navController.navigate(FuelBoxControlRoute.Home.route) {
-                        popUpTo(FuelBoxControlRoute.Sensor.route) { inclusive = true }
-                    }
+                    navController.popBackStack(FuelBoxControlRoute.Home.route, inclusive = false)
                 }
             )
         }

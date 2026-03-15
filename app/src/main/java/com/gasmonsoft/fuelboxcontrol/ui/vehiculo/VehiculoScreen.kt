@@ -86,7 +86,9 @@ fun VehiculosRoute(
         contentAlignment = Alignment.Center
     ) {
         VehiculosScreen(
+            loggedUser = uiState.value.userData?.username ?: "",
             sensorData = sensorData.value,
+            onLogout = { viewModel.logout() },
             dataSendingStatus = sendingStatus.value,
             isLogged = uiState.value.isLoggedIn,
             username = usuario,
@@ -137,6 +139,7 @@ fun VehiculosRoute(
 
 @Composable
 fun VehiculosScreen(
+    loggedUser: String,
     sensorData: SensorPackage,
     dataSendingStatus: SensorSendingStatus,
     isLogged: Boolean,
@@ -146,6 +149,7 @@ fun VehiculosScreen(
     onLoginUsername: (username: String) -> Unit,
     onLoginPassword: (password: String) -> Unit,
     onLogin: () -> Unit,
+    onLogout: () -> Unit,
     onSelectVehicle: (Int) -> Unit,
     modifier: Modifier = Modifier,
     currentVehicle: VehicleInfo?,
@@ -242,10 +246,50 @@ fun VehiculosScreen(
                         )
                     )
                 }
-
+                Spacer(modifier = Modifier.height(20.dp))
                 if (isLogged) {
-                    Spacer(modifier = Modifier.height(16.dp))
                     SessionChip(text = "Sesión iniciada correctamente")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
+                    ) {
+                        Text(
+                            "Usuario Actual: $loggedUser",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.Login,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Cerrar Sesión",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
 
@@ -647,6 +691,7 @@ private fun outlinedFieldColors() = TextFieldDefaults.colors(
 fun VehiculosRoutePreview() {
     FuelBoxControlTheme {
         VehiculosScreen(
+            loggedUser = "",
             isLogged = true,
             username = "",
             password = "",
@@ -662,6 +707,7 @@ fun VehiculosRoutePreview() {
             ),
             sensorData = SensorPackage("2025/04/24", "-555,-555,-555"),
             dataSendingStatus = SensorSendingStatus.SENT,
+            onLogout = {}
         )
     }
 }

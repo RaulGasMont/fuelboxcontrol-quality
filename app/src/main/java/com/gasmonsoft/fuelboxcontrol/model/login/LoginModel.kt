@@ -52,12 +52,14 @@ data class LoginResponse(
 
 data class UserData(
     val token: String,
+    val username: String,
     val idUser: Int,
     val vehiculos: List<VehicleInfo>
 )
 
 fun LoginResponse.toEntity(vehicles: List<VehicleInfo>) = UserData(
     token = token,
+    username = fld_usuario,
     idUser = id_usuario,
     vehiculos = vehicles
 )
