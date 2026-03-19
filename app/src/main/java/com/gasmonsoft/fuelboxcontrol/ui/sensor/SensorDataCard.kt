@@ -246,6 +246,7 @@ fun SensorErrorData(
     modifier: Modifier = Modifier,
     icon: ImageVector
 ) {
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -283,7 +284,7 @@ fun SensorErrorData(
             )
 
             Text(
-                text = data.ifBlank { "---" },
+                text = data.ifBlank { "Sin datos." },
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -379,6 +380,32 @@ fun UpdatedBadge(
                 color = MaterialTheme.colorScheme.onError
             )
         }
+    }
+}
+
+@Composable
+fun SensorDataCaption(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+
+
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SensorDataCaptionPreview() {
+    FuelBoxControlTheme {
+        SensorDataCaption()
     }
 }
 

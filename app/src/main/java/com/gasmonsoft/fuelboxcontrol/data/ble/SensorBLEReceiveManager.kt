@@ -494,7 +494,7 @@ class SensorBLEReceiveManager @Inject constructor(
         private fun setErrorSensor(rawData: String): SensorData {
             return SensorData(
                 rawData = rawData,
-                error = true
+                error = rawData.isNotEmpty()
             )
         }
 

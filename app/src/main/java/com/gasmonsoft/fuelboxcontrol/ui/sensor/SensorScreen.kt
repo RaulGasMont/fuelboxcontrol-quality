@@ -689,24 +689,3 @@ fun SensorScreenPreview() {
         )
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun SensorSectionCardPreview() {
-    FuelBoxControlTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            SensorSectionCard {
-                SectionHeader(
-                    title = "Sample Title",
-                    subtitle = "Sample subtitle for the section"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "This is a sample content inside the SensorSectionCard. It demonstrates how the card looks with a header and some body text.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
