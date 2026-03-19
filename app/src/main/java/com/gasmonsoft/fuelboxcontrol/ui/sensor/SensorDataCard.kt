@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DataArray
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material.icons.rounded.Verified
@@ -50,7 +51,11 @@ fun SensorDataCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (sensorData.error) {
+                MaterialTheme.colorScheme.errorContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ),
         border = BorderStroke(
             1.dp,
@@ -104,26 +109,35 @@ fun SensorDataCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                SensorDataRow(
-                    title = "Volumen",
-                    data = sensorData.volumen,
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Rounded.WaterDrop
-                )
+                if (sensorData.error) {
+                    SensorErrorData(
+                        title = "Datos erróneos",
+                        data = sensorData.rawData,
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.DataArray
+                    )
+                } else {
+                    SensorDataRow(
+                        title = "Volumen",
+                        data = sensorData.volumen,
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.WaterDrop
+                    )
 
-                SensorDataRow(
-                    title = "Calidad",
-                    data = sensorData.calidad,
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Rounded.Verified
-                )
+                    SensorDataRow(
+                        title = "Calidad",
+                        data = sensorData.calidad,
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.Verified
+                    )
 
-                SensorDataRow(
-                    title = "Temp.",
-                    data = sensorData.temperatura,
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Rounded.Thermostat
-                )
+                    SensorDataRow(
+                        title = "Temp.",
+                        data = sensorData.temperatura,
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.Thermostat
+                    )
+                }
             }
         }
     }
@@ -226,6 +240,61 @@ fun SingleSensorDataCard(
 }
 
 @Composable
+fun SensorErrorData(
+    title: String,
+    data: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.onErrorContainer
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onError,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onError,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = data.ifBlank { "---" },
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onError,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
 fun SensorDataRow(
     title: String,
     data: String,
@@ -288,7 +357,7 @@ fun UpdatedBadge(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.primaryContainer
+        color = MaterialTheme.colorScheme.error
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -299,7 +368,7 @@ fun UpdatedBadge(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onError
             )
 
             Spacer(modifier = Modifier.height(2.dp))
@@ -307,7 +376,7 @@ fun UpdatedBadge(
             Text(
                 text = date.ifBlank { "---" },
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onError
             )
         }
     }
@@ -320,6 +389,25 @@ fun SensorDataCardPreview() {
         SensorDataCard(
             numSensor = "1",
             sensorData = SensorData(
+                date = "2026/02/03 12:22:11",
+                temperatura = "34",
+                volumen = "172",
+                calidad = "53"
+            )
+        )
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun SensorErrorDataCardPreview() {
+    FuelBoxControlTheme {
+        SensorDataCard(
+            numSensor = "1",
+            sensorData = SensorData(
+                error = true,
+                rawData = "1234567890",
                 date = "2026/02/03 12:22:11",
                 temperatura = "34",
                 volumen = "172",

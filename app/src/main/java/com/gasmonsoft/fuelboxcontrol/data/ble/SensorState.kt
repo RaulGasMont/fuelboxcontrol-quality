@@ -10,13 +10,17 @@ data class SensorState(
 )
 
 data class SensorData(
-    val date: String,
-    val temperatura: String,
-    val volumen: String,
-    val calidad: String
+    val rawData: String = "",
+    val error: Boolean = false,
+    val date: String = "",
+    val temperatura: String = "",
+    val volumen: String = "",
+    val calidad: String = ""
 )
 
 data class AccelerometerData(
-    val date: String,
-    val value: String,
+    val rawData: String = "",
+    val error: Boolean = false,
+    val date: String = "",
+    val value: String = "",
 )

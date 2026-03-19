@@ -66,7 +66,7 @@ class SensorBLEReceiveManager @Inject constructor(
     private val bluetoothAdapter: BluetoothAdapter,
     private val context: Context,
 ) : SensorReceiveManager {
-    
+
     private val sharedPrefs = context.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
     private val KEY_LAST_MAC = "last_mac"
 
@@ -299,6 +299,12 @@ class SensorBLEReceiveManager @Inject constructor(
                                 sensor1 = getSensorData(sensorData)
                             )
                         }
+                    } else {
+                        _sensorState.update {
+                            it.copy(
+                                sensor1 = setErrorSensor(value.toString(Charsets.UTF_8))
+                            )
+                        }
                     }
                     _sensorEvents.tryEmit(SensorEvent(SensorDataType.FIRST, value))
                 }
@@ -309,6 +315,12 @@ class SensorBLEReceiveManager @Inject constructor(
                         _sensorState.update { current ->
                             current.copy(
                                 sensor2 = getSensorData(sensorData)
+                            )
+                        }
+                    } else {
+                        _sensorState.update { current ->
+                            current.copy(
+                                sensor2 = setErrorSensor(value.toString(Charsets.UTF_8))
                             )
                         }
                     }
@@ -324,6 +336,12 @@ class SensorBLEReceiveManager @Inject constructor(
                                 sensor3 = getSensorData(sensorData)
                             )
                         }
+                    } else {
+                        _sensorState.update {
+                            it.copy(
+                                sensor3 = setErrorSensor(value.toString(Charsets.UTF_8))
+                            )
+                        }
                     }
                     _sensorEvents.tryEmit(SensorEvent(SensorDataType.THIRD, value))
                 }
@@ -334,6 +352,12 @@ class SensorBLEReceiveManager @Inject constructor(
                         _sensorState.update { current ->
                             current.copy(
                                 sensor4 = getSensorData(sensorData)
+                            )
+                        }
+                    } else {
+                        _sensorState.update {
+                            it.copy(
+                                sensor4 = setErrorSensor(value.toString(Charsets.UTF_8))
                             )
                         }
                     }
@@ -348,6 +372,8 @@ class SensorBLEReceiveManager @Inject constructor(
                                 acelerometro = getAcelerometroData(sensorData)
                             )
                         }
+                    } else {
+                        setErrorAccelerometer(value.toString(Charsets.UTF_8))
                     }
                     _sensorEvents.tryEmit(SensorEvent(SensorDataType.ACCELEROMETER, value))
                 }
@@ -447,6 +473,13 @@ class SensorBLEReceiveManager @Inject constructor(
             )
         }
 
+        private fun setErrorAccelerometer(rawData: String): AccelerometerData {
+            return AccelerometerData(
+                rawData = rawData,
+                error = true
+            )
+        }
+
         private fun getSensorData(sensorData: List<String>): SensorData {
             val date = "${sensorData[0]} ${sensorData[1]}"
             val data = sensorData.drop(2)
@@ -455,6 +488,13 @@ class SensorBLEReceiveManager @Inject constructor(
                 temperatura = data[2],
                 volumen = data[0],
                 calidad = data[1]
+            )
+        }
+
+        private fun setErrorSensor(rawData: String): SensorData {
+            return SensorData(
+                rawData = rawData,
+                error = true
             )
         }
 
@@ -512,7 +552,10 @@ class SensorBLEReceiveManager @Inject constructor(
                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
 
                 val writeStarted = if (Build.VERSION.SDK_INT >= 33) {
-                    gatt.writeDescriptor(descriptor, enableValue) == BluetoothStatusCodes.SUCCESS
+                    gatt.writeDescriptor(
+                        descriptor,
+                        enableValue
+                    ) == BluetoothStatusCodes.SUCCESS
                 } else {
                     descriptor.value = enableValue
                     gatt.writeDescriptor(descriptor)
@@ -549,8 +592,9 @@ class SensorBLEReceiveManager @Inject constructor(
         gatt = null
         discoveredDevices.update { emptySet() }
         scanAttempts = 0
-        
-        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
+        val bluetoothManager =
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
 
         // Recuperar última MAC para reconexión automática tras Process Death
@@ -578,12 +622,20 @@ class SensorBLEReceiveManager @Inject constructor(
         // Si ya hay una configuración de MAC y está en los conectados al sistema, reconectar directamente
         val phantomDevice = connectedDevices.find { it.address == nombreconfiguracion.trim() }
         if (phantomDevice != null && configuracion == "mac") {
-            Log.i("SensorBLEReceiveManager", "Dispositivo fantasma detectado: ${phantomDevice.address}. Reconectando...")
+            Log.i(
+                "SensorBLEReceiveManager",
+                "Dispositivo fantasma detectado: ${phantomDevice.address}. Reconectando..."
+            )
             coroutineScope.launch {
                 connectionState.emit(ConnectionState.CurrentlyInitializing)
                 data.emit(Resource.Loading(message = "Reconectando a dispositivo conocido..."))
             }
-            gatt = phantomDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+            gatt = phantomDevice.connectGatt(
+                context,
+                false,
+                gattCallback,
+                BluetoothDevice.TRANSPORT_LE
+            )
             return
         }
 
@@ -811,11 +863,13 @@ class SensorBLEReceiveManager @Inject constructor(
                         ch.value = value
                         characteristicsToWrite.add(ch)
                     }
+
                     passwordUuid -> {
                         val value = password.trim().toByteArray()
                         ch.value = value
                         characteristicsToWrite.add(ch)
                     }
+
                     wifiEnabledUuid -> {
                         val value = (if (isWifiEnabled) "1" else "0").toByteArray()
                         ch.value = value
@@ -865,14 +919,38 @@ class SensorBLEReceiveManager @Inject constructor(
             val started = writeCharacteristicCompat(gatt, ch, payload)
             if (started) {
                 coroutineScope.launch {
-                    data.emit(Resource.Success(data = SensorResult(ch.uuid.toString(), "Escribiendo ${ch.uuid}", "", "", "", "", ConnectionState.Connected)))
+                    data.emit(
+                        Resource.Success(
+                            data = SensorResult(
+                                ch.uuid.toString(),
+                                "Escribiendo ${ch.uuid}",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ConnectionState.Connected
+                            )
+                        )
+                    )
                 }
             } else {
                 resetWriteState()
             }
         } else {
             coroutineScope.launch {
-                data.emit(Resource.Success(data = SensorResult(wifiEnabledUuid.toString(), "Todos los datos enviados correctamente.", "", "", "", "", ConnectionState.Connected)))
+                data.emit(
+                    Resource.Success(
+                        data = SensorResult(
+                            wifiEnabledUuid.toString(),
+                            "Todos los datos enviados correctamente.",
+                            "",
+                            "",
+                            "",
+                            "",
+                            ConnectionState.Connected
+                        )
+                    )
+                )
             }
             resetWriteState()
         }

@@ -44,7 +44,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,8 +62,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
@@ -667,11 +664,11 @@ fun SensorScreenPreview() {
             onBack = {},
             bleConnectionState = ConnectionState.Connected,
             sensorInfoState = SensorState(
-                sensor1 = SensorData("2024-01-01", "25°C", "100L", "Good"),
-                sensor2 = SensorData("2024-01-01", "26°C", "150L", "Normal"),
-                sensor3 = SensorData("2024-01-01", "24°C", "200L", "Good"),
-                sensor4 = SensorData("2024-01-01", "27°C", "50L", "Bad"),
-                acelerometro = AccelerometerData("2024-01-01", "100")
+                sensor1 = SensorData("", false, "2024-01-01", "25°C", "100L", "Good"),
+                sensor2 = SensorData("", false, "2024-01-01", "26°C", "150L", "Normal"),
+                sensor3 = SensorData("", false, "2024-01-01", "24°C", "200L", "Good"),
+                sensor4 = SensorData("", false, "2024-01-01", "27°C", "50L", "Bad"),
+                acelerometro = AccelerometerData("", false, "2024-01-01", "100")
             ),
             permissionState = object : MultiplePermissionsState {
                 override val allPermissionsGranted: Boolean = true
@@ -690,5 +687,26 @@ fun SensorScreenPreview() {
             onWriteEinc = {},
             onWriteRTC = {},
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SensorSectionCardPreview() {
+    FuelBoxControlTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            SensorSectionCard {
+                SectionHeader(
+                    title = "Sample Title",
+                    subtitle = "Sample subtitle for the section"
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "This is a sample content inside the SensorSectionCard. It demonstrates how the card looks with a header and some body text.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
