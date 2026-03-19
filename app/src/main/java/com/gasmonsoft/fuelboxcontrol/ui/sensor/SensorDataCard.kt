@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.DataArray
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Thermostat
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
+
+val WarningAmber = Color(0xFFFFC107)
 
 @Composable
 fun SensorDataCard(
@@ -384,19 +388,45 @@ fun UpdatedBadge(
 }
 
 @Composable
-fun SensorDataCaption(modifier: Modifier = Modifier) {
+fun SensorDataCaption(
+    isAccelerometer: Boolean,
+    isAllSensorData: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val message =
+        if (isAccelerometer && !isAllSensorData) "Aun no hay datos de sensores. Solo Acelerómetro. Revise la conexión de los sensores."
+        else if (!isAccelerometer && !isAllSensorData) "Aun no hay datos de la caja. Si después de un momento no hay datos revise la conexión física."
+        else null
+
+    if (message == null) return
+
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.tertiaryContainer
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.errorContainer
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
-
+            Box() {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = null,
+                    tint = WarningAmber,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
         }
     }
 }
@@ -405,7 +435,10 @@ fun SensorDataCaption(modifier: Modifier = Modifier) {
 @Composable
 fun SensorDataCaptionPreview() {
     FuelBoxControlTheme {
-        SensorDataCaption()
+        SensorDataCaption(
+            isAccelerometer = true,
+            isAllSensorData = false
+        )
     }
 }
 

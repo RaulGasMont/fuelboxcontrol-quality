@@ -1,11 +1,11 @@
 package com.gasmonsoft.fuelboxcontrol.data.ble
 
 data class SensorState(
-    val sensor1: SensorData? = null,
-    val sensor2: SensorData? = null,
-    val sensor3: SensorData? = null,
-    val sensor4: SensorData? = null,
-    val acelerometro: AccelerometerData? = null,
+    val sensor1: SensorData = SensorData(),
+    val sensor2: SensorData = SensorData(),
+    val sensor3: SensorData = SensorData(),
+    val sensor4: SensorData = SensorData(),
+    val acelerometro: AccelerometerData = AccelerometerData(),
     val alertas: String = ""
 )
 
