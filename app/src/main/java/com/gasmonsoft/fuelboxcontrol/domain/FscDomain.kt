@@ -24,10 +24,12 @@ class LoginUseCase @Inject constructor(
                     // Extraemos el ID quitando cualquier prefijo con ':' si existe
                     val idPart = parts[0].split(":")
                     val id = if (idPart.size > 1) idPart.last() else idPart[0]
-                    
+
                     // El MAC suele ser la cuarta parte (índice 3)
                     val macPart = if (parts.size > 3) parts[3].split(":") else null
-                    val mac = if (macPart != null && macPart.size > 1) macPart.last() else (macPart?.get(0) ?: "")
+                    val mac =
+                        if (macPart != null && macPart.size > 1) macPart.last() else (macPart?.get(0)
+                            ?: "")
 
                     VehicleInfo(
                         id = id.trim(),
@@ -36,6 +38,7 @@ class LoginUseCase @Inject constructor(
                     )
                 } else null
             }
+            if (vehicles.isEmpty()) return Result.failure(Exception("El usuario no cuenta con vehiculos."))
             Result.success(result.getOrNull()?.firstOrNull()?.toEntity(vehicles))
         } else Result.failure(Exception("Ocurrio un error al traer la informacion del servidor."))
     }
