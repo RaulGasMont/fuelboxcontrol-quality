@@ -290,12 +290,14 @@ fun SensorScreenContent(
                 }
 
                 item {
-                    val allSensorDataAvailability = sensorInfoState.sensor1.rawData.
-
+                    val allSensorDataAvailability = sensorInfoState.sensor1.rawData.isNotBlank() &&
+                            sensorInfoState.sensor2.rawData.isNotBlank() &&
+                            sensorInfoState.sensor3.rawData.isNotBlank() &&
+                            sensorInfoState.sensor4.rawData.isNotBlank()
 
                     SensorDataCaption(
-                        isAccelerometer = sensorInfoState.acelerometro.value.isNotBlank() ,
-                        isAllSensorData = sens,
+                        isAccelerometer = sensorInfoState.acelerometro.value.isNotBlank(),
+                        isAllSensorData = allSensorDataAvailability,
                     )
                 }
 

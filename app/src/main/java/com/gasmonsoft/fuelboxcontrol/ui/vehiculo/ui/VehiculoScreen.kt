@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.vehiculo
+package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -67,7 +67,11 @@ import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.AlertMessage
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
+import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.NetworkEvent
+import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent
+import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.VehiculosViewModel
 
 @Composable
 fun VehiculosRoute(
@@ -76,7 +80,7 @@ fun VehiculosRoute(
 ) {
     val uiState = viewModel.uiState.collectAsState()
     val sensorData = viewModel.sensorData.collectAsState(SensorPackage("", ""))
-    val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingStatus.NOT_SENT)
+    val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingEvent.Idle)
 
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -141,7 +145,7 @@ fun VehiculosRoute(
 fun VehiculosScreen(
     loggedUser: String,
     sensorData: SensorPackage,
-    dataSendingStatus: SensorSendingStatus,
+    dataSendingStatus: SensorSendingEvent,
     isLogged: Boolean,
     username: String,
     password: String,
@@ -317,7 +321,19 @@ fun VehiculosScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                StatusPill(status = dataSendingStatus.message)
+                StatusPill(status = dataSendingStatus.title)
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                when (dataSendingStatus) {
+                    is SensorSendingEvent.Error -> {
+                        AlertMessage(
+                            message = dataSendingStatus.message,
+                        )
+                    }
+
+                    else -> {}
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
@@ -346,7 +362,7 @@ fun VehiculosScreen(
 
                         InfoRow(
                             title = "Estado",
-                            value = dataSendingStatus.message,
+                            value = dataSendingStatus.title,
                             icon = Icons.Rounded.CloudDone
                         )
 
@@ -706,7 +722,7 @@ fun VehiculosRoutePreview() {
                 mac = ""
             ),
             sensorData = SensorPackage("2025/04/24", "-555,-555,-555"),
-            dataSendingStatus = SensorSendingStatus.SENT,
+            dataSendingStatus = SensorSendingEvent.Error("No se pudo enviar por que la trama no corresponde."),
             onLogout = {}
         )
     }

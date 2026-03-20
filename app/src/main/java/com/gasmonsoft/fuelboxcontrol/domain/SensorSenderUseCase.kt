@@ -3,9 +3,10 @@ package com.gasmonsoft.fuelboxcontrol.domain
 import com.gasmonsoft.fuelboxcontrol.data.repository.FuelSoftwareControlRepository
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
-import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.SensorSendingStatus
+import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -13,7 +14,8 @@ import javax.inject.Inject
 class SensorSenderUseCase @Inject constructor(
     private val repository: FuelSoftwareControlRepository
 ) {
-    private var _sensorSenderStatus = MutableStateFlow(SensorSendingStatus.NOT_SENT)
+    private var _sensorSenderStatus: MutableStateFlow<SensorSendingEvent> =
+        MutableStateFlow(SensorSendingEvent.Idle)
     val sensorSenderStatus = _sensorSenderStatus.asStateFlow()
 
     val sensorInfo = repository.sensorPackages
@@ -24,7 +26,7 @@ class SensorSenderUseCase @Inject constructor(
         idCaja: String,
         data: SensorPackage
     ) {
-        _sensorSenderStatus.value = SensorSendingStatus.SENDING
+        _sensorSenderStatus.update { SensorSendingEvent.Loading }
         val idCajaComunicaciones = idCaja.toIntOrNull() ?: return
         repository.sendSensorData(
             SensorInfo(
@@ -43,10 +45,11 @@ class SensorSenderUseCase @Inject constructor(
             )
         ).fold(
             onSuccess = {
-                _sensorSenderStatus.value = SensorSendingStatus.SENT
+                _sensorSenderStatus.update { SensorSendingEvent.Success(message = "Datos enviados correctamente.") }
             },
             onFailure = {
-                _sensorSenderStatus.value = SensorSendingStatus.ERROR
+                val result = it.message ?: "Error desconocido"
+                _sensorSenderStatus.update { SensorSendingEvent.Error(message = result) }
             }
         )
     }

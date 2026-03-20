@@ -400,6 +400,14 @@ fun SensorDataCaption(
 
     if (message == null) return
 
+    AlertMessage(
+        message = message,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun AlertMessage(message: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
@@ -412,7 +420,7 @@ fun SensorDataCaption(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box() {
+            Box {
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = null,

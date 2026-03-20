@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.vehiculo
+package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel
 
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.vehiculo
+package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel
 
 import com.gasmonsoft.fuelboxcontrol.model.login.UserData
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
@@ -15,11 +15,33 @@ data class VehiculoUiState(
     val userData: UserData? = null
 )
 
-enum class SensorSendingStatus(val message: String) {
-    NOT_SENT("No enviado"),
-    SENDING("Enviando..."),
-    SENT("Enviado"),
-    ERROR("Error al enviar")
+sealed class SensorSendingEvent(
+    open val title: String,
+    open val message: String? = null
+) {
+    data object Idle : SensorSendingEvent(
+        title = "No enviado"
+    )
+
+    data object Loading : SensorSendingEvent(
+        title = "Enviando..."
+    )
+
+    data class Error(
+        override val message: String,
+        override val title: String = "Error del servidor"
+    ) : SensorSendingEvent(
+        title = title,
+        message = message
+    )
+
+    data class Success(
+        override val message: String,
+        override val title: String = "Enviado"
+    ) : SensorSendingEvent(
+        title = title,
+        message = message
+    )
 }
 
 sealed interface NetworkEvent {
