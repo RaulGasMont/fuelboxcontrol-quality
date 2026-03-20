@@ -28,9 +28,8 @@ import androidx.compose.material.icons.rounded.Battery6Bar
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LinkOff
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -38,10 +37,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -223,34 +222,6 @@ fun SensorScreenContent(
                 }
 
                 item {
-                    CommandSection(
-                        title = "Comando EINC",
-                        subtitle = "Calibra el acelerómetro con base en la posición actual del vehículo.",
-                        helpText = "Valores aceptados: x, y, z",
-                        value = textValueEINC,
-                        onValueChange = { textValueEINC = it },
-                        label = "Valor EINC",
-                        buttonText = "Enviar EINC",
-                        onSend = { onWriteEinc(textValueEINC.trim()) },
-                        leadingIcon = Icons.Rounded.Tune
-                    )
-                }
-
-                item {
-                    CommandSection(
-                        title = "Comando RTC",
-                        subtitle = "Actualiza fecha y hora en la caja de comunicaciones.",
-                        helpText = "Enviar 0 para fecha y 1 para hora.",
-                        value = textValueRTC,
-                        onValueChange = { textValueRTC = it },
-                        label = "Valor RTC",
-                        buttonText = "Enviar RTC",
-                        onSend = { onWriteRTC(textValueRTC.trim()) },
-                        leadingIcon = Icons.Rounded.Schedule
-                    )
-                }
-
-                item {
                     SensorSectionCard {
                         SectionHeader(
                             title = "Características",
@@ -280,6 +251,99 @@ fun SensorScreenContent(
                             EmptyInfoState("Aún no hay información disponible.")
                         }
                     }
+                }
+
+                item {
+                    CommandSection(
+                        title = "Comando EINC",
+                        subtitle = "Calibra el acelerómetro con base en la posición actual del vehículo.",
+                        options = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                TextButton(
+                                    onClick = { onWriteEinc("x") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        MaterialTheme.colorScheme.secondaryFixed
+                                    )
+                                ) {
+                                    Text(
+                                        text = "X",
+                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { onWriteEinc("y") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        MaterialTheme.colorScheme.secondaryFixed
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Y",
+                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { onWriteEinc("z") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        MaterialTheme.colorScheme.secondaryFixed
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Z",
+                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+
+                item {
+                    CommandSection(
+                        title = "Comando RTC",
+                        subtitle = "Actualiza fecha y hora en la caja de comunicaciones.",
+                        options = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                TextButton(
+                                    onClick = { onWriteRTC("0") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        MaterialTheme.colorScheme.secondaryFixed
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Fecha",
+                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { onWriteRTC("1") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        MaterialTheme.colorScheme.secondaryFixed
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Hora",
+                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                    )
+                                }
+                            }
+                        }
+                    )
                 }
 
                 item {
@@ -503,13 +567,7 @@ fun ConnectionStatusRow(
 fun CommandSection(
     title: String,
     subtitle: String,
-    helpText: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    buttonText: String,
-    onSend: () -> Unit,
-    leadingIcon: ImageVector
+    options: @Composable () -> Unit,
 ) {
     SensorSectionCard {
         SectionHeader(
@@ -517,41 +575,9 @@ fun CommandSection(
             subtitle = subtitle
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = helpText,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
         Spacer(modifier = Modifier.height(18.dp))
 
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(18.dp),
-            label = { Text(label) },
-            leadingIcon = {
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = null
-                )
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onSend,
-            enabled = value.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(buttonText)
-        }
+        options()
     }
 }
 
