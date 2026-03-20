@@ -356,13 +356,14 @@ fun SensorDataRow(
 
 @Composable
 fun UpdatedBadge(
+    isError: Boolean = false,
     date: String,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.error
+        color = if (isError) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primary
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -373,7 +374,7 @@ fun UpdatedBadge(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = MaterialTheme.colorScheme.onError
+                color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
             )
 
             Spacer(modifier = Modifier.height(2.dp))
@@ -381,7 +382,7 @@ fun UpdatedBadge(
             Text(
                 text = date.ifBlank { "---" },
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onError
+                color = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
             )
         }
     }

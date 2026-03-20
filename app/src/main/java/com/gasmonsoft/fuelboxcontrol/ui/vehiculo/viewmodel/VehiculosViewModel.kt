@@ -3,6 +3,8 @@ package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserver
 import com.gasmonsoft.fuelboxcontrol.domain.ConfigVehicleUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.LoginUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.SensorSenderUseCase
@@ -12,8 +14,10 @@ import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,10 +27,19 @@ class VehiculosViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val configVehicle: ConfigVehicleUseCase,
     private val sensorSenderUseCase: SensorSenderUseCase,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    wifiStateObserver: WifiStateObserver
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(VehiculoUiState())
     val uiState: StateFlow<VehiculoUiState> = _uiState.asStateFlow()
+
+    val wifiState: StateFlow<WifiConnectionState> =
+        wifiStateObserver.observe()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = WifiConnectionState()
+            )
 
     val sensorData = sensorSenderUseCase.sensorInfo
     val dataSendStatus = sensorSenderUseCase.sensorSenderStatus

@@ -1,7 +1,7 @@
-package com.gasmonsoft.fuelboxcontrol.data.repository
+package com.gasmonsoft.fuelboxcontrol.data.repository.ble
 
-import com.gasmonsoft.fuelboxcontrol.data.service.BleDataSource
-import com.gasmonsoft.fuelboxcontrol.data.service.RemoteFscDataSource
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleDataSource
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.RemoteFscDataSource
 import com.gasmonsoft.fuelboxcontrol.model.ConfVehicle
 import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse

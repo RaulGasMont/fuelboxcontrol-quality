@@ -8,6 +8,9 @@ import com.gasmonsoft.fuelboxcontrol.BuildConfig
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorBLEReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
+import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserver
+import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserverImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,4 +77,14 @@ object SensorModule {
     fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences("misPreferenciasFSC", Context.MODE_PRIVATE)
     }
+
+
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class DiRepository {
+
+    @Binds
+    abstract fun wifiObserver(impl: WifiStateObserverImpl): WifiStateObserver
 }

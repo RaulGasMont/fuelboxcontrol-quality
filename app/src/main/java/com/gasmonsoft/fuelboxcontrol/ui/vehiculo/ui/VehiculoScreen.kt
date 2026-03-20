@@ -63,6 +63,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
+import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
@@ -81,6 +82,7 @@ fun VehiculosRoute(
     val uiState = viewModel.uiState.collectAsState()
     val sensorData = viewModel.sensorData.collectAsState(SensorPackage("", ""))
     val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingEvent.Idle)
+    val wifiStatus = viewModel.wifiState.collectAsState()
 
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -90,6 +92,7 @@ fun VehiculosRoute(
         contentAlignment = Alignment.Center
     ) {
         VehiculosScreen(
+            wifiStatus = wifiStatus.value,
             loggedUser = uiState.value.userData?.username ?: "",
             sensorData = sensorData.value,
             onLogout = { viewModel.logout() },
@@ -143,6 +146,7 @@ fun VehiculosRoute(
 
 @Composable
 fun VehiculosScreen(
+    wifiStatus: WifiConnectionState,
     loggedUser: String,
     sensorData: SensorPackage,
     dataSendingStatus: SensorSendingEvent,
@@ -182,6 +186,30 @@ fun VehiculosScreen(
                 title = stringResource(R.string.conexion_servidor),
                 subtitle = "Acceso, selección de unidad y monitoreo del envío"
             )
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = if (wifiStatus.signalLevel == 1 || !wifiStatus.wifi)
+                    MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.tertiaryContainer
+            ) {
+                Text(
+                    text = when {
+                        !wifiStatus.connected -> "Sin conexión"
+                        !wifiStatus.wifi -> "Conectado, pero no por Wi-Fi"
+                        else -> "Intensidad Wi-Fi: ${wifiStatus.signalMessage}"
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (wifiStatus.signalLevel == 1 || !wifiStatus.wifi)
+                        MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
 
             SectionCard {
                 SectionTitle(
@@ -257,15 +285,16 @@ fun VehiculosScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
+                            .padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Text(
                             "Usuario Actual: $loggedUser",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(8.dp)
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(12.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -277,13 +306,13 @@ fun VehiculosScreen(
                         shape = RoundedCornerShape(18.dp),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.Login,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
@@ -291,7 +320,7 @@ fun VehiculosScreen(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -323,10 +352,9 @@ fun VehiculosScreen(
 
                 StatusPill(status = dataSendingStatus.title)
 
-                Spacer(modifier = Modifier.height(18.dp))
-
                 when (dataSendingStatus) {
                     is SensorSendingEvent.Error -> {
+                        Spacer(modifier = Modifier.height(18.dp))
                         AlertMessage(
                             message = dataSendingStatus.message,
                         )
@@ -723,7 +751,8 @@ fun VehiculosRoutePreview() {
             ),
             sensorData = SensorPackage("2025/04/24", "-555,-555,-555"),
             dataSendingStatus = SensorSendingEvent.Error("No se pudo enviar por que la trama no corresponde."),
-            onLogout = {}
+            onLogout = {},
+            wifiStatus = WifiConnectionState(),
         )
     }
 }

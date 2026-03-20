@@ -1,7 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.domain
 
 import android.content.SharedPreferences
-import com.gasmonsoft.fuelboxcontrol.data.repository.FuelSoftwareControlRepository
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.FuelSoftwareControlRepository
 import com.gasmonsoft.fuelboxcontrol.model.ConfVehicle
 import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.UserData

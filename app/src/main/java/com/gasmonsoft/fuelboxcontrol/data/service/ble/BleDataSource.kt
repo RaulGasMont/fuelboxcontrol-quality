@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.service
+package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.domain.SensorCollectorUseCase

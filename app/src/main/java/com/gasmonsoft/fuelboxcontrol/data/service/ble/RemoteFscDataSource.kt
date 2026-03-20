@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.service
+package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
 import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
