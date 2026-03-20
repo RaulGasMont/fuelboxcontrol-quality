@@ -483,11 +483,16 @@ class SensorBLEReceiveManager @Inject constructor(
         private fun getSensorData(sensorData: List<String>): SensorData {
             val date = "${sensorData[0]} ${sensorData[1]}"
             val data = sensorData.drop(2)
+            val isError = data.any {
+                data[2] == "-555" && data[1] == "-555" && data[0] == "-555"
+            }
             return SensorData(
                 date = date,
                 temperatura = data[2],
                 volumen = data[0],
-                calidad = data[1]
+                calidad = data[1],
+                error = isError,
+                rawData = data.joinToString(",")
             )
         }
 
