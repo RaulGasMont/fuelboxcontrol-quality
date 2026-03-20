@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.sensor
+package com.gasmonsoft.fuelboxcontrol.ui.sensor.ui
 
 import android.Manifest
 import android.os.Build
@@ -47,10 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +62,10 @@ import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.data.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCaption
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCard
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SingleSensorDataCard
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
@@ -133,9 +134,6 @@ fun SensorScreenContent(
         onDisconnect()
         onBack()
     }
-
-    var textValueEINC by rememberSaveable { mutableStateOf("") }
-    var textValueRTC by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         if (!permissionState.allPermissionsGranted) {
@@ -260,7 +258,8 @@ fun SensorScreenContent(
                         options = {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(
                                     onClick = { onWriteEinc("x") },

@@ -68,7 +68,7 @@ import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.AlertMessage
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.AlertMessage
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.NetworkEvent
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.sensor
+package com.gasmonsoft.fuelboxcontrol.ui.sensor.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

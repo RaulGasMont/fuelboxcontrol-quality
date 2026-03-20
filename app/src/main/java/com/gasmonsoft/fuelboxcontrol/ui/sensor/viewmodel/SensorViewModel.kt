@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.sensor
+package com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -40,22 +40,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.lang.Float
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.Boolean
-import kotlin.Double
-import kotlin.Exception
-import kotlin.Int
-import kotlin.NumberFormatException
-import kotlin.String
-import kotlin.Unit
-import kotlin.apply
-import kotlin.with
 
 @HiltViewModel
 class SensorViewModel @Inject constructor(
@@ -604,7 +594,7 @@ class SensorViewModel @Inject constructor(
         }
     }
 
-    fun ordenarYConvertir(volumen: String): kotlin.Float? {
+    fun ordenarYConvertir(volumen: String): Float? {
 
         try {
             val volumenOrdenado = kotlin.text.StringBuilder()
@@ -614,7 +604,7 @@ class SensorViewModel @Inject constructor(
             }
 
             val intBits = Integer.parseInt(volumenOrdenado.toString(), 16)
-            return Float.intBitsToFloat(intBits)
+            return java.lang.Float.intBitsToFloat(intBits)
         } catch (e: NumberFormatException) {
 
             println(" hexadecimal : $volumen")

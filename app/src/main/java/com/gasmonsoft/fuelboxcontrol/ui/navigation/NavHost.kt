@@ -9,7 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.SensorRoute
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.ui.SensorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui.VehiculosRoute
 import kotlinx.serialization.Serializable
 
