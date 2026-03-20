@@ -68,6 +68,7 @@ import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
+import com.gasmonsoft.fuelboxcontrol.ui.common.ScreenHeaderCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.AlertMessage
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.NetworkEvent
@@ -184,7 +185,8 @@ fun VehiculosScreen(
         ) {
             ScreenHeaderCard(
                 title = stringResource(R.string.conexion_servidor),
-                subtitle = "Acceso, selección de unidad y monitoreo del envío"
+                subtitle = "Acceso, selección de unidad y monitoreo del envío",
+                icon = Icons.Rounded.Dns
             )
 
             Surface(
@@ -508,61 +510,7 @@ fun SectionCard(
     }
 }
 
-@Composable
-fun ScreenHeaderCard(
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(22.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Dns,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun SectionTitle(
