@@ -96,6 +96,8 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Herramientas de Matemáticas
+    implementation("org.apache.commons:commons-math3:3.6.1")
 
     // Testing
     testImplementation(libs.junit)
