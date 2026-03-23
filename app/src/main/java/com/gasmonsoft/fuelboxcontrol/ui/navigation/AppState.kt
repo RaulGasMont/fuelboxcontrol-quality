@@ -6,11 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-
 
 @Stable
 class AppState(
@@ -25,15 +25,14 @@ class AppState(
     @Composable
     fun shouldShowBottomBar(): Boolean {
         val currentDestination = currentDestination()
-        return destinations.any { topLevel ->
-            when (topLevel.route) {
-                is ScreenRoute.Sensores -> currentDestination?.hasRoute<ScreenRoute.Sensores>() == true
-                is ScreenRoute.DatosVehiculos -> currentDestination?.hasRoute<ScreenRoute.DatosVehiculos>() == true
-            }
-        }
+        return currentDestination?.hierarchy?.any { destination ->
+            destination.hasRoute<ScreenRoute.Sensores>() ||
+                    destination.hasRoute<ScreenRoute.Calibracion>() ||
+                    destination.hasRoute<ScreenRoute.DatosVehiculos>()
+        } == true
     }
 
-    fun navigateToTopLevel(route: Any) {
+    fun navigateToTopLevel(route: ScreenRoute) {
         navController.navigate(route) {
             launchSingleTop = true
             restoreState = true
@@ -47,6 +46,6 @@ class AppState(
 @Composable
 fun rememberAppState(
     navController: NavHostController = rememberNavController()
-) = remember(navController) {
+): AppState = remember(navController) {
     AppState(navController)
 }

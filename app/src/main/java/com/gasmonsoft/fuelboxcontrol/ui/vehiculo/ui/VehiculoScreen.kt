@@ -1,11 +1,9 @@
 package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,8 +28,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +64,8 @@ import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.common.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.common.ScreenHeaderCard
+import com.gasmonsoft.fuelboxcontrol.ui.common.SectionCard
+import com.gasmonsoft.fuelboxcontrol.ui.common.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.AlertMessage
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.NetworkEvent
@@ -191,8 +188,7 @@ fun VehiculosScreen(
 
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 color = if (wifiStatus.signalLevel == 1 || !wifiStatus.wifi)
                     MaterialTheme.colorScheme.errorContainer
@@ -484,60 +480,7 @@ fun DropdownVehicleMenu(
 }
 
 @Composable
-fun SectionCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
-        ),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            content()
-        }
-    }
-}
-
-
-
-@Composable
-fun SectionTitle(
-    title: String,
-    subtitle: String
-) {
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-fun SessionChip(
-    text: String
-) {
+fun SessionChip(text: String) {
     Surface(
         shape = RoundedCornerShape(999.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer
@@ -565,9 +508,7 @@ fun SessionChip(
 }
 
 @Composable
-fun StatusPill(
-    status: String
-) {
+fun StatusPill(status: String) {
     val normalized = status.lowercase()
     val containerColor = when {
         "error" in normalized || "fall" in normalized || "fail" in normalized ->
@@ -677,6 +618,33 @@ private fun outlinedFieldColors() = TextFieldDefaults.colors(
     unfocusedIndicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
     cursorColor = MaterialTheme.colorScheme.primary
 )
+
+@Preview(showBackground = true)
+@Composable
+fun DropdownMenuVehiclePreview() {
+    FuelBoxControlTheme {
+        DropdownVehicleMenu(
+            vehicles = listOf(
+                VehicleInfo(
+                    id = "1",
+                    description = "Unidad 1",
+                    mac = "12:34:56:78:90"
+                ),
+                VehicleInfo(
+                    id = "2",
+                    description = "Unidad 2",
+                    mac = "12:34:56:78:90"
+                )
+            ),
+            currentVehicle = VehicleInfo(
+                id = "1",
+                description = "Unidad 1",
+                mac = ""
+            ),
+            onSelectVehicle = {}
+        )
+    }
+}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

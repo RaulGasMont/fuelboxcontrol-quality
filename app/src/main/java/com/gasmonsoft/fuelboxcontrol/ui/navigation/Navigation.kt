@@ -1,5 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.ui.navigation
 
+import androidx.annotation.DrawableRes
 import com.gasmonsoft.fuelboxcontrol.R
 import kotlinx.serialization.Serializable
 
@@ -9,13 +10,16 @@ sealed interface ScreenRoute {
     data object Sensores : ScreenRoute
 
     @Serializable
+    data object Calibracion : ScreenRoute
+
+    @Serializable
     data object DatosVehiculos : ScreenRoute
 }
 
 data class ScreenDestination(
     val route: ScreenRoute,
     val title: String,
-    val icon: Int
+    @DrawableRes val icon: Int
 )
 
 val destinations = listOf(
@@ -25,9 +29,13 @@ val destinations = listOf(
         icon = R.drawable.ic_sensor
     ),
     ScreenDestination(
+        route = ScreenRoute.Calibracion,
+        title = "Calibración",
+        icon = R.drawable.ic_datos_vehiculos
+    ),
+    ScreenDestination(
         route = ScreenRoute.DatosVehiculos,
         title = "Servidor",
         icon = R.drawable.ic_datos_vehiculos
     )
 )
-

@@ -52,7 +52,7 @@ class ConfigVehicleUseCase @Inject constructor(
         val result = repository.getVehicleData(ConfVehicle(token, idVehicle))
         return if (result.isSuccess) {
             val vehicleData =
-                result.getOrNull()?.first()?.fld_noEconomico?.split("|") ?: emptyList()
+                result.getOrNull()?.first()?.noEconomico?.split("|") ?: emptyList()
             if (vehicleData.isEmpty()) Result.failure(Exception("El vehiculo no cuenta con configuracion."))
             else {
                 val idCaja = if (vehicleData.size >= 2) vehicleData[1] else null

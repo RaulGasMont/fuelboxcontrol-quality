@@ -20,7 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppNavHost
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppState
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute
@@ -33,8 +33,7 @@ fun MainSensorObservation(
     modifier: Modifier = Modifier,
     onBack: () -> Unit
 ) {
-    val navController = rememberNavController()
-    val appState = rememberAppState(navController)
+    val appState = rememberAppState()
 
     MainSensorObservationContent(
         shouldShowBottomBar = appState.shouldShowBottomBar(),
@@ -42,7 +41,7 @@ fun MainSensorObservation(
         modifier = modifier
     ) { innerPadding ->
         AppNavHost(
-            navController = navController,
+            navController = appState.navController,
             modifier = Modifier.padding(innerPadding),
             onGeneralBack = onBack
         )
@@ -71,22 +70,37 @@ private fun MainSensorObservationContent(
 @Composable
 fun AppBottomBar(appState: AppState) {
     val currentDestination = appState.currentDestination()
+
     AppBottomBarContent(
         isRouteSelected = { route ->
             when (route) {
-                is ScreenRoute.Sensores -> currentDestination?.hasRoute<ScreenRoute.Sensores>() == true
-                is ScreenRoute.DatosVehiculos -> currentDestination?.hasRoute<ScreenRoute.DatosVehiculos>() == true
-                else -> false
+                ScreenRoute.Sensores -> {
+                    currentDestination?.hierarchy?.any {
+                        it.hasRoute<ScreenRoute.Sensores>()
+                    } == true
+                }
+
+                ScreenRoute.Calibracion -> {
+                    currentDestination?.hierarchy?.any {
+                        it.hasRoute<ScreenRoute.Calibracion>()
+                    } == true
+                }
+
+                ScreenRoute.DatosVehiculos -> {
+                    currentDestination?.hierarchy?.any {
+                        it.hasRoute<ScreenRoute.DatosVehiculos>()
+                    } == true
+                }
             }
         },
-        onNavigate = { appState.navigateToTopLevel(it) }
+        onNavigate = appState::navigateToTopLevel
     )
 }
 
 @Composable
 private fun AppBottomBarContent(
-    isRouteSelected: (Any) -> Boolean,
-    onNavigate: (Any) -> Unit
+    isRouteSelected: (ScreenRoute) -> Boolean,
+    onNavigate: (ScreenRoute) -> Unit
 ) {
     NavigationBar(
         modifier = Modifier
@@ -117,7 +131,7 @@ private fun AppBottomBarContent(
                     )
                 },
                 label = { Text(destination.title) },
-                alwaysShowLabel = true,
+                alwaysShowLabel = true
             )
         }
     }
