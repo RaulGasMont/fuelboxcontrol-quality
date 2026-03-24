@@ -46,9 +46,13 @@ import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationSensor
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationUiState
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationViewModel
-import com.gasmonsoft.fuelboxcontrol.ui.common.ScreenHeaderCard
-import com.gasmonsoft.fuelboxcontrol.ui.common.SectionCard
-import com.gasmonsoft.fuelboxcontrol.ui.common.SectionTitle
+import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.SenderCalibrationEvent
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
+import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
+import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
+import com.gasmonsoft.fuelboxcontrol.ui.commons.SuccessDialog
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
@@ -71,6 +75,45 @@ fun CalibracionRoute(
             onDeleteMeasurement = { viewModel.eliminarUltimaMedicion() },
             onStarAnalise = { viewModel.startAnalise() }
         )
+
+        when (uiState.value.calibrationEvent) {
+            SenderCalibrationEvent.Calibrating -> {
+                LoadingDialog(
+                    title = (uiState.value.calibrationEvent as SenderCalibrationEvent.Calibrating).title,
+                    message = "Espera un momento mientras procesamos la información",
+                )
+            }
+
+            is SenderCalibrationEvent.Error -> {
+                ErrorDialog(
+                    message = (uiState.value.calibrationEvent as SenderCalibrationEvent.Error).message,
+                    onDismiss = { viewModel.restarCalibrationState() },
+                )
+            }
+
+            SenderCalibrationEvent.Loading -> {
+                LoadingDialog(
+                    title = (uiState.value.calibrationEvent as SenderCalibrationEvent.Loading).title,
+                    message = "Espera un momento mientras procesamos la información",
+                )
+            }
+
+            SenderCalibrationEvent.Success -> {
+                SuccessDialog(
+                    message = "El archivo de configuración se ha procesado y enviado correctamente",
+                    onDismiss = { viewModel.restarCalibrationState() }
+                )
+            }
+
+            SenderCalibrationEvent.Updating -> {
+                LoadingDialog(
+                    title = (uiState.value.calibrationEvent as SenderCalibrationEvent.Updating).title,
+                    message = "Espera un momento mientras procesamos la información",
+                )
+            }
+
+            else -> {}
+        }
     }
 }
 

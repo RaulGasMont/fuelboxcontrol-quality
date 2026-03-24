@@ -1,7 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.ui.home
 
 import androidx.lifecycle.ViewModel
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject

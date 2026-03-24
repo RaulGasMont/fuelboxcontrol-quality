@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.ble
+package com.gasmonsoft.fuelboxcontrol.data.model.ble
 
 data class SensorResult(
     val SensorId: String,

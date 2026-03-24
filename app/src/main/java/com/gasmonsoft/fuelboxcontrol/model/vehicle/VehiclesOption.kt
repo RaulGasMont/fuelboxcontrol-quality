@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.model
+package com.gasmonsoft.fuelboxcontrol.model.vehicle
 
 data class VehiclesOption(
     val id: String,

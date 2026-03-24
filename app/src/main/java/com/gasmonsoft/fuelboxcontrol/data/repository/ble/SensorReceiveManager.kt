@@ -1,5 +1,10 @@
-package com.gasmonsoft.fuelboxcontrol.data.ble
+package com.gasmonsoft.fuelboxcontrol.data.repository.ble
 
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorResult
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.CtrlMsg
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.UpgradeFileType
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,4 +46,11 @@ interface SensorReceiveManager {
     fun writesDataHostPost(ssid: String, password: String, isWifiEnabled: Boolean)
 
     fun closeConnection()
+
+    suspend fun sendConfFile(
+        data: ByteArray,
+        name: String,
+        sensorId: String,
+        upgradeType: UpgradeFileType
+    ): Pair<CtrlMsg?, String>
 }

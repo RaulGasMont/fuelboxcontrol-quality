@@ -37,8 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 val WarningAmber = Color(0xFFFFC107)

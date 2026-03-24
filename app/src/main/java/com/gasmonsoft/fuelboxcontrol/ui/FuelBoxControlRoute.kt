@@ -14,7 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gasmonsoft.fuelboxcontrol.ui.home.HomeScreen
-import com.gasmonsoft.fuelboxcontrol.ui.main_observation.MainSensorObservation
+import com.gasmonsoft.fuelboxcontrol.ui.sensorconfig.SensorConfigHome
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.BluetoothPermissionScreen
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.LocationPermissionScreen
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionResultScreen
@@ -100,7 +100,7 @@ fun FuelBoxControlFlowNav() {
         }
 
         composable(FuelBoxControlRoute.Sensor.route) {
-            MainSensorObservation(
+            SensorConfigHome(
                 onBack = { 
                     navController.popBackStack(FuelBoxControlRoute.Home.route, inclusive = false)
                 }

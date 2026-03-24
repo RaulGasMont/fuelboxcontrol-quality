@@ -21,8 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
-import com.gasmonsoft.fuelboxcontrol.data.ble.Device
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.Device
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 

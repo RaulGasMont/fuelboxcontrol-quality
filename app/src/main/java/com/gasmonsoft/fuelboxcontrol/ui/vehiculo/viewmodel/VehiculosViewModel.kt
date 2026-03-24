@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserver
-import com.gasmonsoft.fuelboxcontrol.domain.ConfigVehicleUseCase
-import com.gasmonsoft.fuelboxcontrol.domain.LoginUseCase
-import com.gasmonsoft.fuelboxcontrol.domain.SensorSenderUseCase
+import com.gasmonsoft.fuelboxcontrol.domain.api.ConfigVehicleUseCase
+import com.gasmonsoft.fuelboxcontrol.domain.api.LoginUseCase
+import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorSenderUseCase
 import com.gasmonsoft.fuelboxcontrol.model.login.UserData
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo

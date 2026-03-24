@@ -23,8 +23,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel

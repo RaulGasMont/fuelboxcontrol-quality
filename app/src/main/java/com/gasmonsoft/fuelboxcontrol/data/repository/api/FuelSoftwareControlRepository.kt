@@ -1,8 +1,9 @@
-package com.gasmonsoft.fuelboxcontrol.data.repository.ble
+package com.gasmonsoft.fuelboxcontrol.data.repository.api
 
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleDataSource
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.RemoteFscDataSource
-import com.gasmonsoft.fuelboxcontrol.model.ConfVehicle
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.toDto
 import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse
 import com.gasmonsoft.fuelboxcontrol.model.login.toDto
@@ -11,6 +12,7 @@ import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.model.sensor.UploadSensorResponse
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehicle
 import javax.inject.Inject
 
 class FuelSoftwareControlRepository @Inject constructor(
@@ -34,6 +36,13 @@ class FuelSoftwareControlRepository @Inject constructor(
         return remoteFscDataSource.addSensorDatosUnitariaList(
             token = body.token,
             body = listOf(body.data)
+        )
+    }
+
+    suspend fun getDatFile(body: Calibration): Result<ByteArray> {
+        return remoteFscDataSource.getDatFile(
+            token = "",
+            body = body.toDto()
         )
     }
 

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.ble
+package com.gasmonsoft.fuelboxcontrol.data.repository.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -18,7 +18,26 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.gasmonsoft.fuelboxcontrol.domain.SensorDataType
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CCCD_UUID
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_ACELEROMETRO
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_ALERTAS_GLOBALES
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_1
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_2
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_3
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_4
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.CONTROL_FIRMWARE_UUID
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorResult
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.safeUuidOrNull
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleConnectionManager
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.GattOpQueue
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.CtrlMsg
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.ProFileSender
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.UpgradeFileType
+import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorDataType
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.configuracion
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
@@ -32,6 +51,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.lang.Float.parseFloat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -65,6 +85,9 @@ data class SensorEvent(
 class SensorBLEReceiveManager @Inject constructor(
     private val bluetoothAdapter: BluetoothAdapter,
     private val context: Context,
+    private val bleConnectionManager: BleConnectionManager,
+    private val gattQueue: GattOpQueue,
+    private val proFileSender: ProFileSender,
 ) : SensorReceiveManager {
 
     private val sharedPrefs = context.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
@@ -201,6 +224,8 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         )
                     }
+                    bleConnectionManager.setStatus(BluetoothProfile.STATE_DISCONNECTED)
+                    bleConnectionManager.clearGatt()
                     reconnect()
                 }
             } else {
@@ -212,6 +237,7 @@ class SensorBLEReceiveManager @Inject constructor(
                         connectionState.emit(ConnectionState.CurrentlyInitializing)
                         data.emit(Resource.Loading(message = "Intentando conectarse $currentConnectionAttempt/$MAXIMUM_CONNECTION_ATTEMPTS"))
                     }
+                    bleConnectionManager.setStatus(BluetoothProfile.STATE_DISCONNECTED)
                     startReceiving()
                 } else {
                     currentConnectionAttempt = 0
@@ -240,6 +266,9 @@ class SensorBLEReceiveManager @Inject constructor(
                         }
                     }
                     coroutineScope.launch {
+                        proFileSender.setMtuAndGatt(
+                            mtu = 23
+                        )
                         subscribeToDiscoveredCharacteristics(gatt, characteristics)
                     }
                 }
@@ -269,8 +298,12 @@ class SensorBLEReceiveManager @Inject constructor(
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (gatt == null) return
                 coroutineScope.launch {
+                    bleConnectionManager.setStatus(BluetoothProfile.STATE_CONNECTED)
                     data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
                 }
+                val mac = sharedPrefs.getString(KEY_LAST_MAC, "")
+                if (mac.isNullOrBlank()) return
+                bleConnectionManager.setGatt(gatt, mac)
                 gatt.discoverServices()
                 gatt.readRemoteRssi()
             }
@@ -385,6 +418,10 @@ class SensorBLEReceiveManager @Inject constructor(
                             alertas = sensorData
                         )
                     }
+                }
+
+                CONTROL_FIRMWARE_UUID -> {
+                    proFileSender.onControlNotify(value)
                 }
             }
 
@@ -654,7 +691,48 @@ class SensorBLEReceiveManager @Inject constructor(
     }
 
     override fun reconnect() {
+        bleConnectionManager.getGatt()?.apply {
+            connect()
+        }
+
+        gattQueue.onDisconnected()
+
+        bleConnectionManager.getGatt()?.apply {
+            try {
+                disconnect()
+            } catch (_: Throwable) {
+            }
+        }
+
         gatt?.connect()
+    }
+
+    override suspend fun sendConfFile(
+        data: ByteArray,
+        name: String,
+        sensorId: String,
+        upgradeType: UpgradeFileType
+    ): Pair<CtrlMsg?, String> {
+
+        return try {
+            val sender = proFileSender
+            val result = withContext(Dispatchers.IO) {
+                sender.sendFilePro(
+                    fileName = name,
+                    fileBytes = data,
+                    upgradeType = upgradeType,
+                    sensorId = if (sensorId == "0") "" else sensorId
+                )
+            }
+
+            Log.d("SensorBLEReceiver", "Transferencia OK ✅")
+            Pair(result, "")
+
+        } catch (e: Exception) {
+
+            Log.d("SensorBLEReceiver", "Transferencia falló: ${e.message}")
+            Pair(null, "Transferencia falló: ${e.message}")
+        }
     }
 
     override fun disconnect() {

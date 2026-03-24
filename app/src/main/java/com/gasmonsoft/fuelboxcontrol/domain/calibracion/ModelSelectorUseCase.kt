@@ -15,7 +15,7 @@ class ModelSelectorUseCase @Inject constructor() {
     suspend operator fun invoke(
         linealCoefficients: List<Tendencia>,
         poliCoefficients: DoubleArray
-    ) {
+    ): Boolean {
         val isPoliApproachBetter = mutableListOf<Boolean>()
 
         linealCoefficients.forEach {
@@ -43,7 +43,7 @@ class ModelSelectorUseCase @Inject constructor() {
             isPoliApproachBetter.add(linearApproach < poliApproach)
         }
 
-//        isPoliApproachBetter.
+        return isPoliApproachBetter.all { it }
     }
 
     private fun predictPolynomial(x: Double, coefficients: DoubleArray): Double {

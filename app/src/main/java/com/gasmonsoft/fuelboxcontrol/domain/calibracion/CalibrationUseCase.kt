@@ -1,6 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
 import android.util.Log
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
 import com.gasmonsoft.fuelboxcontrol.model.sensor.Tendencia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -125,12 +126,19 @@ class CalibrationUseCase @Inject constructor(
                 data = rawMeasurements.map { it.first.toDouble() to it.second.toDouble() }
             )
 
-            modelSelectorUseCase(
-                linealCoefficients = tendencias,
-                poliCoefficients = modelo.coefficients
-            )
+            if (modelo == null) {
+                tendencias
+            } else {
+                val result = modelSelectorUseCase(
+                    linealCoefficients = tendencias,
+                    poliCoefficients = modelo.coefficients
+                )
+            }
 
-            Pair("", "")
+
+            Calibration(
+                formula = ""
+            )
         }
 
     private fun printFormula(pendiente: Double, intercepto: Double) {

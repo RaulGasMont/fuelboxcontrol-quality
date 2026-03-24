@@ -58,10 +58,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.gasmonsoft.fuelboxcontrol.data.ble.AccelerometerData
-import com.gasmonsoft.fuelboxcontrol.data.ble.ConnectionState
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorData
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCaption
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SingleSensorDataCard

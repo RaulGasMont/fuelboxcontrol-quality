@@ -37,9 +37,11 @@ class PoliRegressionUseCase @Inject constructor() {
     operator fun invoke(
         tendencias: List<Tendencia>,
         data: List<Pair<Double, Double>>,
-    ): PolynomialModel {
+    ): PolynomialModel? {
         val gradoSugerido = gradoSugeridoPorSegmentos(tendencias)
         println("Grado sugerido por segmentos: $gradoSugerido")
+
+        if (gradoSugerido > 6) return null
 
         val gradosAProbar = listOf(
             (gradoSugerido - 1).coerceAtLeast(1),

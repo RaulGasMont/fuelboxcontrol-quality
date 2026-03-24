@@ -1,4 +1,5 @@
-package com.gasmonsoft.fuelboxcontrol.data.ble
+package com.gasmonsoft.fuelboxcontrol.data.repository.ble
+
 
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic

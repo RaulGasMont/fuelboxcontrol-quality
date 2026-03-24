@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.common
+package com.gasmonsoft.fuelboxcontrol.ui.commons
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

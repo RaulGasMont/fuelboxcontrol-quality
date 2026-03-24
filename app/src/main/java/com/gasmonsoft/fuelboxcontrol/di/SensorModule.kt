@@ -5,9 +5,12 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.SharedPreferences
 import com.gasmonsoft.fuelboxcontrol.BuildConfig
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorBLEReceiveManager
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorBLEReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleConnectionManager
+import com.gasmonsoft.fuelboxcontrol.data.service.ble.GattOpQueue
+import com.gasmonsoft.fuelboxcontrol.data.service.firmware.ProFileSender
 import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserver
 import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserverImpl
 import dagger.Binds
@@ -61,8 +64,17 @@ object SensorModule {
     fun provideSensorReceiveManager(
         @ApplicationContext context: Context,
         bluetoothAdapter: BluetoothAdapter,
+        proFileSender: ProFileSender,
+        bleConnectionManager: BleConnectionManager,
+        gattOpQueue: GattOpQueue
     ): SensorReceiveManager {
-        return SensorBLEReceiveManager(bluetoothAdapter, context)
+        return SensorBLEReceiveManager(
+            bluetoothAdapter,
+            context,
+            bleConnectionManager,
+            gattOpQueue,
+            proFileSender,
+        )
     }
 
     @Provides

@@ -1,6 +1,6 @@
-package com.gasmonsoft.fuelboxcontrol.domain
+package com.gasmonsoft.fuelboxcontrol.domain.sensor
 
-import com.gasmonsoft.fuelboxcontrol.data.repository.ble.FuelSoftwareControlRepository
+import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent

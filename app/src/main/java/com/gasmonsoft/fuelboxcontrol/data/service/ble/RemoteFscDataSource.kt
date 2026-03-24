@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
 import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.CalibrationDto
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
@@ -28,5 +29,25 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
             token = "Bearer $token",
             idVehiculo = idVehiculo
         )
+    }
+
+    suspend fun getDatFile(token: String, body: CalibrationDto): Result<ByteArray> {
+        return try {
+            val response = networkRequestHelper { fscService.getDatFile(body) }
+            if (!response.isSuccess) {
+                return Result.failure(
+                    Exception("HTTP ${response.exceptionOrNull()?.message}")
+                )
+            }
+
+            val body = response.getOrNull()
+                ?: return Result.failure(Exception("Body vacío"))
+
+            val bytes = body.bytes()
+
+            Result.success(bytes)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

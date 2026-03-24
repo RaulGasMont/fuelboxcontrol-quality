@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.domain
+package com.gasmonsoft.fuelboxcontrol.domain.sensor
 
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableSharedFlow

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.model
+package com.gasmonsoft.fuelboxcontrol.model.vehicle
 
 data class ConfVehicle(
     val token: String,

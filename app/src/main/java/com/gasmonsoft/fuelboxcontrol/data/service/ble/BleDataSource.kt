@@ -1,8 +1,8 @@
 package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
-import com.gasmonsoft.fuelboxcontrol.data.ble.SensorReceiveManager
-import com.gasmonsoft.fuelboxcontrol.domain.SensorCollectorUseCase
-import com.gasmonsoft.fuelboxcontrol.domain.SensorPackage
+import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorCollectorUseCase
+import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorPackage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

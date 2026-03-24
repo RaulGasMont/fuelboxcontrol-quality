@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.data.ble
+package com.gasmonsoft.fuelboxcontrol.data.model.ble
 
 data class SensorState(
     val sensor1: SensorData = SensorData(),
