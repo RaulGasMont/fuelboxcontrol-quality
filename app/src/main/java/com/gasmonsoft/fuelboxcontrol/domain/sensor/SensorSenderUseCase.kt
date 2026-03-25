@@ -19,6 +19,7 @@ class SensorSenderUseCase @Inject constructor(
     val sensorSenderStatus = _sensorSenderStatus.asStateFlow()
 
     val sensorInfo = repository.sensorPackages
+    val logSensorData = repository.logDataframe
 
     suspend operator fun invoke(
         token: String,

@@ -42,6 +42,7 @@ class VehiculosViewModel @Inject constructor(
             )
 
     val sensorData = sensorSenderUseCase.sensorInfo
+    val logSensorData = sensorSenderUseCase.logSensorData
     val dataSendStatus = sensorSenderUseCase.sensorSenderStatus
 
     private val gson = Gson()

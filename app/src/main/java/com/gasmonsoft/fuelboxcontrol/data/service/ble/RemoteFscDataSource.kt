@@ -33,7 +33,7 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
 
     suspend fun getDatFile(token: String, body: CalibrationDto): Result<ByteArray> {
         return try {
-            val response = networkRequestHelper { fscService.getDatFile(body) }
+            val response = networkRequestHelper { fscService.getDatFile("Bearer $token", body) }
             if (!response.isSuccess) {
                 return Result.failure(
                     Exception("HTTP ${response.exceptionOrNull()?.message}")

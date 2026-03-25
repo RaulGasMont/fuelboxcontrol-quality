@@ -22,6 +22,9 @@ class BleDataSource @Inject constructor(
     private var _sensorInfo = MutableSharedFlow<SensorPackage>()
     val sensorState = _sensorInfo.asSharedFlow()
 
+    private var _logDataframe = MutableSharedFlow<String>()
+    val logDataframe = _logDataframe.asSharedFlow()
+
     init {
         startCollecting()
     }
@@ -37,6 +40,12 @@ class BleDataSource @Inject constructor(
         serviceScope.launch {
             sensorCollectorUseCase.sensorPackages.collect { sensorPackage ->
                 _sensorInfo.emit(sensorPackage)
+            }
+        }
+
+        serviceScope.launch {
+            sensorCollectorUseCase.currentDataFrame.collect {
+                _logDataframe.emit(it)
             }
         }
     }

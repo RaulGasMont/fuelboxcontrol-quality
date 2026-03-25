@@ -28,16 +28,19 @@ data class SensorGroup(
     var accelerometer: String? = null
 )
 
+
 @Singleton
 class SensorCollectorUseCase @Inject constructor(
     private val sharedPreferences: SharedPreferences
 ) {
-
     private val _sensorPackages = MutableSharedFlow<SensorPackage>(
         extraBufferCapacity = 64
     )
     val sensorPackages = _sensorPackages.asSharedFlow()
     private val sensorBuffer = mutableMapOf<String, SensorGroup>() // Date - Data
+
+    private val _currentDataFrame = MutableSharedFlow<String>(extraBufferCapacity = 10)
+    val currentDataFrame = _currentDataFrame.asSharedFlow()
 
     operator fun invoke(sensor: SensorDataType, rawData: ByteArray) {
         val boxType = sharedPreferences.getString("tipoCaja", null) ?: return
@@ -64,6 +67,10 @@ class SensorCollectorUseCase @Inject constructor(
         } else {
             group.isQualityComplete()
         }
+
+        _currentDataFrame.tryEmit(
+            "${group.first},${group.second},${group.third},${group.fourth},${group.accelerometer}"
+        )
 
         if (isDataComplete) {
             val payload =

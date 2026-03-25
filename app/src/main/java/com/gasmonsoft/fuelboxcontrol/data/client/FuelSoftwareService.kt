@@ -42,7 +42,7 @@ interface FuelSoftwareService {
     @Streaming
     @GET("api/SensorCajaApi/AddSensorDataList")
     suspend fun getDatFile(
-//        @Header("Authorization") token: String,
+        @Header("Authorization") token: String,
         @Body datos: CalibrationDto,
     ): Response<ResponseBody>
 }

@@ -22,6 +22,7 @@ class GattOpQueue @Inject constructor() {
 
     private var pendingChar: CompletableDeferred<Int>? = null
     private var pendingDesc: CompletableDeferred<Int>? = null
+    private var pendingRssi: CompletableDeferred<Int>? = null
 
     private var pendingCharKey: String? = null
     private var pendingDescKey: String? = null
@@ -41,9 +42,11 @@ class GattOpQueue @Inject constructor() {
     fun onDisconnected() {
         pendingChar?.complete(BluetoothGatt.GATT_FAILURE)
         pendingDesc?.complete(BluetoothGatt.GATT_FAILURE)
+        pendingRssi?.cancel()
 
         pendingChar = null
         pendingDesc = null
+        pendingRssi = null
         pendingCharKey = null
         pendingDescKey = null
     }
@@ -73,11 +76,7 @@ class GattOpQueue @Inject constructor() {
 
             val started = try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // API 33+: devuelve BluetoothStatusCodes
-                    gatt.writeDescriptor(
-                        desc,
-                        value
-                    ) == BluetoothStatusCodes.SUCCESS
+                    gatt.writeDescriptor(desc, value) == BluetoothStatusCodes.SUCCESS
                 } else {
                     desc.value = value
                     gatt.writeDescriptor(desc)
@@ -88,10 +87,7 @@ class GattOpQueue @Inject constructor() {
 
             if (!started) {
                 attempt++
-                Log.w(
-                    "GattOpQueue",
-                    "writeDescriptor() devolvió false (key=$key) reintento ($attempt/$retries)"
-                )
+                Log.w("GattOpQueue", "writeDescriptor() devolvió false (key=$key) reintento ($attempt/$retries)")
                 pendingDesc = null
                 pendingDescKey = null
                 delay(retryDelayMs)
@@ -102,10 +98,7 @@ class GattOpQueue @Inject constructor() {
                 withTimeout(timeoutMs) { deferred.await() }
             } catch (_: TimeoutCancellationException) {
                 attempt++
-                Log.w(
-                    "GattOpQueue",
-                    "writeDescriptor() TIMEOUT (key=$key) reintento ($attempt/$retries)"
-                )
+                Log.w("GattOpQueue", "writeDescriptor() TIMEOUT (key=$key) reintento ($attempt/$retries)")
                 pendingDesc = null
                 pendingDescKey = null
                 delay(retryDelayMs)
@@ -118,10 +111,7 @@ class GattOpQueue @Inject constructor() {
             if (status == BluetoothGatt.GATT_SUCCESS) return@withLock true
 
             attempt++
-            Log.w(
-                "GattOpQueue",
-                "DescriptorWrite status=$status (key=$key) reintento ($attempt/$retries)"
-            )
+            Log.w("GattOpQueue", "DescriptorWrite status=$status (key=$key) reintento ($attempt/$retries)")
             delay(retryDelayMs)
         }
 
@@ -149,8 +139,7 @@ class GattOpQueue @Inject constructor() {
 
             val started = try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    gatt.writeCharacteristic(ch, value, writeType) ==
-                            BluetoothStatusCodes.SUCCESS
+                    gatt.writeCharacteristic(ch, value, writeType) == BluetoothStatusCodes.SUCCESS
                 } else {
                     ch.writeType = writeType
                     ch.value = value
@@ -162,17 +151,13 @@ class GattOpQueue @Inject constructor() {
 
             if (!started) {
                 attempt++
-                Log.w(
-                    "GattOpQueue",
-                    "writeCharacteristic() devolvió false (key=$key) reintento ($attempt/$retries)"
-                )
+                Log.w("GattOpQueue", "writeCharacteristic() devolvió false (key=$key) reintento ($attempt/$retries)")
                 pendingChar = null
                 pendingCharKey = null
                 delay(retryDelayMs)
                 continue
             }
 
-            // Si es NO_RESPONSE, normalmente NO hay callback => considerar éxito si inició
             if (writeType == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) {
                 pendingChar = null
                 pendingCharKey = null
@@ -183,10 +168,7 @@ class GattOpQueue @Inject constructor() {
                 withTimeout(timeoutMs) { deferred.await() }
             } catch (_: TimeoutCancellationException) {
                 attempt++
-                Log.w(
-                    "GattOpQueue",
-                    "writeCharacteristic() TIMEOUT (key=$key) reintento ($attempt/$retries)"
-                )
+                Log.w("GattOpQueue", "writeCharacteristic() TIMEOUT (key=$key) reintento ($attempt/$retries)")
                 pendingChar = null
                 pendingCharKey = null
                 delay(retryDelayMs)
@@ -199,14 +181,31 @@ class GattOpQueue @Inject constructor() {
             if (status == BluetoothGatt.GATT_SUCCESS) return@withLock true
 
             attempt++
-            Log.w(
-                "GattOpQueue",
-                "CharacteristicWrite status=$status (key=$key) reintento ($attempt/$retries)"
-            )
+            Log.w("GattOpQueue", "CharacteristicWrite status=$status (key=$key) reintento ($attempt/$retries)")
             delay(retryDelayMs)
         }
 
         false
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun readRemoteRssiAwait(
+        gatt: BluetoothGatt,
+        timeoutMs: Long = 2000
+    ): Int? = mutex.withLock {
+        val deferred = CompletableDeferred<Int>()
+        pendingRssi = deferred
+        if (!gatt.readRemoteRssi()) {
+            pendingRssi = null
+            return@withLock null
+        }
+        return try {
+            withTimeout(timeoutMs) { deferred.await() }
+        } catch (_: Exception) {
+            null
+        } finally {
+            pendingRssi = null
+        }
     }
 
     fun onDescriptorWrite(desc: BluetoothGattDescriptor, status: Int) {
@@ -220,6 +219,14 @@ class GattOpQueue @Inject constructor() {
         val key = charKey(ch)
         if (pendingCharKey == key) {
             pendingChar?.complete(status)
+        }
+    }
+
+    fun onReadRemoteRssi(rssi: Int, status: Int) {
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+            pendingRssi?.complete(rssi)
+        } else {
+            pendingRssi?.cancel()
         }
     }
 }

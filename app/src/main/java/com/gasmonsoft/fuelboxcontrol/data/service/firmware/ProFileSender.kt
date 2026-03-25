@@ -86,6 +86,12 @@ class ProFileSender @Inject constructor(
         controlChar = service.getCharacteristic(CONTROL_FIRMWARE_UUID) ?: return
         dataChar = service.getCharacteristic(DATA_FIRMWARE_UUID) ?: return
     }
+
+    fun updateMtu(newMtu: Int) {
+        this.mtu = newMtu
+        Log.d("ProFileSender", "MTU actualizado a $newMtu")
+    }
+
     // ---------------------------------------------------------
     // CONTROL NOTIFY
     // ---------------------------------------------------------
@@ -157,11 +163,12 @@ class ProFileSender @Inject constructor(
         val totalSize = fileBytes.size
         val crc = crc32(fileBytes)
 
-        val mtu = mtu.coerceAtLeast(100)
-        val maxPayload = mtu - 3
-
-        val headerOverhead = 4
-        val chunkSize = 18
+        // Usamos el MTU negociado para calcular un chunkSize seguro
+        // BLE Overhead es 3 bytes (Opcode + Handle).
+        // seq es 2 bytes. 
+        // Si MTU=23, chunkSize máximo es 23 - 3 - 2 = 18.
+        val safeChunkSize = (mtu - 5).coerceAtMost(240).coerceAtLeast(18)
+        val chunkSize = 18 // Mantenemos 18 por compatibilidad si el firmware es estricto, o usamos safeChunkSize
 
         // Limpiar canal
         while (!ctrlChannel.isEmpty) {
@@ -187,19 +194,20 @@ class ProFileSender @Inject constructor(
             .putShort(chunkSize.toShort())
             .array()
 
-        gattQueue.writeCharacteristicAwait(
-            bleGatt!!,
+        val startOk = gattQueue.writeCharacteristicAwait(
+            bleGatt,
             controlChar!!,
             start,
             BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         )
+        if (!startOk) return null
 
-        val metaChunks = meta.asList().chunked(18).map { it.toByteArray() }
+        val metaChunks = meta.asList().chunked(chunkSize).map { it.toByteArray() }
         var mseq = 0
         for (ch in metaChunks) {
             val pkt = byteArrayOf(CMD_META_CHUNK) + byteArrayOf(mseq.toByte()) + ch
             gattQueue.writeCharacteristicAwait(
-                bleGatt!!,
+                bleGatt,
                 controlChar!!,
                 pkt,
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
@@ -208,7 +216,7 @@ class ProFileSender @Inject constructor(
         }
 
         gattQueue.writeCharacteristicAwait(
-            bleGatt!!,
+            bleGatt,
             controlChar!!,
             byteArrayOf(CMD_META_END),
             BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
@@ -255,13 +263,8 @@ class ProFileSender @Inject constructor(
                 BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
             )
 
-            Log.d(
-                "BLE",
-                "SENDING: mtu=$mtu maxPayload=$maxPayload chunkSize=$chunkSize total=$totalSize tamaño del paquete=${pkt.size}"
-            )
-
             // Micro throttle
-            delay(10)
+            delay(5)
 
             val resp = try {
                 awaitCtrlMsg(8_000)
@@ -309,10 +312,7 @@ class ProFileSender @Inject constructor(
         // END_TX
         // =====================================================
 
-        Log.d(
-            "BLE",
-            "ENVIANDO COMANDO DE FINALIZACION"
-        )
+        Log.d("BLE", "ENVIANDO COMANDO DE FINALIZACION")
         gattQueue.writeCharacteristicAwait(
             bleGatt,
             controlChar!!,
@@ -320,13 +320,7 @@ class ProFileSender @Inject constructor(
             BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         )
 
-        val done = awaitCtrlMsg(35_000)
-
-//        if (done.type != NTF_OK) {
-//            throw IllegalStateException("END_TX falló: ${done.type}")
-//        }
-
-        return done
+        return awaitCtrlMsg(35_000)
     }
 
     private fun tlv(t: Byte, s: String): ByteArray {

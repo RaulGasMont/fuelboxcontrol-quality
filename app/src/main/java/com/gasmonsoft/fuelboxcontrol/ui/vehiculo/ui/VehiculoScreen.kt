@@ -79,6 +79,7 @@ fun VehiculosRoute(
 ) {
     val uiState = viewModel.uiState.collectAsState()
     val sensorData = viewModel.sensorData.collectAsState(SensorPackage("", ""))
+    val logData = viewModel.logSensorData.collectAsState("")
     val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingEvent.Idle)
     val wifiStatus = viewModel.wifiState.collectAsState()
 
@@ -93,6 +94,7 @@ fun VehiculosRoute(
             wifiStatus = wifiStatus.value,
             loggedUser = uiState.value.userData?.username ?: "",
             sensorData = sensorData.value,
+            logData = logData.value,
             onLogout = { viewModel.logout() },
             dataSendingStatus = sendingStatus.value,
             isLogged = uiState.value.isLoggedIn,
@@ -146,6 +148,7 @@ fun VehiculosRoute(
 fun VehiculosScreen(
     wifiStatus: WifiConnectionState,
     loggedUser: String,
+    logData: String,
     sensorData: SensorPackage,
     dataSendingStatus: SensorSendingEvent,
     isLogged: Boolean,
@@ -345,6 +348,13 @@ fun VehiculosScreen(
                     title = stringResource(R.string.estatus_envio),
                     subtitle = "Resumen del último envío de sensores"
                 )
+                Spacer(modifier = Modifier.height(18.dp))
+
+                InfoRow(
+                    title = "Última trama sin procesar",
+                    value = logData.trim(),
+                    icon = Icons.AutoMirrored.Rounded.ReceiptLong
+                )
 
                 Spacer(modifier = Modifier.height(18.dp))
 
@@ -399,7 +409,7 @@ fun VehiculosScreen(
                         )
 
                         InfoRow(
-                            title = "Última trama",
+                            title = "Última trama correcta",
                             value = "${sensorData.date} ${sensorData.data}".trim(),
                             icon = Icons.AutoMirrored.Rounded.ReceiptLong
                         )
@@ -669,6 +679,7 @@ fun VehiculosRoutePreview() {
             dataSendingStatus = SensorSendingEvent.Error("No se pudo enviar por que la trama no corresponde."),
             onLogout = {},
             wifiStatus = WifiConnectionState(),
+            logData = "2025/04/24,-555,-555,-555"
         )
     }
 }

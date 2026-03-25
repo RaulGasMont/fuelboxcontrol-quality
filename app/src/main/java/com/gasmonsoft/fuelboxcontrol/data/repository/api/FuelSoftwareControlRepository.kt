@@ -21,6 +21,8 @@ class FuelSoftwareControlRepository @Inject constructor(
 ) {
     val sensorPackages = bleDataSource.sensorState
 
+    val logDataframe = bleDataSource.logDataframe
+
     suspend fun login(login: Login): Result<List<LoginResponse>> {
         return remoteFscDataSource.login(login.toDto())
     }
@@ -40,10 +42,19 @@ class FuelSoftwareControlRepository @Inject constructor(
     }
 
     suspend fun getDatFile(body: Calibration): Result<ByteArray> {
-        return remoteFscDataSource.getDatFile(
-            token = "",
-            body = body.toDto()
-        )
+        val result = login(Login("9612406463", "1234", "test"))
+        return if (result.isSuccess) {
+            val userData = result.getOrNull()
+                ?: return Result.failure(Exception("No se pudo obtener el token"))
+            val user = userData.firstOrNull()
+                ?: return Result.failure(Exception("No se pudo obtener el token"))
+            remoteFscDataSource.getDatFile(
+                token = user.token,
+                body = body.toDto()
+            )
+        } else {
+            Result.failure(Exception("No se pudo obtener el token"))
+        }
     }
 
     suspend fun sendAlertGenerales(token: String, body: SensorAlertasUnitario) {

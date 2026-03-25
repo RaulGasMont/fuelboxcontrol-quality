@@ -97,6 +97,7 @@ class SensorBLEReceiveManager @Inject constructor(
     private val MAX_SCAN_ATTEMPTS = 30
 
     private var RSSI = 0
+    private var currentMtu = 23
 
     private val _sensorEvents = MutableSharedFlow<SensorEvent>(
         replay = 1,
@@ -205,9 +206,10 @@ class SensorBLEReceiveManager @Inject constructor(
                     coroutineScope.launch {
                         _sensorState.value = SensorState()
                         connectionState.emit(ConnectionState.Connected)
-                        data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
+                        data.emit(Resource.Loading(message = "Conectado, negociando MTU..."))
                     }
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    gattQueue.onDisconnected()
                     coroutineScope.launch {
                         connectionState.emit(ConnectionState.Disconnected)
                         data.emit(
@@ -240,6 +242,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     bleConnectionManager.setStatus(BluetoothProfile.STATE_DISCONNECTED)
                     startReceiving()
                 } else {
+                    gattQueue.onDisconnected()
                     currentConnectionAttempt = 0
                     coroutineScope.launch {
                         connectionState.emit(ConnectionState.Disconnected)
@@ -252,6 +255,7 @@ class SensorBLEReceiveManager @Inject constructor(
         override fun onReadRemoteRssi(gatt: BluetoothGatt?, rssi: Int, status: Int) {
             super.onReadRemoteRssi(gatt, rssi, status)
             if (status == BluetoothGatt.GATT_SUCCESS) RSSI = rssi
+            gattQueue.onReadRemoteRssi(rssi, status)
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
@@ -267,7 +271,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     }
                     coroutineScope.launch {
                         proFileSender.setMtuAndGatt(
-                            mtu = 23
+                            mtu = currentMtu
                         )
                         subscribeToDiscoveredCharacteristics(gatt, characteristics)
                     }
@@ -297,15 +301,20 @@ class SensorBLEReceiveManager @Inject constructor(
             super.onMtuChanged(gatt, mtu, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (gatt == null) return
+                currentMtu = mtu
+                proFileSender.updateMtu(mtu)
                 coroutineScope.launch {
                     bleConnectionManager.setStatus(BluetoothProfile.STATE_CONNECTED)
-                    data.emit(Resource.Loading(message = "Conectado, descubriendo servicios..."))
+                    data.emit(Resource.Loading(message = "MTU Negociado: $mtu. Descubriendo servicios..."))
                 }
                 val mac = sharedPrefs.getString(KEY_LAST_MAC, "")
                 if (mac.isNullOrBlank()) return
                 bleConnectionManager.setGatt(gatt, mac)
                 gatt.discoverServices()
-                gatt.readRemoteRssi()
+
+                coroutineScope.launch {
+                    gattQueue.readRemoteRssiAwait(gatt)
+                }
             }
         }
 
@@ -406,7 +415,11 @@ class SensorBLEReceiveManager @Inject constructor(
                             )
                         }
                     } else {
-                        setErrorAccelerometer(value.toString(Charsets.UTF_8))
+                        _sensorState.update { current ->
+                            current.copy(
+                                acelerometro = setErrorAccelerometer(value.toString(Charsets.UTF_8))
+                            )
+                        }
                     }
                     _sensorEvents.tryEmit(SensorEvent(SensorDataType.ACCELEROMETER, value))
                 }
@@ -476,30 +489,7 @@ class SensorBLEReceiveManager @Inject constructor(
             status: Int
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
-            this@SensorBLEReceiveManager.gatt = gatt
-
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (
-                    characteristic.uuid == UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb") ||
-                    characteristic.uuid == UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb") ||
-                    characteristic.uuid == UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
-                ) {
-                    currentCharacteristicIndex++
-                    coroutineScope.launch {
-                        writeNextCharacteristic(
-                            gatt,
-                            characteristicsToWrite,
-                            currentCharacteristicIndex
-                        )
-                    }
-                }
-            } else {
-                Log.e(
-                    "SensorBLEReceiveManager",
-                    "Write FAIL uuid=${characteristic.uuid} status=$status"
-                )
-                resetWriteState()
-            }
+            gattQueue.onCharacteristicWrite(characteristic, status)
         }
 
         private fun getAcelerometroData(sensorData: List<String>): AccelerometerData {
@@ -521,13 +511,13 @@ class SensorBLEReceiveManager @Inject constructor(
             val date = "${sensorData[0]} ${sensorData[1]}"
             val data = sensorData.drop(2)
             val isError = data.any {
-                data[2] == "-555" && data[1] == "-555" && data[0] == "-555"
+                data.size >= 3 && data[2] == "-555" && data[1] == "-555" && data[0] == "-555"
             }
             return SensorData(
                 date = date,
-                temperatura = data[2],
-                volumen = data[0],
-                calidad = data[1],
+                temperatura = if (data.size >= 3) data[2] else "",
+                volumen = if (data.isNotEmpty()) data[0] else "",
+                calidad = if (data.size >= 2) data[1] else "",
                 error = isError,
                 rawData = data.joinToString(",")
             )
@@ -617,18 +607,11 @@ class SensorBLEReceiveManager @Inject constructor(
             status: Int
         ) {
             super.onDescriptorWrite(gatt, descriptor, status)
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                subscriptionIndex++
-                subscribeToCharacteristics(
-                    gatt,
-                    characteristicsWithNotifications
-                )
-            }
+            gattQueue.onDescriptorWrite(descriptor, status)
         }
     }
 
     override fun startReceiving() {
-        // LIMPIEZA: Forzamos el cierre de cualquier GATT previo y LIMPIAMOS LA LISTA DE DISPOSITIVOS
         gatt?.disconnect()
         gatt?.close()
         gatt = null
@@ -639,7 +622,6 @@ class SensorBLEReceiveManager @Inject constructor(
             context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
 
-        // Recuperar última MAC para reconexión automática tras Process Death
         if (nombreconfiguracion.isBlank()) {
             val lastMac = sharedPrefs.getString(KEY_LAST_MAC, "")
             if (!lastMac.isNullOrBlank()) {
@@ -648,20 +630,18 @@ class SensorBLEReceiveManager @Inject constructor(
             }
         }
 
-        // AGREGAR DISPOSITIVOS "DIESEL" YA CONECTADOS AL SISTEMA A LA LISTA DISPONIBLE
         connectedDevices.forEach { device ->
             if (device.name == "DIESEL") {
                 discoveredDevices.update { devices ->
                     devices + Device(
                         mac = device.address,
                         name = device.name ?: "Dispositivo conectado",
-                        rssi = -50 // Valor fijo para indicar que ya está cerca/conectado
+                        rssi = -50
                     )
                 }
             }
         }
 
-        // Si ya hay una configuración de MAC y está en los conectados al sistema, reconectar directamente
         val phantomDevice = connectedDevices.find { it.address == nombreconfiguracion.trim() }
         if (phantomDevice != null && configuracion == "mac") {
             Log.i(
@@ -691,20 +671,15 @@ class SensorBLEReceiveManager @Inject constructor(
     }
 
     override fun reconnect() {
-        bleConnectionManager.getGatt()?.apply {
-            connect()
-        }
-
         gattQueue.onDisconnected()
 
-        bleConnectionManager.getGatt()?.apply {
-            try {
-                disconnect()
-            } catch (_: Throwable) {
-            }
-        }
+        gatt?.disconnect()
+        gatt?.close()
+        gatt = null
 
-        gatt?.connect()
+        bleConnectionManager.clearGatt()
+
+        startReceiving()
     }
 
     override suspend fun sendConfFile(
@@ -739,189 +714,77 @@ class SensorBLEReceiveManager @Inject constructor(
         nombreconfiguracion = ""
         configuracion = ""
         sharedPrefs.edit().remove(KEY_LAST_MAC).apply()
+        gattQueue.onDisconnected()
+
         gatt?.disconnect()
         gatt?.close()
         gatt = null
+
+        bleConnectionManager.clearGatt()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun writeInitialValuese(valor: String, opcion: Int) {
         coroutineScope.launch {
-            writeableCharacteristics.forEach { characteristic ->
-                when (characteristic.uuid) {
-                    UUID.fromString("66169bab-d567-4388-b634-357ff0dac5f1") -> {
-                        if (opcion == 1) {
-                            var x = "[COMM] ${valor.trim()}";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia COMM $text",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 34) {
-                            var x = "[SACE] ${valor.trim()}";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia SACE $text",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 32) {
-                            var x = "[EEMO] ${valor.trim()}";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia EEMO $text",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 33) {
-                            var valorFlotante = parseFloat(valor.trim());
-                            var x = "[ELMO] ${valorFlotante}";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia ELMO $text",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 6) {
-                            var x = "[EINC] ${valor.trim()}";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia EINC $text",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 2) {
-                            if (gatt != null) {
-                                gatt?.readRemoteRssi()
-                                batteryLevel = getBatteryLevel(context)
-                                var x = "[INFO] $RSSI , $batteryLevel";
-                                text = x;
-                                characteristic.value =
-                                    x.toByteArray(Charsets.UTF_8)
-                                coroutineScope.launch {
-                                    data.emit(
-                                        Resource.Success(
-                                            data = SensorResult(
-                                                "66169bab-d567-4388-b634-357ff0dac5f1",
-                                                "Se envia bat senial $RSSI,$batteryLevel",
-                                                "", "", "", "",
-                                                ConnectionState.Connected
-                                            )
-                                        )
-                                    )
-                                }
-                                gatt?.writeCharacteristic(characteristic)
-                            }
-                        }
-                        if (opcion == 3) {
-                            val fechaHoraActual = LocalDateTime.now()
-                            val formato = DateTimeFormatter.ofPattern("ss,mm,HH,dd,MM,yyyy,")
-                            val fechaHoraFormateada = fechaHoraActual.format(formato)
-                            var x = "[NTP]$fechaHoraFormateada";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "463290d6-431e-416a-b303-6564bec8800f",
-                                            "Se envia fecha$x",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
-                        if (opcion == 7) {
-                            val fechaHoraActual = LocalDateTime.now()
-                            var fechaHoraFormateada = ""
-                            val formato = when (valor) {
-                                "0" -> "yyyy,MM,dd"
-                                "1" -> "HH,mm,ss"
-                                else -> ""
-                            }
-                            if (formato.isNotEmpty()) {
-                                val dateTimeFormatter = DateTimeFormatter.ofPattern(formato)
-                                fechaHoraFormateada = fechaHoraActual.format(dateTimeFormatter)
-                            }
-                            var x = "[RTC] $valor,$fechaHoraFormateada";
-                            text = x;
-                            characteristic.value =
-                                x.toByteArray(Charsets.UTF_8)
-                            coroutineScope.launch {
-                                data.emit(
-                                    Resource.Success(
-                                        data = SensorResult(
-                                            "66169bab-d567-4388-b634-357ff0dac5f1",
-                                            "Se envia fecha$x",
-                                            "", "", "", "",
-                                            ConnectionState.Connected
-                                        )
-                                    )
-                                )
-                            }
-                            gatt?.writeCharacteristic(characteristic)
-                        }
+            val characteristic = writeableCharacteristics.find {
+                it.uuid == UUID.fromString("66169bab-d567-4388-b634-357ff0dac5f1")
+            } ?: return@launch
+
+            val payload = when (opcion) {
+                1 -> "[COMM] ${valor.trim()}"
+                34 -> "[SACE] ${valor.trim()}"
+                32 -> "[EEMO] ${valor.trim()}"
+                33 -> "[ELMO] ${parseFloat(valor.trim())}"
+                6 -> "[EINC] ${valor.trim()}"
+                2 -> {
+                    val currentGatt = gatt ?: return@launch
+                    val rssi = gattQueue.readRemoteRssiAwait(currentGatt) ?: RSSI
+                    batteryLevel = getBatteryLevel(context)
+                    "[INFO] $rssi , $batteryLevel"
+                }
+
+                3 -> {
+                    val fechaHoraActual = LocalDateTime.now()
+                    val formato = DateTimeFormatter.ofPattern("ss,mm,HH,dd,MM,yyyy,")
+                    val fechaHoraFormateada = fechaHoraActual.format(formato)
+                    "[NTP]$fechaHoraFormateada"
+                }
+
+                7 -> {
+                    val fechaHoraActual = LocalDateTime.now()
+                    val formato = when (valor) {
+                        "0" -> "yyyy,MM,dd"
+                        "1" -> "HH,mm,ss"
+                        else -> ""
                     }
+                    val fechaHoraFormateada = if (formato.isNotEmpty()) {
+                        fechaHoraActual.format(DateTimeFormatter.ofPattern(formato))
+                    } else ""
+                    "[RTC] $valor,$fechaHoraFormateada"
+                }
+
+                else -> null
+            }
+
+            if (payload != null) {
+                val currentGatt = gatt ?: return@launch
+                val ok = gattQueue.writeCharacteristicAwait(
+                    currentGatt,
+                    characteristic,
+                    payload.toByteArray(Charsets.UTF_8)
+                )
+
+                if (ok) {
+                    data.emit(
+                        Resource.Success(
+                            data = SensorResult(
+                                characteristic.uuid.toString(),
+                                "Enviado: $payload",
+                                "", "", "", "",
+                                ConnectionState.Connected
+                            )
+                        )
+                    )
                 }
             }
         }
@@ -942,94 +805,65 @@ class SensorBLEReceiveManager @Inject constructor(
             writeableCharacteristics.forEach { ch ->
                 when (ch.uuid) {
                     ssidUuid -> {
-                        val value = ssid.trim().toByteArray()
-                        ch.value = value
+                        ch.value = ssid.trim().toByteArray()
                         characteristicsToWrite.add(ch)
                     }
 
                     passwordUuid -> {
-                        val value = password.trim().toByteArray()
-                        ch.value = value
+                        ch.value = password.trim().toByteArray()
                         characteristicsToWrite.add(ch)
                     }
 
                     wifiEnabledUuid -> {
-                        val value = (if (isWifiEnabled) "1" else "0").toByteArray()
-                        ch.value = value
+                        ch.value = (if (isWifiEnabled) "1" else "0").toByteArray()
                         characteristicsToWrite.add(ch)
                     }
                 }
             }
             if (characteristicsToWrite.isNotEmpty()) {
-                writeNextCharacteristic(g, characteristicsToWrite, currentCharacteristicIndex)
+                writeNextCharacteristic(g, characteristicsToWrite, 0)
             }
-        }
-    }
-
-    private fun writeCharacteristicCompat(
-        gatt: BluetoothGatt,
-        characteristic: BluetoothGattCharacteristic,
-        payload: ByteArray
-    ): Boolean {
-        val supportsNoResp =
-            (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0
-        val writeType =
-            if (supportsNoResp) BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-
-        return if (Build.VERSION.SDK_INT >= 33) {
-            gatt.writeCharacteristic(
-                characteristic,
-                payload,
-                writeType
-            ) == BluetoothStatusCodes.SUCCESS
-        } else {
-            characteristic.writeType = writeType
-            characteristic.value = payload
-            gatt.writeCharacteristic(characteristic)
         }
     }
 
     private fun writeNextCharacteristic(
         gatt: BluetoothGatt,
         characteristicsToWrite: List<BluetoothGattCharacteristic>,
-        currentCharacteristicIndex: Int
+        index: Int
     ) {
-        val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
-        if (currentCharacteristicIndex < characteristicsToWrite.size) {
-            val ch = characteristicsToWrite[currentCharacteristicIndex]
-            val payload = ch.value ?: byteArrayOf()
-            val started = writeCharacteristicCompat(gatt, ch, payload)
-            if (started) {
-                coroutineScope.launch {
+        if (index < characteristicsToWrite.size) {
+            val ch = characteristicsToWrite[index]
+            val value = ch.value ?: return
+
+            coroutineScope.launch {
+                val ok = gattQueue.writeCharacteristicAwait(
+                    gatt = gatt,
+                    ch = ch,
+                    value = value,
+                    writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                )
+
+                if (ok) {
                     data.emit(
                         Resource.Success(
                             data = SensorResult(
                                 ch.uuid.toString(),
                                 "Escribiendo ${ch.uuid}",
-                                "",
-                                "",
-                                "",
-                                "",
+                                "", "", "", "",
                                 ConnectionState.Connected
                             )
                         )
                     )
                 }
-            } else {
-                resetWriteState()
             }
         } else {
             coroutineScope.launch {
                 data.emit(
                     Resource.Success(
                         data = SensorResult(
-                            wifiEnabledUuid.toString(),
+                            "",
                             "Todos los datos enviados correctamente.",
-                            "",
-                            "",
-                            "",
-                            "",
+                            "", "", "", "",
                             ConnectionState.Connected
                         )
                     )
