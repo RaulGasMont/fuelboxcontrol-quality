@@ -11,7 +11,6 @@ import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorSenderUseCase
 import com.gasmonsoft.fuelboxcontrol.model.login.UserData
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
-import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,50 +44,50 @@ class VehiculosViewModel @Inject constructor(
     val logSensorData = sensorSenderUseCase.logSensorData
     val dataSendStatus = sensorSenderUseCase.sensorSenderStatus
 
-    private val gson = Gson()
-    private val KEY_USER_DATA = "user_data_session"
-    private val KEY_VEHICLE_CONFIG = "vehicle_config_session"
-    private val KEY_SELECTED_VEHICLE = "selected_vehicle_session"
+//    private val gson = Gson()
+//    private val KEY_USER_DATA = "user_data_session"
+//    private val KEY_VEHICLE_CONFIG = "vehicle_config_session"
+//    private val KEY_SELECTED_VEHICLE = "selected_vehicle_session"
 
     init {
-        restoreSession()
+//        restoreSession()
         sendSensorData()
     }
 
-    private fun restoreSession() {
-        val userDataJson = sharedPreferences.getString(KEY_USER_DATA, null)
-        val vehicleConfigJson = sharedPreferences.getString(KEY_VEHICLE_CONFIG, null)
-        val selectedVehicleJson = sharedPreferences.getString(KEY_SELECTED_VEHICLE, null)
-
-        if (userDataJson != null) {
-            val userData = gson.fromJson(userDataJson, UserData::class.java)
-            val vehicleConfig =
-                vehicleConfigJson?.let { gson.fromJson(it, VehicleConfiguration::class.java) }
-            val selectedVehicle =
-                selectedVehicleJson?.let { gson.fromJson(it, VehicleInfo::class.java) }
-
-            _uiState.update {
-                it.copy(
-                    isLoggedIn = true,
-                    userData = userData,
-                    vehicleConfiguration = vehicleConfig,
-                    vehicleInfo = selectedVehicle
-                )
-            }
-        }
-    }
+//    private fun restoreSession() {
+//        val userDataJson = sharedPreferences.getString(KEY_USER_DATA, null)
+//        val vehicleConfigJson = sharedPreferences.getString(KEY_VEHICLE_CONFIG, null)
+//        val selectedVehicleJson = sharedPreferences.getString(KEY_SELECTED_VEHICLE, null)
+//
+//        if (userDataJson != null) {
+//            val userData = gson.fromJson(userDataJson, UserData::class.java)
+//            val vehicleConfig =
+//                vehicleConfigJson?.let { gson.fromJson(it, VehicleConfiguration::class.java) }
+//            val selectedVehicle =
+//                selectedVehicleJson?.let { gson.fromJson(it, VehicleInfo::class.java) }
+//
+//            _uiState.update {
+//                it.copy(
+//                    isLoggedIn = true,
+//                    userData = userData,
+//                    vehicleConfiguration = vehicleConfig,
+//                    vehicleInfo = selectedVehicle
+//                )
+//            }
+//        }
+//    }
 
     private fun saveSession(
         userData: UserData? = null,
         config: VehicleConfiguration? = null,
         vehicle: VehicleInfo? = null
     ) {
-        sharedPreferences.edit().apply {
-            userData?.let { putString(KEY_USER_DATA, gson.toJson(it)) }
-            config?.let { putString(KEY_VEHICLE_CONFIG, gson.toJson(it)) }
-            vehicle?.let { putString(KEY_SELECTED_VEHICLE, gson.toJson(it)) }
-            apply()
-        }
+//        sharedPreferences.edit().apply {
+//            userData?.let { putString(KEY_USER_DATA, gson.toJson(it)) }
+//            config?.let { putString(KEY_VEHICLE_CONFIG, gson.toJson(it)) }
+//            vehicle?.let { putString(KEY_SELECTED_VEHICLE, gson.toJson(it)) }
+//            apply()
+//        }
     }
 
     fun doLogin(username: String, password: String) {

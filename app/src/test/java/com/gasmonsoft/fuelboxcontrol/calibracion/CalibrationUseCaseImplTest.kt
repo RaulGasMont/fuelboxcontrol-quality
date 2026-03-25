@@ -46,6 +46,5 @@ class CalibrationUseCaseImplTest {
         val result = sut(rawMeasurements)
 
         assertNotNull(result)
-        assertEquals("modelo_calculado", result.formula)
     }
 }

@@ -49,9 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,8 +58,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorPackage
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoRow
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
@@ -75,6 +75,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.VehiculosViewModel
 @Composable
 fun VehiculosRoute(
     modifier: Modifier = Modifier,
+    onCalibrate: (idCaja: Int) -> Unit,
     viewModel: VehiculosViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState.collectAsState()
@@ -82,7 +83,6 @@ fun VehiculosRoute(
     val logData = viewModel.logSensorData.collectAsState("")
     val sendingStatus = viewModel.dataSendStatus.collectAsState(SensorSendingEvent.Idle)
     val wifiStatus = viewModel.wifiState.collectAsState()
-
     var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -91,6 +91,7 @@ fun VehiculosRoute(
         contentAlignment = Alignment.Center
     ) {
         VehiculosScreen(
+            config = uiState.value.vehicleConfiguration,
             wifiStatus = wifiStatus.value,
             loggedUser = uiState.value.userData?.username ?: "",
             sensorData = sensorData.value,
@@ -115,7 +116,8 @@ fun VehiculosRoute(
             },
             onSelectVehicle = {
                 viewModel.getVehicleData(it)
-            }
+            },
+            onCalibrate = { onCalibrate(it) }
         )
 
         when (uiState.value.loginEvent) {
@@ -146,6 +148,7 @@ fun VehiculosRoute(
 
 @Composable
 fun VehiculosScreen(
+    config: VehicleConfiguration?,
     wifiStatus: WifiConnectionState,
     loggedUser: String,
     logData: String,
@@ -159,6 +162,7 @@ fun VehiculosScreen(
     onLoginPassword: (password: String) -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onCalibrate: (idCaja: Int) -> Unit,
     onSelectVehicle: (Int) -> Unit,
     modifier: Modifier = Modifier,
     currentVehicle: VehicleInfo?,
@@ -327,21 +331,13 @@ fun VehiculosScreen(
                 }
             }
 
-            SectionCard {
-                SectionTitle(
-                    title = stringResource(R.string.vehiculo),
-                    subtitle = "Selecciona la unidad que deseas consultar"
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                DropdownVehicleMenu(
-                    vehicles = vehicles,
-                    currentVehicle = currentVehicle
-                ) {
-                    onSelectVehicle(it)
-                }
-            }
+            VehicleSection(
+                idCaja = config?.idCaja?.toIntOrNull(),
+                vehicles = vehicles,
+                currentVehicle = currentVehicle,
+                onSelectVehicle = { onSelectVehicle(it) },
+                onCalibrate = { onCalibrate(it) }
+            )
 
             SectionCard {
                 SectionTitle(
@@ -569,53 +565,6 @@ fun StatusPill(status: String) {
 }
 
 @Composable
-fun InfoRow(
-    title: String,
-    value: String,
-    icon: ImageVector
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value.ifBlank { "---" },
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-@Composable
 private fun outlinedFieldColors() = TextFieldDefaults.colors(
     focusedContainerColor = MaterialTheme.colorScheme.surface,
     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -661,6 +610,7 @@ fun DropdownMenuVehiclePreview() {
 fun VehiculosRoutePreview() {
     FuelBoxControlTheme {
         VehiculosScreen(
+            config = null,
             loggedUser = "",
             isLogged = true,
             username = "",
@@ -679,7 +629,8 @@ fun VehiculosRoutePreview() {
             dataSendingStatus = SensorSendingEvent.Error("No se pudo enviar por que la trama no corresponde."),
             onLogout = {},
             wifiStatus = WifiConnectionState(),
-            logData = "2025/04/24,-555,-555,-555"
+            logData = "2025/04/24,-555,-555,-555",
+            onCalibrate = {}
         )
     }
 }
