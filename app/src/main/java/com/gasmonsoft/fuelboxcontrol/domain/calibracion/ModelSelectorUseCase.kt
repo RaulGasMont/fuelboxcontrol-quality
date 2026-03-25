@@ -5,45 +5,44 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.pow
 
 class ModelSelectorUseCase @Inject constructor() {
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     suspend operator fun invoke(
         linealCoefficients: List<Tendencia>,
         poliCoefficients: DoubleArray
-    ): Boolean {
+    ): Boolean = withContext(Dispatchers.Default) {
+
         val isPoliApproachBetter = mutableListOf<Boolean>()
 
-        linealCoefficients.forEach {
-            val linearResultDeferred = scope.async {
-                predictLineal(
-                    x = it.sampleValue.first,
-                    intercepto = it.intercepto,
-                    pendiente = it.pendiente
-                )
-            }
+        linealCoefficients.forEach { tendencia ->
+            // sampleValue ya viene como (x, y) = (nivel, litros)
+            val x = tendencia.sampleValue.first
+            val yReal = tendencia.sampleValue.second
 
-            val poliResultDeferred = scope.async {
-                predictPolynomial(
-                    x = it.sampleValue.first,
-                    coefficients = poliCoefficients,
-                )
-            }
+            val linearResult = predictLineal(
+                x = x,
+                intercepto = tendencia.intercepto,
+                pendiente = tendencia.pendiente
+            )
 
-            val linearResult = linearResultDeferred.await()
-            val poliResult = poliResultDeferred.await()
+            val poliResult = predictPolynomial(
+                x = x,
+                coefficients = poliCoefficients
+            )
 
-            val linearApproach = abs(linearResult - it.sampleValue.second)
-            val poliApproach = abs(poliResult - it.sampleValue.second)
+            val linearApproach = abs(linearResult - yReal)
+            val poliApproach = abs(poliResult - yReal)
 
-            isPoliApproachBetter.add(linearApproach < poliApproach)
+            // true cuando la polinomial sí fue mejor
+            isPoliApproachBetter.add(poliApproach < linearApproach)
         }
 
-        return isPoliApproachBetter.all { it }
+        isPoliApproachBetter.all { it }
     }
 
     private fun predictPolynomial(x: Double, coefficients: DoubleArray): Double {

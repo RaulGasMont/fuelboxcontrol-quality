@@ -18,7 +18,9 @@ data class CalibrationUiState(
     val selectedSensor: CalibrationSensor? = null,
     val measurements: List<Pair<String, String>> = emptyList(),
     val currentSensorValue: String = "",
-    val calibrationEvent: SenderCalibrationEvent = SenderCalibrationEvent.Idle
+    val calibrationEvent: SenderCalibrationEvent = SenderCalibrationEvent.Idle,
+    val capacidad: Double = 0.0,
+    val capacitancia: Double = 0.0
 )
 
 sealed class SenderCalibrationEvent(open val title: String, open val message: String) {

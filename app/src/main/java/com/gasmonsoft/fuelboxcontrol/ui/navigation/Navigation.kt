@@ -31,7 +31,7 @@ val destinations = listOf(
     ScreenDestination(
         route = ScreenRoute.Calibracion,
         title = "Calibración",
-        icon = R.drawable.ic_datos_vehiculos
+        icon = R.drawable.dat
     ),
     ScreenDestination(
         route = ScreenRoute.DatosVehiculos,

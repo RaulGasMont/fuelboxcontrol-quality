@@ -31,6 +31,7 @@ data class Tendencia(
     val intercepto: Double,
     val puntoInicial: Int,
     val puntoFinal: Int,
+    val initialValue: Double,
     val sampleValue: Pair<Double, Double>,
 )
 

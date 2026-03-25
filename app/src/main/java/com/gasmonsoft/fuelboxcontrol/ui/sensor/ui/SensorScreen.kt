@@ -98,16 +98,16 @@ fun SensorRoute(
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
 
     SensorScreenContent(
-        onBack = {
-            viewModelSensor.disconnect()
-            onBack()
-        },
+        onBack = onBack,
         bleConnectionState = bleConnectionState,
         sensorInfoState = sensorInfoState,
         permissionState = permissionState,
         sensorMessage = sensorMessage,
         bateria = bateria,
-        onDisconnect = viewModelSensor::disconnect,
+        onDisconnect = {
+            viewModelSensor.disconnect()
+            onBack()
+        },
         onReconnect = viewModelSensor::reconnect,
         onInitializeConnection = viewModelSensor::initializeConnection,
         onWriteEinc = viewModelSensor::onwriteEinc,
@@ -132,7 +132,6 @@ fun SensorScreenContent(
 ) {
     BackHandler {
         onDisconnect()
-        onBack()
     }
 
     LaunchedEffect(Unit) {
@@ -163,10 +162,7 @@ fun SensorScreenContent(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            onDisconnect()
-                            onBack()
-                        }
+                        onClick = onDisconnect
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -211,10 +207,7 @@ fun SensorScreenContent(
                         ConnectionStatusRow(
                             state = bleConnectionState,
                             onReconnect = onReconnect,
-                            onDisconnect = {
-                                onDisconnect()
-                                onBack()
-                            }
+                            onDisconnect = onDisconnect
                         )
                     }
                 }

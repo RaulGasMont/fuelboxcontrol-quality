@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sensors
@@ -39,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -73,7 +75,10 @@ fun CalibracionRoute(
             },
             onSelectSensor = { viewModel.selectSensor(it) },
             onDeleteMeasurement = { viewModel.eliminarUltimaMedicion() },
-            onStarAnalise = { viewModel.startAnalise() }
+            onStarAnalise = { viewModel.startAnalise() },
+            onSaveConfig = { capacidad, capacitancia ->
+                viewModel.saveCapacidadAndCapacitancia(capacidad, capacitancia)
+            }
         )
 
         when (uiState.value.calibrationEvent) {
@@ -124,6 +129,7 @@ fun CalibrationScreen(
     onSelectSensor: (CalibrationSensor) -> Unit,
     onDeleteMeasurement: () -> Unit,
     onStarAnalise: () -> Unit,
+    onSaveConfig: (capacidad: String, capacitancia: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundBrush = Brush.verticalGradient(
@@ -136,9 +142,10 @@ fun CalibrationScreen(
 
     var litros by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
+    var capacidad by remember { mutableStateOf("") }
+    var capacitancia by remember { mutableStateOf("") }
     var userIsTryingToEdit by remember { mutableStateOf(false) }
     var userEditedManually by remember { mutableStateOf(false) }
-
 
     LaunchedEffect(uiState.currentSensorValue) {
         if (!userIsTryingToEdit && !userEditedManually) {
@@ -181,6 +188,68 @@ fun CalibrationScreen(
 
             SectionCard {
                 SectionTitle(
+                    title = "Datos de configuración",
+                    subtitle = "Ingrese la capacidad del tanque y la capacitancia"
+                )
+
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))) {
+                    OutlinedTextField(
+                        enabled = uiState.selectedSensor != null,
+                        value = capacitancia,
+                        onValueChange = { newText ->
+                            capacitancia = newText
+                        },
+                        label = { Text("Capacitancia") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal
+                        )
+                    )
+
+                    OutlinedTextField(
+                        enabled = uiState.selectedSensor != null,
+                        value = capacidad,
+                        onValueChange = { newText ->
+                            litros = newText
+                        },
+                        label = { Text("Capacidad") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
+
+                Button(
+                    enabled = uiState.selectedSensor != null,
+                    onClick = {
+                        onSaveConfig(capacidad, capacitancia)
+                        capacidad = ""
+                        capacitancia = ""
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text(text = "Guardar")
+                }
+            }
+
+            SectionCard {
+                SectionTitle(
                     title = "Tomar medida",
                     subtitle = "Tomar medición de combustible para realizar el  análisis"
                 )
@@ -190,19 +259,7 @@ fun CalibrationScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))) {
                     OutlinedTextField(
                         enabled = uiState.selectedSensor != null,
-                        value = litros,
-                        onValueChange = { newText ->
-                            litros = newText
-                        },
-                        label = { Text("Litros") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    OutlinedTextField(
-                        enabled = uiState.selectedSensor != null,
-                        value = uiState.currentSensorValue,
+                        value = valor,
                         onValueChange = { newText ->
                             valor = newText
                             userEditedManually = true
@@ -214,7 +271,26 @@ fun CalibrationScreen(
                             .onFocusChanged { focusState ->
                                 userIsTryingToEdit = focusState.isFocused
                             }
-                            .weight(1f)
+                            .weight(1f),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal
+                        )
+                    )
+
+                    OutlinedTextField(
+                        enabled = uiState.selectedSensor != null,
+                        value = litros,
+                        onValueChange = { newText ->
+                            litros = newText
+
+                        },
+                        label = { Text("Litros") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal
+                        )
                     )
                 }
 
@@ -222,7 +298,13 @@ fun CalibrationScreen(
 
                 Button(
                     enabled = uiState.selectedSensor != null,
-                    onClick = { onTakeMeasure(litros, valor) },
+                    onClick = {
+                        onTakeMeasure(litros, valor)
+                        litros = ""
+                        valor = ""
+                        userIsTryingToEdit = false
+                        userEditedManually = false
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
@@ -253,7 +335,7 @@ fun CalibrationScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                enabled = uiState.measurements.isNotEmpty()
+                enabled = uiState.measurements.isNotEmpty() && uiState.measurements.size >= 3
             ) {
                 Text(text = "Iniciar análisis")
             }
@@ -328,7 +410,8 @@ fun CalibrationRoutePreview() {
         onTakeMeasure = { _, _ -> },
         onSelectSensor = {},
         onDeleteMeasurement = {},
-        onStarAnalise = {}
+        onStarAnalise = {},
+        onSaveConfig = { _, _ -> }
     )
 }
 

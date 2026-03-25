@@ -7,7 +7,7 @@ import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepo
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.service.firmware.NTF_ACK
 import com.gasmonsoft.fuelboxcontrol.data.service.firmware.UpgradeFileType
-import com.gasmonsoft.fuelboxcontrol.domain.calibracion.CalibrationUseCase
+import com.gasmonsoft.fuelboxcontrol.domain.calibracion.CalibrationUseCaseImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CalibrationViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
-    private val calibrationUseCase: CalibrationUseCase,
+    private val calibrationUseCase: CalibrationUseCaseImpl,
     private val repository: FuelSoftwareControlRepository
 ) : ViewModel() {
     private val sensorData = sensorReceiveManager.sensorData.stateIn(
@@ -103,7 +103,7 @@ class CalibrationViewModel @Inject constructor(
             } else {
                 _calibrationUiState.update { currentUiState ->
                     currentUiState.copy(
-                        calibrationEvent = SenderCalibrationEvent.Updating
+                        calibrationEvent = SenderCalibrationEvent.Error("Error al obtener el archivo de datos", "Error")
                     )
                 }
             }
@@ -172,5 +172,18 @@ class CalibrationViewModel @Inject constructor(
             )
         }
     }
+
+    fun saveCapacidadAndCapacitancia(capacidad: String, capacitancia: String) {
+        val capacity = capacidad.toDoubleOrNull() ?: 0.0
+        val capacitance = capacitancia.toDoubleOrNull() ?: 0.0
+
+        _calibrationUiState.update { currentUiState ->
+            currentUiState.copy(
+                capacidad = capacity,
+                capacitancia = capacitance
+            )
+        }
+    }
+
 
 }

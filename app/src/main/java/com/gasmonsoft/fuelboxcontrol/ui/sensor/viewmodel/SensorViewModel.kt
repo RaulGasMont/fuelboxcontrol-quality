@@ -627,7 +627,8 @@ class SensorViewModel @Inject constructor(
     }
 
     fun disconnect() {
-        _connectionState.update { ConnectionState.Uninitialized }
+        _shouldReconnect.value = false
+        _connectionState.update { ConnectionState.Disconnected }
         sensorReceiveManager.disconnect()
         _Message.value = ""
     }
