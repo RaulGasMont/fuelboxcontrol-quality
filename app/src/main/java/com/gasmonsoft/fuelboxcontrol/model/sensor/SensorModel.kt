@@ -16,32 +16,6 @@ data class SensorAlertasUnitarioRequest(
     val alertas: List<SensorAlertasUnitario>
 )
 
-data class ConfVehiclesResponse(
-
-    @SerializedName("fld_tarjeta") var tarjeta: String,
-    @SerializedName("fld_caracteristicas") var caracteristicas: String,
-    @SerializedName("fld_totalSensor") var totalSensor: Int,
-    @SerializedName("fld_rutas") var rutas: String,
-    @SerializedName("fld_placas") var placas: String,
-    @SerializedName("fld_noEconomico") var noEconomico: String
-)
-
-data class Tendencia(
-    val pendiente: Double,
-    val intercepto: Double,
-    val puntoInicial: Int,
-    val puntoFinal: Int,
-    val initialValue: Double,
-    val sampleValue: Pair<Double, Double>,
-)
-
-data class ConfigVehiculo(
-    val tarjeta: String,
-    val caracteristicas: String,
-    val noEconomico: String,
-    val totalSensor: Int
-)
-
 data class SensorInfo(
     val token: String,
     val data: SensorDataUnitario

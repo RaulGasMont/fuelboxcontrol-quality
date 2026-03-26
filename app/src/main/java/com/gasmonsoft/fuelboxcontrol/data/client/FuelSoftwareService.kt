@@ -3,10 +3,10 @@ package com.gasmonsoft.fuelboxcontrol.data.client
 import com.gasmonsoft.fuelboxcontrol.model.calibracion.CalibrationDto
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse
-import com.gasmonsoft.fuelboxcontrol.model.sensor.ConfVehiclesResponse
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.UploadSensorResponse
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehiclesResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body

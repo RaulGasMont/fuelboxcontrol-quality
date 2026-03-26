@@ -7,12 +7,12 @@ import com.gasmonsoft.fuelboxcontrol.model.calibracion.toDto
 import com.gasmonsoft.fuelboxcontrol.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse
 import com.gasmonsoft.fuelboxcontrol.model.login.toDto
-import com.gasmonsoft.fuelboxcontrol.model.sensor.ConfVehiclesResponse
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitario
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.model.sensor.UploadSensorResponse
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehicle
+import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehiclesResponse
 import javax.inject.Inject
 
 class FuelSoftwareControlRepository @Inject constructor(

@@ -1,6 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
-import com.gasmonsoft.fuelboxcontrol.model.sensor.Tendencia
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import javax.inject.Inject
 import kotlin.math.abs

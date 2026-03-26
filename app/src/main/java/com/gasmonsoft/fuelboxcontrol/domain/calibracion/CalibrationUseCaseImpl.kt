@@ -2,7 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
 import android.util.Log
 import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
-import com.gasmonsoft.fuelboxcontrol.model.sensor.Tendencia
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.stat.regression.SimpleRegression
@@ -40,7 +40,7 @@ class CalibrationUseCaseImpl @Inject constructor(
             }
 
             if (puntos.size < 2) {
-                return@withContext Calibration(formula = "")
+                return@withContext Calibration(formula = "", message = "")
             }
 
             val tendencias = construirTendenciasDinamicas(puntos).toMutableList()
@@ -76,7 +76,8 @@ class CalibrationUseCaseImpl @Inject constructor(
             }
 
             Calibration(
-                formula = ""
+                formula = "",
+                message = ""
             )
         }
 
@@ -137,28 +138,30 @@ class CalibrationUseCaseImpl @Inject constructor(
             if (corresponde) {
                 regression.addData(nivel, litros)
             } else {
-                tendencias.add(
-                    construirTendenciaDesdeRango(
-                        puntos = puntos,
-                        start = puntoInicial,
-                        end = index - 1
-                    )
+                val nuevoPunto = construirTendenciaDesdeRango(
+                    puntos = puntos,
+                    start = puntoInicial,
+                    end = index - 1
                 )
+                if (nuevoPunto != null) {
+                    tendencias.add(nuevoPunto)
 
-                puntoInicial = index
-                regression = SimpleRegression(true)
-                regression.addData(nivel, litros)
+                    puntoInicial = index
+                    regression = SimpleRegression(true)
+                    regression.addData(nivel, litros)
+                }
             }
         }
 
         if (regression.n >= 2) {
-            tendencias.add(
-                construirTendenciaDesdeRango(
-                    puntos = puntos,
-                    start = puntoInicial,
-                    end = puntos.lastIndex
-                )
+            val nuevoPunto = construirTendenciaDesdeRango(
+                puntos = puntos,
+                start = puntoInicial,
+                end = puntos.lastIndex
             )
+            if (nuevoPunto != null) {
+                tendencias.add(nuevoPunto)
+            }
         }
 
         return tendencias
@@ -199,6 +202,8 @@ class CalibrationUseCaseImpl @Inject constructor(
                         start = mejor.third,
                         end = mejor.fourth
                     )
+
+                    if (nuevaIzquierda == null || nuevaDerecha == null) continue
 
                     val cambioIzquierda = nuevaIzquierda.puntoInicial != izquierda.puntoInicial ||
                             nuevaIzquierda.puntoFinal != izquierda.puntoFinal
@@ -343,6 +348,7 @@ class CalibrationUseCaseImpl @Inject constructor(
                 start = ultimaTendencia.puntoInicial,
                 end = ultimoIndiceReal
             )
+            if (reconstruida == null) return
             tendencias[tendencias.lastIndex] = reconstruida
             return
         }
@@ -353,6 +359,7 @@ class CalibrationUseCaseImpl @Inject constructor(
             start = inicioCola,
             end = finCola
         )
+        if (nuevaFinal == null) return
         tendencias.add(nuevaFinal)
     }
 
@@ -378,6 +385,7 @@ class CalibrationUseCaseImpl @Inject constructor(
 
         tendencias.removeAt(tendencias.lastIndex)
         tendencias.removeAt(tendencias.lastIndex)
+        if (fusionado == null) return
         tendencias.add(fusionado)
     }
 
@@ -385,10 +393,19 @@ class CalibrationUseCaseImpl @Inject constructor(
         puntos: List<Punto>,
         start: Int,
         end: Int
-    ): Tendencia {
-        require(start in puntos.indices) { "start fuera de rango" }
-        require(end in puntos.indices) { "end fuera de rango" }
-        require(start <= end) { "start no puede ser mayor que end" }
+    ): Tendencia? {
+        if (start in puntos.indices) {
+            println("start fuera de rango")
+            return null
+        }
+        if (end in puntos.indices) {
+            println("end fuera de rango")
+            return null
+        }
+        if (start <= end) {
+            println("start no puede ser mayor que end")
+            return null
+        }
 
         val regression = SimpleRegression(true)
 

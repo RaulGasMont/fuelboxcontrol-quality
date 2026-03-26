@@ -1,10 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
-import com.gasmonsoft.fuelboxcontrol.model.sensor.Tendencia
-import kotlinx.coroutines.CoroutineScope
+import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.abs

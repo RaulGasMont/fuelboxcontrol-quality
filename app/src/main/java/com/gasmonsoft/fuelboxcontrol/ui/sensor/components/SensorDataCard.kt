@@ -63,6 +63,11 @@ fun SensorDataCard(
         else -> SensorVisualStatus.Empty
     }
 
+    val elevation = when {
+        hasRawData -> 0.dp
+        else -> 6.dp
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -80,7 +85,7 @@ fun SensorDataCard(
                 else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
             modifier = Modifier

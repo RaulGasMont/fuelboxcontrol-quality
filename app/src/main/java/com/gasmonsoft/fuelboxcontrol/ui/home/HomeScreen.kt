@@ -1,5 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -111,7 +112,7 @@ fun HomeScreenContent(
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(
+                Image(
                     painter = painterResource(R.drawable.fbc_icon),
                     contentDescription = null,
                     modifier = Modifier.size(60.dp)
