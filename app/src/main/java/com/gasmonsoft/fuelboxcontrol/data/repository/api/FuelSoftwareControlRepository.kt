@@ -2,17 +2,18 @@ package com.gasmonsoft.fuelboxcontrol.data.repository.api
 
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleDataSource
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.RemoteFscDataSource
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.toDto
-import com.gasmonsoft.fuelboxcontrol.model.login.Login
-import com.gasmonsoft.fuelboxcontrol.model.login.LoginResponse
-import com.gasmonsoft.fuelboxcontrol.model.login.toDto
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitario
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
-import com.gasmonsoft.fuelboxcontrol.model.sensor.UploadSensorResponse
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehicle
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehiclesResponse
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.AnalisisRegresion
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Calibracion
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.toDto
+import com.gasmonsoft.fuelboxcontrol.data.model.login.Login
+import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginResponse
+import com.gasmonsoft.fuelboxcontrol.data.model.login.toDto
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitarioRequest
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.UploadSensorResponse
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehicle
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehiclesResponse
 import javax.inject.Inject
 
 class FuelSoftwareControlRepository @Inject constructor(
@@ -41,7 +42,7 @@ class FuelSoftwareControlRepository @Inject constructor(
         )
     }
 
-    suspend fun getDatFile(body: Calibration): Result<ByteArray> {
+    suspend fun getDatFile(body: Calibracion): Result<ByteArray> {
         val result = login(Login("9612406463", "1234", "test"))
         return if (result.isSuccess) {
             val userData = result.getOrNull()

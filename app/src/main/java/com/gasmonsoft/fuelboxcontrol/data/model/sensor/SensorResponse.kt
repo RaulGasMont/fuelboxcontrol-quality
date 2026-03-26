@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.model.sensor
+package com.gasmonsoft.fuelboxcontrol.data.model.sensor
 
 import com.google.gson.annotations.SerializedName
 

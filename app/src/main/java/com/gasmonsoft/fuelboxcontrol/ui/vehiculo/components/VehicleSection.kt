@@ -25,7 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme

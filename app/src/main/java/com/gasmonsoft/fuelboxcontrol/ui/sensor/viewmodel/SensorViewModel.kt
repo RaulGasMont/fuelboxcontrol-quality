@@ -103,7 +103,9 @@ class SensorViewModel @Inject constructor(
     }
 
     fun disconnect() {
-        stopPeriodicWriteTask()
+        stopPeriodicWriteTask() // Detiene envíos de [INFO]
+        subscriptionJob?.cancel() // Detiene la escucha de nuevos paquetes del sensor
+
         _uiState.update {
             it.copy(
                 shouldReconnect = false,
@@ -111,7 +113,7 @@ class SensorViewModel @Inject constructor(
                 initializingMessage = null
             )
         }
-        sensorReceiveManager.disconnect()
+        sensorReceiveManager.disconnect() // Cierra el BluetoothGatt
     }
 
     fun reconnect() {

@@ -2,12 +2,12 @@ package com.gasmonsoft.fuelboxcontrol.domain.api
 
 import android.content.SharedPreferences
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
-import com.gasmonsoft.fuelboxcontrol.model.login.Login
-import com.gasmonsoft.fuelboxcontrol.model.login.UserData
-import com.gasmonsoft.fuelboxcontrol.model.login.toEntity
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.ConfVehicle
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.login.Login
+import com.gasmonsoft.fuelboxcontrol.data.model.login.UserData
+import com.gasmonsoft.fuelboxcontrol.data.model.login.toEntity
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehicle
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleConfiguration
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import javax.inject.Inject
 
 class LoginUseCase @Inject constructor(

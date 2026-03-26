@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.model.vehicle
+package com.gasmonsoft.fuelboxcontrol.data.model.vehicle
 
 import com.google.gson.annotations.SerializedName
 

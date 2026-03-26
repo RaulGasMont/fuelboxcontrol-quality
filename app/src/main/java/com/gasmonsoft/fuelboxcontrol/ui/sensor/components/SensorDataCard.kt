@@ -64,8 +64,8 @@ fun SensorDataCard(
     }
 
     val elevation = when {
-        hasRawData -> 0.dp
-        else -> 6.dp
+        isError || hasRawData -> 6.dp
+        else -> 0.dp
     }
 
     Card(
@@ -431,6 +431,8 @@ fun SingleSensorDataCard(
 ) {
     val hasData = accelerometerData.value.isNotBlank()
 
+    val elevation = if (hasData) 6.dp else 0.dp
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -445,7 +447,7 @@ fun SingleSensorDataCard(
             1.dp,
             MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
             modifier = Modifier

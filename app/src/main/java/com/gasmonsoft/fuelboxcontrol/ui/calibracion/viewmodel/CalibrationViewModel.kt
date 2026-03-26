@@ -3,6 +3,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Calibracion
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.service.firmware.NTF_ACK
@@ -90,23 +91,49 @@ class CalibrationViewModel @Inject constructor(
 
             val regressionResponse = calibrationUseCase(_calibrationUiState.value.measurements)
 
+            if (regressionResponse == null) {
+                _calibrationUiState.update { currentUiState ->
+                    currentUiState.copy(
+                        calibrationEvent = SenderCalibrationEvent.Error(
+                            message = "No se pudo realizar el análisis de regresión",
+                            title = "Error en el análisis de regresión"
+                        )
+                    )
+                }
+                return@launch
+            }
+
+
             _calibrationUiState.update { currentUiState ->
                 currentUiState.copy(
                     calibrationEvent = SenderCalibrationEvent.Loading
                 )
             }
+            val response = repository.getDatFile(
+                Calibracion(
+                    tendencias = regressionResponse.tendencias,
+                    capacidad = _calibrationUiState.value.capacidad,
+                    capacitancia = _calibrationUiState.value.capacitancia.toInt(),
+                    intervalos = regressionResponse.tendencias.size,
+                    coefPolinomial = regressionResponse.coefPolinomial
+                )
+            )
 
-            val response = repository.getDatFile(regressionResponse)
             if (response.isSuccess) {
                 val data = response.getOrNull() ?: return@launch
                 sendToBox(data)
             } else {
                 _calibrationUiState.update { currentUiState ->
                     currentUiState.copy(
-                        calibrationEvent = SenderCalibrationEvent.Error("Error al obtener el archivo de datos", "Error")
+                        calibrationEvent = SenderCalibrationEvent.Error(
+                            "Error al obtener el archivo de datos",
+                            "Error"
+                        )
                     )
                 }
             }
+
+
         }
     }
 
@@ -184,6 +211,4 @@ class CalibrationViewModel @Inject constructor(
             )
         }
     }
-
-
 }

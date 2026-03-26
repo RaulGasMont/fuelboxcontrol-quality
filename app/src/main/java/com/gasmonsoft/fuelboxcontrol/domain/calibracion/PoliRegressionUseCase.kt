@@ -1,6 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Tendencia
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import javax.inject.Inject
 import kotlin.math.abs
@@ -37,11 +37,9 @@ class PoliRegressionUseCase @Inject constructor() {
     operator fun invoke(
         tendencias: List<Tendencia>,
         data: List<Pair<Double, Double>>,
-    ): PolynomialModel? {
+    ): PolynomialModel {
         val gradoSugerido = gradoSugeridoPorSegmentos(tendencias)
         println("Grado sugerido por segmentos: $gradoSugerido")
-
-        if (gradoSugerido > 6) return null
 
         val gradosAProbar = listOf(
             (gradoSugerido - 1).coerceAtLeast(1),

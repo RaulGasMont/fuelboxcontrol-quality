@@ -8,9 +8,9 @@ import com.gasmonsoft.fuelboxcontrol.data.service.wifi.WifiStateObserver
 import com.gasmonsoft.fuelboxcontrol.domain.api.ConfigVehicleUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.api.LoginUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorSenderUseCase
-import com.gasmonsoft.fuelboxcontrol.model.login.UserData
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.login.UserData
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleConfiguration
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

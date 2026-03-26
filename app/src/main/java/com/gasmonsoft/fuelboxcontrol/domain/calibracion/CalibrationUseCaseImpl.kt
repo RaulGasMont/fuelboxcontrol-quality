@@ -1,8 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
-import android.util.Log
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.AnalisisRegresion
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Tendencia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.stat.regression.SimpleRegression
@@ -13,7 +12,7 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 interface CalibrationUseCase {
-    suspend operator fun invoke(rawMeasurements: List<Pair<String, String>>): Calibration
+    suspend operator fun invoke(rawMeasurements: List<Pair<String, String>>): AnalisisRegresion?
 }
 
 class CalibrationUseCaseImpl @Inject constructor(
@@ -21,64 +20,62 @@ class CalibrationUseCaseImpl @Inject constructor(
     private val modelSelectorUseCase: ModelSelectorUseCase
 ) : CalibrationUseCase {
 
-    override suspend fun invoke(rawMeasurements: List<Pair<String, String>>): Calibration =
+    override suspend fun invoke(rawMeasurements: List<Pair<String, String>>): AnalisisRegresion? =
         withContext(Dispatchers.IO) {
+            try {
+                val puntos = rawMeasurements.mapIndexedNotNull { index, pair ->
+                    val litros = pair.first.toDoubleOrNull()
+                    val nivel = pair.second.toDoubleOrNull()
 
-            val puntos = rawMeasurements.mapIndexedNotNull { index, pair ->
-                val litros = pair.first.toDoubleOrNull()
-                val nivel = pair.second.toDoubleOrNull()
-
-                if (litros == null || nivel == null) {
-                    null
-                } else {
-                    Punto(
-                        index = index,
-                        nivel = nivel,
-                        litros = litros
-                    )
+                    if (litros == null || nivel == null) {
+                        null
+                    } else {
+                        Punto(
+                            index = index,
+                            nivel = nivel,
+                            litros = litros
+                        )
+                    }
                 }
-            }
 
-            if (puntos.size < 2) {
-                return@withContext Calibration(formula = "", message = "")
-            }
+                if (puntos.size < 2) {
+                    return@withContext null
+                }
 
-            val tendencias = construirTendenciasDinamicas(puntos).toMutableList()
+                val tendencias = construirTendenciasDinamicas(puntos).toMutableList()
 
-            ajustarUltimoSegmentoSiEsMuyCorto(
-                tendencias = tendencias,
-                puntos = puntos,
-                minPointsPerSegment = MIN_POINTS_PER_SEGMENT
-            )
-
-            refinarFronterasSegmentos(
-                tendencias = tendencias,
-                puntos = puntos,
-                minPointsPerSegment = MIN_POINTS_PER_SEGMENT
-            )
-
-            println("\nTendencias encontradas:")
-            tendencias.forEachIndexed { i, t -> println("$i = $t") }
-
-            val modelo = polinomialRegression(
-                tendencias = tendencias,
-                data = puntos.map { it.nivel to it.litros }
-            )
-
-            if (modelo != null) {
-                val result = modelSelectorUseCase(
-                    linealCoefficients = tendencias,
-                    poliCoefficients = modelo.coefficients
+                ajustarUltimoSegmentoSiEsMuyCorto(
+                    tendencias = tendencias,
+                    puntos = puntos,
+                    minPointsPerSegment = MIN_POINTS_PER_SEGMENT
                 )
 
-                val decision = if (result) "Polinomial" else "Escalonada"
-                Log.i("Calibracion", "Modelo seleccionado: $decision")
-            }
+                refinarFronterasSegmentos(
+                    tendencias = tendencias,
+                    puntos = puntos,
+                    minPointsPerSegment = MIN_POINTS_PER_SEGMENT
+                )
 
-            Calibration(
-                formula = "",
-                message = ""
-            )
+                println("\nTendencias encontradas:")
+                tendencias.forEachIndexed { i, t -> println("$i = $t") }
+
+                val modelo = polinomialRegression(
+                    tendencias = tendencias,
+                    data = puntos.map { it.nivel to it.litros }
+                )
+
+//                val result = modelSelectorUseCase(
+//                    linealCoefficients = tendencias,
+//                    poliCoefficients = modelo.coefficients
+//                )
+
+                AnalisisRegresion(
+                    coefPolinomial = modelo.coefficients.joinToString(),
+                    tendencias = tendencias
+                )
+            } catch (_: Exception) {
+                null
+            }
         }
 
     private fun construirTendenciasDinamicas(
@@ -138,30 +135,28 @@ class CalibrationUseCaseImpl @Inject constructor(
             if (corresponde) {
                 regression.addData(nivel, litros)
             } else {
-                val nuevoPunto = construirTendenciaDesdeRango(
-                    puntos = puntos,
-                    start = puntoInicial,
-                    end = index - 1
+                tendencias.add(
+                    construirTendenciaDesdeRango(
+                        puntos = puntos,
+                        start = puntoInicial,
+                        end = index - 1
+                    )
                 )
-                if (nuevoPunto != null) {
-                    tendencias.add(nuevoPunto)
 
-                    puntoInicial = index
-                    regression = SimpleRegression(true)
-                    regression.addData(nivel, litros)
-                }
+                puntoInicial = index
+                regression = SimpleRegression(true)
+                regression.addData(nivel, litros)
             }
         }
 
         if (regression.n >= 2) {
-            val nuevoPunto = construirTendenciaDesdeRango(
-                puntos = puntos,
-                start = puntoInicial,
-                end = puntos.lastIndex
+            tendencias.add(
+                construirTendenciaDesdeRango(
+                    puntos = puntos,
+                    start = puntoInicial,
+                    end = puntos.lastIndex
+                )
             )
-            if (nuevoPunto != null) {
-                tendencias.add(nuevoPunto)
-            }
         }
 
         return tendencias
@@ -202,8 +197,6 @@ class CalibrationUseCaseImpl @Inject constructor(
                         start = mejor.third,
                         end = mejor.fourth
                     )
-
-                    if (nuevaIzquierda == null || nuevaDerecha == null) continue
 
                     val cambioIzquierda = nuevaIzquierda.puntoInicial != izquierda.puntoInicial ||
                             nuevaIzquierda.puntoFinal != izquierda.puntoFinal
@@ -348,7 +341,6 @@ class CalibrationUseCaseImpl @Inject constructor(
                 start = ultimaTendencia.puntoInicial,
                 end = ultimoIndiceReal
             )
-            if (reconstruida == null) return
             tendencias[tendencias.lastIndex] = reconstruida
             return
         }
@@ -359,7 +351,6 @@ class CalibrationUseCaseImpl @Inject constructor(
             start = inicioCola,
             end = finCola
         )
-        if (nuevaFinal == null) return
         tendencias.add(nuevaFinal)
     }
 
@@ -385,7 +376,6 @@ class CalibrationUseCaseImpl @Inject constructor(
 
         tendencias.removeAt(tendencias.lastIndex)
         tendencias.removeAt(tendencias.lastIndex)
-        if (fusionado == null) return
         tendencias.add(fusionado)
     }
 
@@ -393,19 +383,10 @@ class CalibrationUseCaseImpl @Inject constructor(
         puntos: List<Punto>,
         start: Int,
         end: Int
-    ): Tendencia? {
-        if (start in puntos.indices) {
-            println("start fuera de rango")
-            return null
-        }
-        if (end in puntos.indices) {
-            println("end fuera de rango")
-            return null
-        }
-        if (start <= end) {
-            println("start no puede ser mayor que end")
-            return null
-        }
+    ): Tendencia {
+        require(start in puntos.indices) { "start fuera de rango" }
+        require(end in puntos.indices) { "end fuera de rango" }
+        require(start <= end) { "start no puede ser mayor que end" }
 
         val regression = SimpleRegression(true)
 

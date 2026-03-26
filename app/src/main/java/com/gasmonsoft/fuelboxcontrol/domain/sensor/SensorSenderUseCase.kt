@@ -1,8 +1,8 @@
 package com.gasmonsoft.fuelboxcontrol.domain.sensor
 
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

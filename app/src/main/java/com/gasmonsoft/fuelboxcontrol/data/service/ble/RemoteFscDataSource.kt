@@ -2,10 +2,10 @@ package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
 import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.CalibrationDto
-import com.gasmonsoft.fuelboxcontrol.model.login.LoginDto
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorAlertasUnitarioRequest
-import com.gasmonsoft.fuelboxcontrol.model.sensor.SensorDataUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.CalibrationDto
+import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitarioRequest
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
 import javax.inject.Inject
 
 class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwareService) {

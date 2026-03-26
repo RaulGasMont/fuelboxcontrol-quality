@@ -102,7 +102,12 @@ fun FuelBoxControlFlowNav() {
         composable(FuelBoxControlRoute.Sensor.route) {
             SensorConfigHome(
                 onBack = { 
-                    navController.popBackStack(FuelBoxControlRoute.Home.route, inclusive = false)
+                    val popped = navController.popBackStack(FuelBoxControlRoute.Home.route, inclusive = false)
+                    if (!popped) {
+                        navController.navigate(FuelBoxControlRoute.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 }
             )
         }

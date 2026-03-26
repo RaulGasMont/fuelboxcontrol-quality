@@ -190,6 +190,11 @@ class SensorBLEReceiveManager @Inject constructor(
                         )
                     }
                 }
+            } else {
+                scanAttempts = 0
+                scope.launch {
+                    connectionState.emit(ConnectionState.Disconnected)
+                }
             }
         }
     }
@@ -344,6 +349,19 @@ class SensorBLEReceiveManager @Inject constructor(
 
                 connectionState.emit(ConnectionState.Connected)
                 data.emit(Resource.Loading(message = "Dispositivo listo para operar"))
+                data.emit(
+                    Resource.Success(
+                        data = SensorResult(
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            ConnectionState.Connected
+                        )
+                    )
+                )
             }
         }
 
@@ -463,7 +481,9 @@ class SensorBLEReceiveManager @Inject constructor(
         nombreconfiguracion = ""
         configuracion = ""
         sharedPrefs.edit().remove(KEY_LAST_MAC).apply()
-
+        scope.launch {
+            connectionState.emit(ConnectionState.Disconnected)
+        }
         bleConnectionManager.markDisconnectingByUser()
         teardownGatt(clearMac = true)
     }

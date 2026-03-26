@@ -3,13 +3,15 @@ package com.gasmonsoft.fuelboxcontrol.calibracion
 import com.gasmonsoft.fuelboxcontrol.domain.calibracion.CalibrationUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.calibracion.ModelSelectorUseCase
 import com.gasmonsoft.fuelboxcontrol.domain.calibracion.PoliRegressionUseCase
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Calibration
-import com.gasmonsoft.fuelboxcontrol.model.sensor.Tendencia
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.AnalisisRegresion
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Tendencia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.math3.stat.regression.SimpleRegression
 import javax.inject.Inject
-import kotlin.math.ln
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 class CalibrationUseCaseImpl @Inject constructor(
@@ -17,187 +19,369 @@ class CalibrationUseCaseImpl @Inject constructor(
     private val modelSelectorUseCase: ModelSelectorUseCase
 ) : CalibrationUseCase {
 
-    override suspend fun invoke(rawMeasurements: List<Pair<String, String>>): Calibration =
+    override suspend fun invoke(rawMeasurements: List<Pair<String, String>>): AnalisisRegresion =
         withContext(Dispatchers.IO) {
+            try {
+                val puntos = rawMeasurements.mapIndexedNotNull { index, pair ->
+                    val litros = pair.first.toDoubleOrNull()
+                    val nivel = pair.second.toDoubleOrNull()
 
-            val puntos = rawMeasurements.mapIndexedNotNull { index, pair ->
-                val litros = pair.first.toDoubleOrNull()
-                val nivel = pair.second.toDoubleOrNull()
-
-                if (litros == null || nivel == null) {
-                    null
-                } else {
-                    Punto(
-                        index = index,
-                        nivel = nivel,
-                        litros = litros
-                    )
+                    if (litros == null || nivel == null) {
+                        null
+                    } else {
+                        Punto(
+                            index = index,
+                            nivel = nivel,
+                            litros = litros
+                        )
+                    }
                 }
-            }
 
-            if (puntos.size < 2) {
-                return@withContext Calibration(formula = "")
-            }
+                if (puntos.size < 2) {
+                    return@withContext AnalisisRegresion(formula = "", message = "")
+                }
 
-            val tendencias = construirTendenciasAutomaticas(puntos)
+                val tendencias = construirTendenciasDinamicas(puntos).toMutableList()
 
-            println("\nTendencias encontradas:")
-            tendencias.forEachIndexed { i, t -> println("$i = $t") }
-
-            val modelo = polinomialRegression(
-                tendencias = tendencias,
-                data = puntos.map { it.nivel to it.litros }
-            )
-
-            if (modelo != null) {
-                val result = modelSelectorUseCase(
-                    linealCoefficients = tendencias,
-                    poliCoefficients = modelo.coefficients
+                ajustarUltimoSegmentoSiEsMuyCorto(
+                    tendencias = tendencias,
+                    puntos = puntos,
+                    minPointsPerSegment = MIN_POINTS_PER_SEGMENT
                 )
 
-                val decision = if (result) "Polinomial" else "Escalonada"
-                println("Modelo seleccionado: $decision")
-            }
+                refinarFronterasSegmentos(
+                    tendencias = tendencias,
+                    puntos = puntos,
+                    minPointsPerSegment = MIN_POINTS_PER_SEGMENT
+                )
 
-            Calibration(
-                formula = ""
-            )
+                println("\nTendencias encontradas:")
+                tendencias.forEachIndexed { i, t -> println("$i = $t") }
+
+                val modelo = polinomialRegression(
+                    tendencias = tendencias,
+                    data = puntos.map { it.nivel to it.litros }
+                )
+
+                if (modelo != null) {
+                    val result = modelSelectorUseCase(
+                        linealCoefficients = tendencias,
+                        poliCoefficients = modelo.coefficients
+                    )
+
+                    val decision = if (result) "Polinomial" else "Escalonada"
+                    println("Modelo seleccionado: $decision")
+                }
+
+                AnalisisRegresion(
+                    formula = "", message = ""
+                )
+            } catch (_: Exception) {
+                AnalisisRegresion(
+                    formula = "", message = ""
+                )
+            }
         }
 
-    private fun construirTendenciasAutomaticas(
+    private fun construirTendenciasDinamicas(
         puntos: List<Punto>
-    ): MutableList<Tendencia> {
-        val n = puntos.size
+    ): List<Tendencia> {
+        val tendencias = mutableListOf<Tendencia>()
 
-        if (n < MIN_POINTS_PER_SEGMENT) {
-            return mutableListOf(
+        var puntoInicial = 0
+        var regression = SimpleRegression(true)
+
+        puntos.forEachIndexed { index, punto ->
+            val litros = punto.litros
+            val nivel = punto.nivel
+
+            if (regression.n < MIN_POINTS_PER_SEGMENT.toLong()) {
+                regression.addData(nivel, litros)
+                return@forEachIndexed
+            }
+
+            val mActual = regression.slope
+            val bActual = regression.intercept
+
+            val puntosActuales = puntos.subList(puntoInicial, index)
+            val rmseActual = calcularRmse(
+                puntos = puntosActuales,
+                pendiente = mActual,
+                intercepto = bActual
+            )
+
+            val regressionNuevo = SimpleRegression(true)
+            puntos.subList(puntoInicial, index + 1).forEach {
+                regressionNuevo.addData(it.nivel, it.litros)
+            }
+
+            val mNuevo = regressionNuevo.slope
+            val bNuevo = regressionNuevo.intercept
+            val rmseNuevo = calcularRmse(
+                puntos = puntos.subList(puntoInicial, index + 1),
+                pendiente = mNuevo,
+                intercepto = bNuevo
+            )
+
+            val corresponde = puntoCorresponde(
+                xNuevo = nivel,
+                yReal = litros,
+                pendienteActual = mActual,
+                interceptoActual = bActual,
+                rmseActual = rmseActual,
+                pendienteNueva = mNuevo,
+                interceptoNuevo = bNuevo,
+                rmseNuevo = rmseNuevo,
+                factorTolerancia = FACTOR_TOLERANCIA,
+                toleranciaMinima = TOLERANCIA_MINIMA,
+                factorCrecimientoRmse = FACTOR_CRECIMIENTO_RMSE
+            )
+
+            if (corresponde) {
+                regression.addData(nivel, litros)
+            } else {
+                tendencias.add(
+                    construirTendenciaDesdeRango(
+                        puntos = puntos,
+                        start = puntoInicial,
+                        end = index - 1
+                    )
+                )
+
+                puntoInicial = index
+                regression = SimpleRegression(true)
+                regression.addData(nivel, litros)
+            }
+        }
+
+        if (regression.n >= 2) {
+            tendencias.add(
                 construirTendenciaDesdeRango(
                     puntos = puntos,
-                    start = 0,
+                    start = puntoInicial,
                     end = puntos.lastIndex
                 )
             )
         }
 
-        val fits = Array(n) { arrayOfNulls<SegmentFit>(n) }
+        return tendencias
+    }
 
-        for (start in 0 until n) {
-            for (end in start until n) {
-                val size = end - start + 1
-                if (size >= MIN_POINTS_PER_SEGMENT) {
-                    fits[start][end] = fitSegment(
+    private fun refinarFronterasSegmentos(
+        tendencias: MutableList<Tendencia>,
+        puntos: List<Punto>,
+        minPointsPerSegment: Int
+    ) {
+        if (tendencias.size < 2) return
+
+        var huboCambio: Boolean
+
+        do {
+            huboCambio = false
+
+            for (i in 0 until tendencias.lastIndex) {
+                val izquierda = tendencias[i]
+                val derecha = tendencias[i + 1]
+
+                val mejor = mejorFronteraEntreSegmentos(
+                    izquierda = izquierda,
+                    derecha = derecha,
+                    puntos = puntos,
+                    minPointsPerSegment = minPointsPerSegment
+                )
+
+                if (mejor != null) {
+                    val nuevaIzquierda = construirTendenciaDesdeRango(
                         puntos = puntos,
-                        start = start,
-                        end = end
+                        start = mejor.first,
+                        end = mejor.second
                     )
-                }
-            }
-        }
 
-        val maxSegments = (n / MIN_POINTS_PER_SEGMENT).coerceAtLeast(1)
+                    val nuevaDerecha = construirTendenciaDesdeRango(
+                        puntos = puntos,
+                        start = mejor.third,
+                        end = mejor.fourth
+                    )
 
-        val dp = Array(maxSegments + 1) { DoubleArray(n) { Double.POSITIVE_INFINITY } }
-        val prev = Array(maxSegments + 1) { IntArray(n) { -1 } }
+                    val cambioIzquierda = nuevaIzquierda.puntoInicial != izquierda.puntoInicial ||
+                            nuevaIzquierda.puntoFinal != izquierda.puntoFinal
 
-        // Caso base: 1 segmento
-        for (end in 0 until n) {
-            val fit = fits[0][end]
-            if (fit != null) {
-                dp[1][end] = fit.sse
-                prev[1][end] = -1
-            }
-        }
+                    val cambioDerecha = nuevaDerecha.puntoInicial != derecha.puntoInicial ||
+                            nuevaDerecha.puntoFinal != derecha.puntoFinal
 
-        // DP para K = 2..maxSegments
-        for (k in 2..maxSegments) {
-            for (end in 0 until n) {
-                if (end + 1 < k * MIN_POINTS_PER_SEGMENT) continue
-
-                val minCut = (k - 1) * MIN_POINTS_PER_SEGMENT - 1
-                val maxCut = end - MIN_POINTS_PER_SEGMENT
-
-                for (cut in minCut..maxCut) {
-                    val fit = fits[cut + 1][end] ?: continue
-                    if (!dp[k - 1][cut].isFinite()) continue
-
-                    val candidate = dp[k - 1][cut] + fit.sse
-
-                    if (candidate < dp[k][end]) {
-                        dp[k][end] = candidate
-                        prev[k][end] = cut
+                    if (cambioIzquierda || cambioDerecha) {
+                        tendencias[i] = nuevaIzquierda
+                        tendencias[i + 1] = nuevaDerecha
+                        huboCambio = true
                     }
                 }
             }
-        }
 
-        var bestK = 1
-        var bestBic = Double.POSITIVE_INFINITY
+        } while (huboCambio)
+    }
 
-        for (k in 1..maxSegments) {
-            val sse = dp[k][n - 1]
-            if (!sse.isFinite()) continue
+    private fun mejorFronteraEntreSegmentos(
+        izquierda: Tendencia,
+        derecha: Tendencia,
+        puntos: List<Punto>,
+        minPointsPerSegment: Int
+    ): BoundaryCandidate? {
+        val leftStart = izquierda.puntoInicial
+        val leftEnd = izquierda.puntoFinal
+        val rightStart = derecha.puntoInicial
+        val rightEnd = derecha.puntoFinal
 
-            val bic = calcularBic(
-                n = n,
-                sse = sse,
-                k = k
+        val candidatos = mutableListOf<BoundaryCandidate>()
+
+        // Opción actual
+        if (segmentoValido(leftStart, leftEnd, minPointsPerSegment) &&
+            segmentoValido(rightStart, rightEnd, minPointsPerSegment)
+        ) {
+            candidatos.add(
+                BoundaryCandidate(
+                    first = leftStart,
+                    second = leftEnd,
+                    third = rightStart,
+                    fourth = rightEnd,
+                    error = errorTotalDosSegmentos(leftStart, leftEnd, rightStart, rightEnd, puntos)
+                )
             )
-
-            println("K=$k  SSE=$sse  BIC=$bic")
-
-            if (bic < bestBic) {
-                bestBic = bic
-                bestK = k
-            }
         }
 
-        println("K seleccionado automáticamente: $bestK")
+        // Mover un punto del segmento izquierdo al derecho
+        if (segmentoValido(leftStart, leftEnd - 1, minPointsPerSegment) &&
+            segmentoValido(rightStart - 1, rightEnd, minPointsPerSegment) &&
+            leftEnd == rightStart - 1
+        ) {
+            candidatos.add(
+                BoundaryCandidate(
+                    first = leftStart,
+                    second = leftEnd - 1,
+                    third = rightStart - 1,
+                    fourth = rightEnd,
+                    error = errorTotalDosSegmentos(
+                        leftStart,
+                        leftEnd - 1,
+                        rightStart - 1,
+                        rightEnd,
+                        puntos
+                    )
+                )
+            )
+        }
 
-        val ranges = reconstruirSegmentos(
-            prev = prev,
-            n = n,
-            kFinal = bestK
+        // Mover un punto del segmento derecho al izquierdo
+        if (segmentoValido(leftStart, leftEnd + 1, minPointsPerSegment) &&
+            segmentoValido(rightStart + 1, rightEnd, minPointsPerSegment) &&
+            leftEnd == rightStart - 1
+        ) {
+            candidatos.add(
+                BoundaryCandidate(
+                    first = leftStart,
+                    second = leftEnd + 1,
+                    third = rightStart + 1,
+                    fourth = rightEnd,
+                    error = errorTotalDosSegmentos(
+                        leftStart,
+                        leftEnd + 1,
+                        rightStart + 1,
+                        rightEnd,
+                        puntos
+                    )
+                )
+            )
+        }
+
+        return candidatos.minByOrNull { it.error }
+    }
+
+    private fun errorTotalDosSegmentos(
+        leftStart: Int,
+        leftEnd: Int,
+        rightStart: Int,
+        rightEnd: Int,
+        puntos: List<Punto>
+    ): Double {
+        val fitIzq = fitSegment(puntos, leftStart, leftEnd)
+        val fitDer = fitSegment(puntos, rightStart, rightEnd)
+
+        val rmseIzq = calcularRmse(
+            puntos = puntos.subList(leftStart, leftEnd + 1),
+            pendiente = fitIzq.first,
+            intercepto = fitIzq.second
         )
 
-        return ranges.map {
-            construirTendenciaDesdeRango(
+        val rmseDer = calcularRmse(
+            puntos = puntos.subList(rightStart, rightEnd + 1),
+            pendiente = fitDer.first,
+            intercepto = fitDer.second
+        )
+
+        return rmseIzq + rmseDer
+    }
+
+    private fun asegurarCoberturaUltimoPunto(
+        tendencias: MutableList<Tendencia>,
+        puntos: List<Punto>,
+        minPointsPerSegment: Int
+    ) {
+        if (tendencias.isEmpty() || puntos.isEmpty()) return
+
+        val ultimoIndiceReal = puntos.lastIndex
+        val ultimaTendencia = tendencias.last()
+
+        // Ya cubre todo
+        if (ultimaTendencia.puntoFinal >= ultimoIndiceReal) return
+
+        val inicioCola = ultimaTendencia.puntoFinal + 1
+        val finCola = ultimoIndiceReal
+        val puntosFaltantes = finCola - inicioCola + 1
+
+        if (puntosFaltantes <= 0) return
+
+        // Si la cola es muy corta, la absorbemos en la última tendencia
+        if (puntosFaltantes < minPointsPerSegment) {
+            val reconstruida = construirTendenciaDesdeRango(
                 puntos = puntos,
-                start = it.start,
-                end = it.end
+                start = ultimaTendencia.puntoInicial,
+                end = ultimoIndiceReal
             )
-        }.toMutableList()
-    }
-
-    private fun calcularBic(
-        n: Int,
-        sse: Double,
-        k: Int
-    ): Double {
-        val sseSeguro = sse.coerceAtLeast(1e-12)
-        val p = 3 * k - 1
-        return n * ln(sseSeguro / n.toDouble()) + p * ln(n.toDouble())
-    }
-
-    private fun reconstruirSegmentos(
-        prev: Array<IntArray>,
-        n: Int,
-        kFinal: Int
-    ): List<RangeCandidate> {
-        val ranges = mutableListOf<RangeCandidate>()
-
-        var currentEnd = n - 1
-        var currentK = kFinal
-
-        while (currentK >= 1 && currentEnd >= 0) {
-            val cut = prev[currentK][currentEnd]
-            val start = if (cut == -1) 0 else cut + 1
-            ranges.add(RangeCandidate(start, currentEnd))
-            currentEnd = cut
-            currentK--
+            tendencias[tendencias.lastIndex] = reconstruida
+            return
         }
 
-        ranges.reverse()
-        return ranges
+        // Si la cola ya alcanza para formar un segmento válido, la creamos
+        val nuevaFinal = construirTendenciaDesdeRango(
+            puntos = puntos,
+            start = inicioCola,
+            end = finCola
+        )
+        tendencias.add(nuevaFinal)
+    }
+
+    private fun ajustarUltimoSegmentoSiEsMuyCorto(
+        tendencias: MutableList<Tendencia>,
+        puntos: List<Punto>,
+        minPointsPerSegment: Int
+    ) {
+        if (tendencias.size < 2) return
+
+        val ultimo = tendencias.last()
+        val puntosUltimo = ultimo.puntoFinal - ultimo.puntoInicial + 1
+
+        if (puntosUltimo >= minPointsPerSegment) return
+
+        val penultimo = tendencias[tendencias.lastIndex - 1]
+
+        val fusionado = construirTendenciaDesdeRango(
+            puntos = puntos,
+            start = penultimo.puntoInicial,
+            end = ultimo.puntoFinal
+        )
+
+        tendencias.removeAt(tendencias.lastIndex)
+        tendencias.removeAt(tendencias.lastIndex)
+        tendencias.add(fusionado)
     }
 
     private fun construirTendenciaDesdeRango(
@@ -232,40 +416,70 @@ class CalibrationUseCaseImpl @Inject constructor(
         puntos: List<Punto>,
         start: Int,
         end: Int
-    ): SegmentFit {
+    ): Pair<Double, Double> {
         val regression = SimpleRegression(true)
-
         for (i in start..end) {
             regression.addData(puntos[i].nivel, puntos[i].litros)
         }
-
-        val slope = regression.slope
-        val intercept = regression.intercept
-
-        var sse = 0.0
-        for (i in start..end) {
-            val yPred = intercept + slope * puntos[i].nivel
-            val error = puntos[i].litros - yPred
-            sse += error * error
-        }
-
-        return SegmentFit(
-            slope = slope,
-            intercept = intercept,
-            sse = sse
-        )
+        return regression.slope to regression.intercept
     }
 
-    private data class SegmentFit(
-        val slope: Double,
-        val intercept: Double,
-        val sse: Double
-    )
+    private fun puntoCorresponde(
+        xNuevo: Double,
+        yReal: Double,
+        pendienteActual: Double,
+        interceptoActual: Double,
+        rmseActual: Double,
+        pendienteNueva: Double,
+        interceptoNuevo: Double,
+        rmseNuevo: Double,
+        factorTolerancia: Double = 1.8,
+        toleranciaMinima: Double = 0.10,
+        factorCrecimientoRmse: Double = 1.35
+    ): Boolean {
+        val yPredActual = predecir(xNuevo, pendienteActual, interceptoActual)
+        val errorActual = abs(yReal - yPredActual)
 
-    private data class RangeCandidate(
-        val start: Int,
-        val end: Int
-    )
+        val yPredNuevo = predecir(xNuevo, pendienteNueva, interceptoNuevo)
+        val errorNuevo = abs(yReal - yPredNuevo)
+
+        val umbral = max(rmseActual * factorTolerancia, toleranciaMinima)
+        val noExplotaRmse = rmseNuevo <= max(rmseActual * factorCrecimientoRmse, toleranciaMinima)
+
+        return errorActual <= umbral &&
+                errorNuevo <= umbral &&
+                noExplotaRmse
+    }
+
+    private fun calcularRmse(
+        puntos: List<Punto>,
+        pendiente: Double,
+        intercepto: Double
+    ): Double {
+        require(puntos.isNotEmpty()) { "La lista no puede estar vacía" }
+
+        val mse = puntos.sumOf { punto ->
+            val yPred = predecir(punto.nivel, pendiente, intercepto)
+            val error = punto.litros - yPred
+            error.pow(2)
+        } / puntos.size
+
+        return sqrt(mse)
+    }
+
+    private fun predecir(x: Double, pendiente: Double, intercepto: Double): Double {
+        return intercepto + pendiente * x
+    }
+
+    private fun segmentoValido(
+        start: Int,
+        end: Int,
+        minPointsPerSegment: Int
+    ): Boolean {
+        if (start > end) return false
+        val size = end - start + 1
+        return size >= minPointsPerSegment
+    }
 
     data class Punto(
         val index: Int,
@@ -273,7 +487,18 @@ class CalibrationUseCaseImpl @Inject constructor(
         val litros: Double
     )
 
+    data class BoundaryCandidate(
+        val first: Int,
+        val second: Int,
+        val third: Int,
+        val fourth: Int,
+        val error: Double
+    )
+
     companion object {
         private const val MIN_POINTS_PER_SEGMENT = 3
+        private const val FACTOR_TOLERANCIA = 1.25
+        private const val TOLERANCIA_MINIMA = 0.001
+        private const val FACTOR_CRECIMIENTO_RMSE = 1.20
     }
 }

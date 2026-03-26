@@ -1,8 +1,8 @@
 package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel
 
-import com.gasmonsoft.fuelboxcontrol.model.login.UserData
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.login.UserData
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleConfiguration
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 
 data class VehiculoUiState(
     val isLoggedIn: Boolean = false,

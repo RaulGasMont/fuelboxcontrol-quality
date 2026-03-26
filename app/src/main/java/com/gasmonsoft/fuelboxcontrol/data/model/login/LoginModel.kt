@@ -1,6 +1,6 @@
-package com.gasmonsoft.fuelboxcontrol.model.login
+package com.gasmonsoft.fuelboxcontrol.data.model.login
 
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import com.google.gson.annotations.SerializedName
 
 data class LoginDto(

@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorPackage
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard

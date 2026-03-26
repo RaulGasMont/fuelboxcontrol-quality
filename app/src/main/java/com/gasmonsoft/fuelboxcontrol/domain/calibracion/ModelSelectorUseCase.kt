@@ -1,6 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.domain.calibracion
 
-import com.gasmonsoft.fuelboxcontrol.model.calibracion.Tendencia
+import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Tendencia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
