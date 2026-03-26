@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.sensor.ui
+package com.gasmonsoft.fuelboxcontrol.ui.sensor.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,9 +65,9 @@ fun ConnectionStatusRow(
     }
 
     val actionLabel = when (state) {
-        ConnectionState.Connected -> "Desconectar"
-        ConnectionState.Disconnected -> "Reconectar"
-        ConnectionState.Uninitialized -> "Inicializar"
+        ConnectionState.Connected -> "Cerrar conexión"
+        ConnectionState.Disconnected -> "Volver a conectar"
+        ConnectionState.Uninitialized -> "Iniciar conexión"
         ConnectionState.CurrentlyInitializing -> "Conectando..."
     }
 

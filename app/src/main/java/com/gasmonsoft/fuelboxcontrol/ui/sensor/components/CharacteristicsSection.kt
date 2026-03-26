@@ -1,9 +1,8 @@
-package com.gasmonsoft.fuelboxcontrol.ui.sensor.ui
+package com.gasmonsoft.fuelboxcontrol.ui.sensor.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Battery6Bar
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.runtime.Composable

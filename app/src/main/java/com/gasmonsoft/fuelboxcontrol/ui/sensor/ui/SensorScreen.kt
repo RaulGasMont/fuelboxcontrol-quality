@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Battery6Bar
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,8 +44,14 @@ import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.CommandSection
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.ConnectionStatusRow
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.InfoLine
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.PermissionRequiredContent
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SectionHeader
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCaption
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCard
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorSectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SingleSensorDataCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorUiEvent
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorUiState
@@ -143,7 +151,7 @@ fun SensorScreenContent(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Caja de comunicaciones",
+                        text = "Monitoreo de caja",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -181,8 +189,8 @@ fun SensorScreenContent(
                 item {
                     SensorSectionCard {
                         SectionHeader(
-                            title = "Estado de conexión",
-                            subtitle = "Control de la sesión Bluetooth actual"
+                            title = "Conexión del dispositivo",
+                            subtitle = "Revise el estado actual de la caja y gestione la conexión."
                         )
 
                         Spacer(modifier = Modifier.height(18.dp))
@@ -199,16 +207,34 @@ fun SensorScreenContent(
                 }
 
                 item {
-                    CharacteristicsSection(
-                        bateria = uiState.bateria,
-                        sensorMessage = uiState.sensorMessage
-                    )
+                    SensorSectionCard {
+                        SectionHeader(
+                            title = "Resumen del dispositivo",
+                            subtitle = "Información general y mensajes recientes del dispositivo."
+                        )
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        InfoLine(
+                            title = "Estado de batería / comando",
+                            value = uiState.bateria.ifBlank { "Sin información disponible" },
+                            icon = Icons.Rounded.Battery6Bar
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        InfoLine(
+                            title = "Mensaje del sistema",
+                            value = uiState.sensorMessage.ifBlank { "Sin mensajes disponibles" },
+                            icon = Icons.Rounded.Info
+                        )
+                    }
                 }
 
                 item {
                     CommandSection(
-                        title = "Comando EINC",
-                        subtitle = "Calibra el acelerómetro con base en la posición actual del vehículo.",
+                        title = "Calibrar acelerómetro",
+                        subtitle = "Seleccione el eje de referencia para calibrar el acelerómetro.",
                         options = {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -225,7 +251,7 @@ fun SensorScreenContent(
                                     )
                                 ) {
                                     Text(
-                                        text = "X",
+                                        text = "Eje X",
                                         color = MaterialTheme.colorScheme.onSecondaryFixed
                                     )
                                 }
@@ -240,7 +266,7 @@ fun SensorScreenContent(
                                     )
                                 ) {
                                     Text(
-                                        text = "Y",
+                                        text = "Eje Y",
                                         color = MaterialTheme.colorScheme.onSecondaryFixed
                                     )
                                 }
@@ -255,7 +281,7 @@ fun SensorScreenContent(
                                     )
                                 ) {
                                     Text(
-                                        text = "Z",
+                                        text = "Eje Z",
                                         color = MaterialTheme.colorScheme.onSecondaryFixed
                                     )
                                 }
@@ -266,8 +292,8 @@ fun SensorScreenContent(
 
                 item {
                     CommandSection(
-                        title = "Comando RTC",
-                        subtitle = "Actualiza fecha y hora en la caja de comunicaciones.",
+                        title = "Actualizar fecha y hora",
+                        subtitle = "Sincronice la fecha y la hora del dispositivo.",
                         options = {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -283,7 +309,7 @@ fun SensorScreenContent(
                                     )
                                 ) {
                                     Text(
-                                        text = "Fecha",
+                                        text = "Actualizar fecha",
                                         color = MaterialTheme.colorScheme.onSecondaryFixed
                                     )
                                 }
@@ -298,7 +324,7 @@ fun SensorScreenContent(
                                     )
                                 ) {
                                     Text(
-                                        text = "Hora",
+                                        text = "Actualizar hora",
                                         color = MaterialTheme.colorScheme.onSecondaryFixed
                                     )
                                 }
@@ -309,8 +335,8 @@ fun SensorScreenContent(
 
                 item {
                     SectionHeader(
-                        title = "Sensores",
-                        subtitle = "Lecturas y acelerómetro"
+                        title = "Lecturas de sensores",
+                        subtitle = "Consulte las lecturas recibidas de cada sensor."
                     )
                 }
 
@@ -332,42 +358,15 @@ fun SensorScreenContent(
                     )
                 }
 
-                item {
-                    SensorDataCard(
-                        numSensor = "1",
-                        sensorData = sensorInfoState.sensor1
-                    )
-                }
-
-                item {
-                    SensorDataCard(
-                        numSensor = "2",
-                        sensorData = sensorInfoState.sensor2
-                    )
-                }
-
-                item {
-                    SensorDataCard(
-                        numSensor = "3",
-                        sensorData = sensorInfoState.sensor3
-                    )
-                }
-
-                item {
-                    SensorDataCard(
-                        numSensor = "4",
-                        sensorData = sensorInfoState.sensor4
-                    )
-                }
+                item { SensorDataCard(numSensor = "1", sensorData = sensorInfoState.sensor1) }
+                item { SensorDataCard(numSensor = "2", sensorData = sensorInfoState.sensor2) }
+                item { SensorDataCard(numSensor = "3", sensorData = sensorInfoState.sensor3) }
+                item { SensorDataCard(numSensor = "4", sensorData = sensorInfoState.sensor4) }
 
                 item {
                     SingleSensorDataCard(
                         accelerometerData = sensorInfoState.acelerometro
                     )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -375,24 +374,27 @@ fun SensorScreenContent(
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun SensorScreenPreview() {
+fun SensorScreenContentPreview() {
     FuelBoxControlTheme {
         SensorScreenContent(
+            uiState = SensorUiState(
+                connectionState = ConnectionState.Connected,
+                bateria = "85%",
+                sensorMessage = "Todo normal"
+            ),
             sensorInfoState = SensorState(
-                sensor1 = SensorData("", false, "2024-01-01", "25°C", "100", "3"),
-                sensor2 = SensorData("", false, "2024-01-01", "26°C", "150L", "2"),
-                sensor3 = SensorData("", false, "2024-01-01", "24°C", "200L", "3"),
-                sensor4 = SensorData("", false, "2024-01-01", "27°C", "50L", "1"),
-                acelerometro = AccelerometerData("", false, "2024-01-01", "100")
+                sensor1 = SensorData(rawData = "25.4", error = true),
+                sensor2 = SensorData(rawData = "26.1"),
+                sensor3 = SensorData(rawData = "24.8"),
+                sensor4 = SensorData(rawData = "25.9"),
+                acelerometro = AccelerometerData(value = "0.0, 0.0, 1.0")
             ),
             permissionState = object : MultiplePermissionsState {
                 override val allPermissionsGranted: Boolean = true
-                override val permissions: List<PermissionState> =
-                    emptyList()
-                override val revokedPermissions: List<PermissionState> =
-                    emptyList()
+                override val permissions: List<PermissionState> = emptyList()
+                override val revokedPermissions: List<PermissionState> = emptyList()
                 override val shouldShowRationale: Boolean = false
                 override fun launchMultiplePermissionRequest() {}
             },
@@ -400,7 +402,6 @@ fun SensorScreenPreview() {
             onReconnect = {},
             onInitializeConnection = {},
             onWriteEinc = {},
-            uiState = SensorUiState(),
             onWriteRTC = {}
         )
     }
