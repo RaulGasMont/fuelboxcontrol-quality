@@ -19,7 +19,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppState
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute
-import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.Calibracion
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.DatosVehiculos
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.Sensores
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.destinations
@@ -37,17 +36,13 @@ fun SensorConfigBottomBar(appState: AppState) {
                     } == true
                 }
 
-                Calibracion -> {
-                    currentDestination?.hierarchy?.any {
-                        it.hasRoute<Calibracion>()
-                    } == true
-                }
-
                 DatosVehiculos -> {
                     currentDestination?.hierarchy?.any {
                         it.hasRoute<DatosVehiculos>()
                     } == true
                 }
+
+                else -> false
             }
 
         },

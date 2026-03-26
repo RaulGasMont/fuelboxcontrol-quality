@@ -78,7 +78,7 @@ class CalibrationViewModel @Inject constructor(
         }
     }
 
-    fun startAnalise() {
+    fun startAnalise(idCaja: Int) {
         viewModelScope.launch {
             if (_calibrationUiState.value.selectedSensor == null) return@launch
             if (_calibrationUiState.value.measurements.isEmpty()) return@launch
@@ -111,6 +111,8 @@ class CalibrationViewModel @Inject constructor(
             }
             val response = repository.getDatFile(
                 Calibracion(
+                    idCajaComunicaciones = idCaja,
+                    idSensor = _calibrationUiState.value.selectedSensor!!.id.toInt(),
                     tendencias = regressionResponse.tendencias,
                     capacidad = _calibrationUiState.value.capacidad,
                     capacitancia = _calibrationUiState.value.capacitancia.toInt(),

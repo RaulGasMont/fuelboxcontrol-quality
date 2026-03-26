@@ -1,5 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +24,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleConfiguration
+import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorPackage
-import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
@@ -45,6 +48,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.VehiculosViewModel
 @Composable
 fun VehiculosRoute(
     modifier: Modifier = Modifier,
+    onCalibrate: (idCaja: Int) -> Unit,
     viewModel: VehiculosViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState.collectAsState()
@@ -87,7 +91,9 @@ fun VehiculosRoute(
                 )
             },
             onLogout = { viewModel.logout() },
+            onCalibrate = onCalibrate,
             onSelectVehicle = { viewModel.getVehicleData(it) },
+            vehicleConfig = uiState.value.vehicleConfiguration,
             modifier = modifier
         )
 
@@ -119,6 +125,7 @@ fun VehiculosRoute(
 
 @Composable
 fun VehiculosScreen(
+    vehicleConfig: VehicleConfiguration?,
     wifiStatus: WifiConnectionState,
     loggedUser: String,
     logData: String,
@@ -133,9 +140,11 @@ fun VehiculosScreen(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onSelectVehicle: (Int) -> Unit,
+    onCalibrate: (Int) -> Unit,
     modifier: Modifier = Modifier,
     currentVehicle: VehicleInfo?,
 ) {
+    val context = LocalContext.current
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
@@ -179,7 +188,18 @@ fun VehiculosScreen(
                 vehicles = vehicles,
                 currentVehicle = currentVehicle,
                 isLogged = isLogged,
-                onSelectVehicle = onSelectVehicle
+                onSelectVehicle = onSelectVehicle,
+                onCalibrate = {
+                    val idCaja = vehicleConfig?.idCaja?.toIntOrNull()
+                    if (idCaja != null) onCalibrate(idCaja)
+                    else {
+                        Toast.makeText(
+                            context,
+                            "No se encontro id de la caja de comunicaciones",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
             )
 
             SendingSummarySection(
@@ -224,7 +244,13 @@ fun VehiculosScreenPreview() {
             onLoginPassword = {},
             onLogin = {},
             onLogout = {},
-            onSelectVehicle = {}
+            onSelectVehicle = {},
+            onCalibrate = {},
+            vehicleConfig = VehicleConfiguration(
+                idVehiculo = 0,
+                idCaja = "",
+                tipoCaja = ""
+            ),
         )
     }
 }
@@ -253,7 +279,13 @@ fun VehiculosScreenNotLoggedPreview() {
             onLoginPassword = {},
             onLogin = {},
             onLogout = {},
-            onSelectVehicle = {}
+            onSelectVehicle = {},
+            onCalibrate = {},
+            vehicleConfig = VehicleConfiguration(
+                idVehiculo = 0,
+                idCaja = "",
+                tipoCaja = ""
+            ),
         )
     }
 }

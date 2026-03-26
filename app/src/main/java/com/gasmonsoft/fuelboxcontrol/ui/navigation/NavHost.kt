@@ -27,12 +27,16 @@ fun AppNavHost(
             )
         }
 
-        composable<ScreenRoute.Calibracion> {
-            CalibracionRoute()
+        composable<ScreenRoute.Calibracion> { backStackEntry ->
+            val calibrationRoute = backStackEntry.toRoute<ScreenRoute.Calibracion>()
+            val idCaja = calibrationRoute.idCaja
+            CalibracionRoute(idCaja = idCaja, onBack = { navController.popBackStack() })
         }
 
         composable<ScreenRoute.DatosVehiculos> {
-            VehiculosRoute()
+            VehiculosRoute(onCalibrate = { idCaja ->
+                navController.navigate(ScreenRoute.Calibracion(idCaja))
+            })
         }
     }
 }

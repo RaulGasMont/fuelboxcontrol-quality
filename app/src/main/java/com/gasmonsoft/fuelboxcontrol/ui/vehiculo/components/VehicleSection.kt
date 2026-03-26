@@ -4,9 +4,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -23,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.VehicleInfo
@@ -35,7 +41,8 @@ fun VehicleSection(
     vehicles: List<VehicleInfo>,
     currentVehicle: VehicleInfo?,
     isLogged: Boolean,
-    onSelectVehicle: (Int) -> Unit
+    onSelectVehicle: (Int) -> Unit,
+    onCalibrate: () -> Unit
 ) {
     val isEnabled = isLogged && vehicles.isNotEmpty()
 
@@ -77,6 +84,27 @@ fun VehicleSection(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Button(
+                onClick = onCalibrate,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(18.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Sensors,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Calibrar sensores",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
                 )
             }
         }
@@ -175,7 +203,8 @@ fun VehicleSectionPreview() {
             vehicles = vehicles,
             currentVehicle = vehicles[0],
             isLogged = true,
-            onSelectVehicle = {}
+            onSelectVehicle = {},
+            onCalibrate = {}
         )
     }
 }
@@ -188,7 +217,8 @@ fun VehicleSectionNotLoggedPreview() {
             vehicles = emptyList(),
             currentVehicle = null,
             isLogged = false,
-            onSelectVehicle = {}
+            onSelectVehicle = {},
+            onCalibrate = {}
         )
     }
 }
@@ -201,7 +231,8 @@ fun VehicleSectionNoVehiclesPreview() {
             vehicles = emptyList(),
             currentVehicle = null,
             isLogged = true,
-            onSelectVehicle = {}
+            onSelectVehicle = {},
+            onCalibrate = {}
         )
     }
 }

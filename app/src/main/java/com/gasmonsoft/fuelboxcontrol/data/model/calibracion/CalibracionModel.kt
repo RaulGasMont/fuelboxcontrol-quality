@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName
 
 fun Calibracion.toDto(): CalibrationDto {
     return CalibrationDto(
+        idCajaComunicaciones = idCajaComunicaciones,
+        idSensor = idSensor,
         tendencias = tendencias.map { tendencia ->
             TendenciasDto(
                 limite = tendencia.initialValue,
@@ -33,6 +35,8 @@ data class Tendencia(
 )
 
 data class Calibracion(
+    val idCajaComunicaciones: Int,
+    val idSensor: Int,
     val tendencias: List<Tendencia>,
     val capacidad: Double,
     val capacitancia: Int,
@@ -47,6 +51,8 @@ data class TendenciasDto(
 )
 
 data class CalibrationDto(
+    @SerializedName("id_cajaComunicaciones") val idCajaComunicaciones: Int,
+    @SerializedName("i_sensor") val idSensor: Int,
     @SerializedName("tendencias") val tendencias: List<TendenciasDto>,
     @SerializedName("capacidad") val capacidad: Double,
     @SerializedName("capacitancia") val capacitancia: Int,

@@ -1,5 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.ui.calibracion.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.OilBarrel
 import androidx.compose.material.icons.filled.Sensors
@@ -27,6 +30,7 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -69,10 +73,16 @@ import com.gasmonsoft.fuelboxcontrol.utils.toPositiveDoubleOrNull
 
 @Composable
 fun CalibracionRoute(
+    idCaja: Int,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CalibrationViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.calibrationUiState.collectAsState()
+
+    BackHandler {
+        onBack()
+    }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -85,10 +95,11 @@ fun CalibracionRoute(
             },
             onSelectSensor = { viewModel.selectSensor(it) },
             onDeleteMeasurement = { viewModel.eliminarUltimaMedicion() },
-            onStarAnalise = { viewModel.startAnalise() },
+            onStarAnalise = { viewModel.startAnalise(idCaja) },
             onSaveConfig = { capacidad, capacitancia ->
                 viewModel.saveCapacidadAndCapacitancia(capacidad, capacitancia)
-            }
+            },
+            onBack = onBack
         )
 
         when (uiState.value.calibrationEvent) {
@@ -140,6 +151,7 @@ fun CalibrationScreen(
     onDeleteMeasurement: () -> Unit,
     onStarAnalise: () -> Unit,
     onSaveConfig: (capacidad: String, capacitancia: String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundBrush = Brush.verticalGradient(
@@ -188,11 +200,23 @@ fun CalibrationScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ScreenHeaderCard(
-                title = "Calibración",
-                subtitle = "",
-                icon = Icons.Filled.Sensors,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Regresar"
+                    )
+                }
+                ScreenHeaderCard(
+                    title = "Calibración",
+                    subtitle = "",
+                    icon = Icons.Filled.Sensors,
+                )
+            }
+
 
             SectionCard {
                 SectionTitle(
@@ -556,7 +580,8 @@ fun CalibrationScreenPreview() {
             onSelectSensor = {},
             onDeleteMeasurement = {},
             onStarAnalise = {},
-            onSaveConfig = { _, _ -> }
+            onSaveConfig = { _, _ -> },
+            onBack = {}
         )
     }
 }
