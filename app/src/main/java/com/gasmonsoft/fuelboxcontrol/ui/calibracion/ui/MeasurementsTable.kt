@@ -62,11 +62,11 @@ fun MeasurementsTable(
                         modifier = Modifier.weight(1f)
                     )
                     HeaderCell(
-                        value = "Litros",
+                        value = "Valor",
                         modifier = Modifier.weight(1f)
                     )
                     HeaderCell(
-                        value = "Valor",
+                        value = "Litros",
                         modifier = Modifier.weight(1f)
                     )
                 }

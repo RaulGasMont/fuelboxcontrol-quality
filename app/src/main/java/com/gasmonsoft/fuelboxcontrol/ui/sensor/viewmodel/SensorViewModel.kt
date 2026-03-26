@@ -1,26 +1,16 @@
 package com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
-import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
@@ -30,20 +20,22 @@ import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Timer
-import java.util.TimerTask
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 
@@ -52,795 +44,630 @@ class SensorViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
-    private val _shouldReconnect = MutableStateFlow(true)
-    val shouldReconnect: StateFlow<Boolean> = _shouldReconnect.asStateFlow()
 
-    fun disableAutoReconnect() {
-        _shouldReconnect.value = false
-    }
+    private val ssidUuid = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb").toString()
+    private val passwordUuid = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb").toString()
+    private val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb").toString()
 
+    private val globalDateUuid = "0fe0e4d2-724e-4e1a-bebe-79e29f621b15"
+    private val globalAlertsUuid = "80c4c443-2128-4570-b0da-6b3dbced01a6"
+    private val batteryUuid = "66169bab-d567-4388-b634-357ff0dac5f1"
 
-    fun enableAutoReconnect() {
-        _shouldReconnect.value = true
-    }
+    private val _uiState = MutableStateFlow(SensorUiState())
+    val uiState: StateFlow<SensorUiState> = _uiState.asStateFlow()
 
+    private val _events = MutableSharedFlow<SensorUiEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<SensorUiEvent> = _events.asSharedFlow()
 
-    var initializingMessage by mutableStateOf<String?>(null)
-        private set
+    /**
+     * Derivados útiles por compatibilidad si todavía no migras toda la UI.
+     */
+    val connectionState: StateFlow<ConnectionState> =
+        uiState.map { it.connectionState }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = ConnectionState.Uninitialized
+            )
 
-    var errorMessage by mutableStateOf<String?>(null)
-        private set
+    val shouldReconnect: StateFlow<Boolean> =
+        uiState.map { it.shouldReconnect }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = true
+            )
 
-    var sensoruno by mutableStateOf("")
-        private set
+    private var subscriptionJob: Job? = null
+    private var periodicWriteJob: Job? = null
 
-    private val _connectionState: MutableStateFlow<ConnectionState> =
-        MutableStateFlow(ConnectionState.Uninitialized)
-    val connectionState = _connectionState.asStateFlow()
-
-    val _Message = MutableLiveData<String>()
-    val Message: LiveData<String> = _Message
-
-    private val _volumen1 = MutableLiveData<String>()
-    val volumen1: LiveData<String> = _volumen1
-    private val _temperatura1 = MutableLiveData<String>()
-    val temperatura1: LiveData<String> = _temperatura1
-    private val _constante1 = MutableLiveData<String>()
-    val constante1: LiveData<String> = _constante1
-    private val _fecha1 = MutableLiveData<String>()
-    val fecha1: LiveData<String> = _fecha1
-    private val _alerta1 = MutableLiveData<String>()
-    val alerta1: LiveData<String> = _alerta1
-
-    private val _volumen2 = MutableLiveData<String>()
-    val volumen2: LiveData<String> = _volumen2
-    private val _temperatura2 = MutableLiveData<String>()
-    val temperatura2: LiveData<String> = _temperatura2
-    private val _constante2 = MutableLiveData<String>()
-    val constante2: LiveData<String> = _constante2
-    private val _fecha2 = MutableLiveData<String>()
-    val fecha2: LiveData<String> = _fecha2
-    private val _alerta2 = MutableLiveData<String>()
-    val alerta2: LiveData<String> = _alerta2
-
-    private val _volumen3 = MutableLiveData<String>()
-    val volumen3: LiveData<String> = _volumen3
-    private val _temperatura3 = MutableLiveData<String>()
-    val temperatura3: LiveData<String> = _temperatura3
-    private val _constante3 = MutableLiveData<String>()
-    val constante3: LiveData<String> = _constante3
-    private val _fecha3 = MutableLiveData<String>()
-    val fecha3: LiveData<String> = _fecha3
-    private val _alerta3 = MutableLiveData<String>()
-    val alerta3: LiveData<String> = _alerta3
-
-    private val _volumen4 = MutableLiveData<String>()
-    val volumen4: LiveData<String> = _volumen4
-    private val _temperatura4 = MutableLiveData<String>()
-    val temperatura4: LiveData<String> = _temperatura4
-    private val _constante4 = MutableLiveData<String>()
-    val constante4: LiveData<String> = _constante4
-    private val _fecha4 = MutableLiveData<String>()
-    val fecha4: LiveData<String> = _fecha4
-    private val _alerta4 = MutableLiveData<String>()
-    val alerta4: LiveData<String> = _alerta4
-
-    private val _senial = MutableLiveData<String>()
-    val senial: LiveData<String> = _senial
-
-    private val _bateria = MutableLiveData<String>()
-    val bateria: LiveData<String> = _bateria
-
-    private val _textValue = MutableLiveData<String>()
-    val textValue: LiveData<String> = _textValue
-
-    private var alertDialog: AlertDialog? = null
-
-
-    private val timer = Timer()
-
-
-    //wifi
-
-    private val _connectionStates = MutableStateFlow("Desconectado")
-    val connectionStates: StateFlow<String> = _connectionStates
-
-    private val _sendingState = MutableStateFlow("Esperando hostpost")
-    val sendingState: StateFlow<String> = _sendingState
-
-    private val _discoveredServices = MutableStateFlow("")
-    val discoveredServices: StateFlow<String> = _discoveredServices
-
+    /**
+     * Si todavía la UI usa esto en otra parte, puedes conservarlo.
+     * Pero idealmente la pantalla debería usar uiState.
+     */
     val sensorInfoState = sensorReceiveManager.sensorData
 
-    var isAutoconsumo by mutableStateOf(false)
-        private set
-
-    init {
-        scheduleWriteInitialValuesTask()
+    fun initializeConnection() {
+        loadSavedMacAddress()
+        clearReadings()
+        ensureSubscription()
+        sensorReceiveManager.startReceiving()
     }
 
-    private fun scheduleWriteInitialValuesTask() {
-        timer.schedule(object : TimerTask() {
-            override fun run() {
-
-                writeInitialValuese("", 2)
-
-            }
-        }, 0, 30000)
+    fun enableAutoReconnect() {
+        _uiState.update { it.copy(shouldReconnect = true) }
     }
 
-    private fun scheduleWriteInitialValuesTask2() {
-        val task = object : TimerTask() {
-            override fun run() {
-                writeInitialValuese("", 3)
-
-                cancel()
-            }
-        }
-
-        timer.schedule(task, 70000) // 34000 milisegundos = 34 segundos
-    }
-
-
-    fun onCleareds() {
-        super.onCleared()
-        timer.cancel()
-        sensorReceiveManager.closeConnection()
-        _Message.value = ""
-        _bateria.value = ""
-    }
-
-//    @SuppressLint("MissingPermission")
-//    suspend fun getLastKnownLocation(): Location? {
-//        return try {
-//            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-//            suspendCoroutine { continuation ->
-//                var isResumed = false
-//
-//                val locationRequest = LocationRequest.create()
-//                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-//                    .setInterval(10000)
-//                    .setFastestInterval(5000)
-//
-//                val callback = object : LocationCallback() {
-//                    override fun onLocationResult(p0: LocationResult) {
-//                        if (!isResumed) {
-//                            p0.lastLocation?.let { location ->
-//                                continuation.resume(location)
-//                            } ?: run {
-//                                continuation.resume(null)
-//                            }
-//                            isResumed = true
-//                            fusedLocationClient.removeLocationUpdates(this)
-//                        }
-//                    }
-//                }
-//
-//                fusedLocationClient.requestLocationUpdates(
-//                    locationRequest,
-//                    callback,
-//                    Looper.getMainLooper()
-//                )
-//            }
-//        } catch (e: Exception) {
-//
-//            null
-//        }
-//    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun onSendRead(context: Context, uri: Uri, date: String, idcaja: String) {
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun subscribeToChanges() {
-        _Message.value = ""
-        var latitude: Double
-        var longitude: Double
-        viewModelScope.launch {
-
-            val ssidUuid = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb")
-            val passwordUuid = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb")
-            val wifiEnabledUuid = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb")
-//
-            sensorReceiveManager.data.collect { result ->
-
-//                val location = getLastKnownLocation()
-//
-//                if (location != null) {
-//                    latitude = location.latitude
-//                    longitude = location.longitude
-//                } else {
-//                    latitude = 0.0
-//                    longitude = 0.0
-//                }
-
-                _connectionState.update {
-                    when (result) {
-                        is Resource.Success -> {
-                            with(result.data.SensorId) {
-                                when (result.data.SensorId) {
-                                    NetworkConfig.Volumen1_CHARACTERISTICS_UUID -> {
-                                        _volumen1.value =
-                                            "Volúmen1 ${NetworkConfig.Volumen1_CHARACTERISTICS_UUID}: " + (ordenarYConvertir(
-                                                result.data.Volumen
-                                            ) ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Temperatura1_CHARACTERISTICS_UUID -> {
-
-                                        _temperatura1.value =
-                                            "Calidad1 ${NetworkConfig.Temperatura1_CHARACTERISTICS_UUID}: " + (ordenarYConvertir(
-                                                result.data.Volumen
-                                            ) ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Constante1_CHARACTERISTICS_UUID -> {
-
-                                        _constante1.value =
-                                            "Temperatura1 ${NetworkConfig.Constante1_CHARACTERISTICS_UUID}: " + (ordenarYConvertir(
-                                                result.data.Volumen
-                                            ) ?: result.data.Volumen)
-                                    }
-
-                                    "0fe0e4d2-724e-4e1a-bebe-79e29f621b15" -> {
-                                        _fecha1.value =
-                                            "Fecha Global: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Alertas1_CHARACTERISTICS_UUID -> {
-
-                                        _alerta1.value =
-                                            "Alertas1: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-
-                                    NetworkConfig.Volumen2_CHARACTERISTICS_UUID -> {
-
-                                        _volumen2.value =
-                                            "Volúmen2: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Temperatura2_CHARACTERISTICS_UUID -> {
-                                        _temperatura2.value =
-                                            "Calidad2: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Constante2_CHARACTERISTICS_UUID -> {
-
-                                        _constante2.value =
-                                            "Temperatura2: " + ordenarYConvertir(result.data.Volumen)
-                                    }
-
-
-                                    ssidUuid.toString() -> {
-
-                                        _sendingState.value = result.data.Volumen
-                                    }
-
-                                    passwordUuid.toString() -> {
-
-                                        _sendingState.value = result.data.Volumen
-                                    }
-
-                                    wifiEnabledUuid.toString() -> {
-
-                                        _sendingState.value = result.data.Volumen
-                                    }
-
-                                    "80c4c443-2128-4570-b0da-6b3dbced01a6" -> {
-                                        _alerta2.value =
-                                            "Alerta Global Sin convertir" + result.data.Volumen
-                                        val hexValue = result.data.Volumen
-                                        val binaryValues = kotlin.text.StringBuilder()
-
-
-                                        for (character in hexValue) {
-                                            val binaryValue =
-                                                character.toString().toInt(16).toString(2)
-                                                    .padStart(4, '0')
-                                            binaryValues.append("$character binario: $binaryValue\n")
-                                        }
-
-//                                        val hexValueSubset = hexValue.substring(4, 6)
-//                                        val binaryValueSubset = hexValueSubset.toInt(16).toString(2)
-//                                        val bit4_1Result =
-//                                            if (binaryValueSubset[0] == '1') "Sensor activo" else "Sensor inactivo"
-//                                        val bit4_3Result =
-//                                            if (binaryValueSubset[2] == '1') "No está Funcionando" else "Funcionando"
-//                                        val bit4_4Result =
-//                                            if (binaryValueSubset[3] == '1') "Tanque menor del 5 porciento" else "Tanque mayor al 5% porciento"
-//                                        val bit4_5Result =
-//                                            if (binaryValueSubset[4] == '1') "Tanque a mayor de 95%" else "El tanque no está a mayor de 95%"
-//                                        val bit5_2Result =
-//                                            if (binaryValueSubset[5] == '1') "Cambio de temperatura si" else "Cambio de temperatura no"
-//                                        val bit5_3Result =
-//                                            if (binaryValueSubset[6] == '1') "Cambio de combustible si" else "Calidad de combustible no"
-//                                        val bit5_4Result =
-//                                            if (binaryValueSubset[7] == '1') "Cambio de nivel si" else "Cambio de nivel no"
-//
-//
-//                                        val finalResults =
-//                                            "Valor binario Sensor1:$binaryValueSubset \n" +
-//                                                    ", Primer Posición: $bit4_1Result\n" +
-//                                                    ",  Tercera Posición Funcionado: $bit4_3Result\n" +
-//                                                    ",  Cuarta Posicion: $bit4_4Result\n" +
-//                                                    ", - Quinta Posicion Tanque 95%: $bit4_5Result\n" +
-//                                                    " Sexta Posicion  Temperatura: $bit5_2Result\n" +
-//                                                    ", Séptima Combustible: $bit5_3Result\n" +
-//                                                    ",  Octava Nivel: $bit5_4Result\n\n\n\n"
-
-                                        val hexValueSubsets = hexValue.substring(6, 8)
-
-                                        val binaryValueSubsets = hexValueSubsets.toInt(16)
-                                            .toString(2)
-
-                                        val bit4_1Results = if (binaryValueSubsets.length == 1)
-                                            if (binaryValueSubsets[0] == '1') "Sensor activo" else "Sensor inactivo"
-                                        else "Campo no contemplado"
-
-                                        val bit4_3Results = if (binaryValueSubsets.length == 3) {
-                                            if (binaryValueSubsets[2] == '1') "No está Funcionando" else "Funcionando"
-                                        } else "Campo no contemplado"
-
-                                        val bit4_4Results = if (binaryValueSubsets.length == 4)
-                                            if (binaryValueSubsets[3] == '1') "Tanque menor del 5 porciento" else "Tanque mayor al 5% porciento"
-                                        else "Campo no contemplado"
-
-                                        val bit4_5Results =
-                                            if (binaryValueSubsets.length == 5) if (binaryValueSubsets[4] == '1')
-                                                "Tanque a mayor de 95%" else "El tanque no está a mayor de 95%"
-                                            else "Campo no contemplado"
-
-                                        val bit5_2Results = if (binaryValueSubsets.length == 6)
-                                            if (binaryValueSubsets[5] == '1') "Cambio de temperatura si" else "Cambio de temperatura no"
-                                        else "Campo no contemplado"
-                                        val bit5_3Results = if (binaryValueSubsets.length == 7)
-                                            if (binaryValueSubsets[6] == '1') "Cambio de combustible si" else "Calidad de combustible no"
-                                        else "Campo no contemplado"
-
-                                        val bit5_4Results = if (binaryValueSubsets.length == 8)
-                                            if (binaryValueSubsets[7] == '1') "Cambio de nivel si" else "Cambio de nivel no"
-                                        else "Campo no contemplado"
-
-                                        val finalResultss =
-                                            "Sensor 2  \n- Sensor: $bit4_1Results\n  Funcionando: $bit4_3Results\n  Tanque: $bit4_4Results\nNovena Posicion\n - Tanque 95%: $bit4_5Results\n" +
-                                                    "   Temperatura: $bit5_2Results\n  Combustible: $bit5_3Results\n  Nivel: $bit5_4Results\n"
-
-//                                        val message =
-//                                            "Alertas Globales: sin convertir ${result.data.Volumen}" +
-//                                                    ",\n hexadecimal: $hexValue\n$binaryValues\n$finalResults\n" +
-//                                                    "$finalResultss"
-                                        _fecha2.value = ""
-                                    }
-
-                                    NetworkConfig.Alertas2_CHARACTERISTICS_UUID -> {
-
-                                        _alerta2.value =
-                                            "Alertas2: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Volumen3_CHARACTERISTICS_UUID -> {
-                                        _volumen3.value = "Volúmen3: " + result.data.Volumen
-
-                                    }
-
-                                    NetworkConfig.Temperatura3_CHARACTERISTICS_UUID -> {
-
-                                        _temperatura3.value =
-                                            "CALIDAD3: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Constante3_CHARACTERISTICS_UUID -> {
-                                        _constante3.value =
-                                            "Temperatura3: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Fecha3_CHARACTERISTICS_UUID -> {
-                                        _fecha3.value =
-                                            "Fecha3: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Alertas3_CHARACTERISTICS_UUID -> {
-                                        _alerta3.value =
-                                            "Alertas3: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-
-                                    NetworkConfig.Volumen4_CHARACTERISTICS_UUID -> {
-                                        _volumen4.value =
-                                            "Volúmen4: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Temperatura4_CHARACTERISTICS_UUID -> {
-                                        _temperatura4.value =
-                                            "Calidad: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Constante4_CHARACTERISTICS_UUID -> {
-
-                                        _constante4.value =
-                                            "Temperatura4: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Fecha4_CHARACTERISTICS_UUID -> {
-                                        _fecha4.value =
-                                            "Fecha4: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-
-                                    }
-
-                                    NetworkConfig.Alertas4_CHARACTERISTICS_UUID -> {
-                                        _alerta4.value =
-                                            "Alertas4: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    NetworkConfig.Alertas4_CHARACTERISTICS_UUID -> {
-                                        _alerta4.value =
-                                            "Alertas4: " + (ordenarYConvertir(result.data.Volumen)
-                                                ?: result.data.Volumen)
-                                    }
-
-                                    "66169bab-d567-4388-b634-357ff0dac5f1" -> {
-                                        _bateria.value = "Comando: " + result.data.Volumen
-                                    }
-
-                                    else -> Unit
-
-                                }
-                                val formato =
-                                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                                val fechaActual = ZonedDateTime.now()
-                                val fecha = fechaActual.format(formato)
-
-                                if (result.data.Volumen.isNotEmpty()) {
-//                                    val defaultSensorResponse = SensorResponse(
-//                                        fld_fechaHoraEnvio = fecha,
-//                                        fld_latitud = latitude.toString(),
-//                                        fld_longitud = longitude.toString(),
-//                                        fld_valor = result.data.Volumen,
-//                                        id_vehiculo = 1,
-//                                        fld_uuid = result.data.SensorId,
-//                                        id_usuario = 1
-//                                    )
-
-//                                    onTaskCreated(defaultSensorResponse)
-                                }
-                            }
-                            result.data.connectionState
-                        }
-
-                        is Resource.Loading -> {
-                            initializingMessage = result.message
-                            ConnectionState.CurrentlyInitializing
-                        }
-
-                        is Resource.Error -> {
-                            errorMessage = result.errorMessage
-                            ConnectionState.Uninitialized
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    fun onwrite(defaultSensorResponse: String) {
-        viewModelScope.launch {
-            writeInitialValuese(defaultSensorResponse, 1)
-        }
-    }
-
-    fun onwriteEemo(defaultSensorResponse: String) {
-        viewModelScope.launch {
-
-            writeInitialValuese(defaultSensorResponse, 32)
-        }
-    }
-
-    fun onwriteElmo(defaultSensorResponse: String) {
-        viewModelScope.launch {
-
-            writeInitialValuese(defaultSensorResponse, 33)
-        }
-    }
-
-    fun onwritesace(defaultSensorResponse: String) {
-        viewModelScope.launch {
-
-            writeInitialValuese(defaultSensorResponse, 34)
-        }
-    }
-
-    fun onwriteEinc(defaultSensorResponse: String) {
-        viewModelScope.launch {
-
-            writeInitialValuese(defaultSensorResponse, 6)
-        }
-    }
-
-    fun onwriteRTC(defaultSensorResponse: String) {
-        viewModelScope.launch {
-
-            writeInitialValuese(defaultSensorResponse, 7)
-        }
-    }
-
-    private suspend fun dismissProgressDialog() {
-        withContext(Dispatchers.Main) {
-            alertDialog?.dismiss()
-        }
-    }
-
-    fun ordenarYConvertir(volumen: String): Float? {
-
-        try {
-            val volumenOrdenado = kotlin.text.StringBuilder()
-
-            for (i in volumen.indices step 2) {
-                volumenOrdenado.insert(0, volumen.substring(i, i + 2))
-            }
-
-            val intBits = Integer.parseInt(volumenOrdenado.toString(), 16)
-            return java.lang.Float.intBitsToFloat(intBits)
-        } catch (e: NumberFormatException) {
-
-            println(" hexadecimal : $volumen")
-            return null
-        } catch (e: Exception) {
-
-            println("error d: ${e.message}")
-            return null
-        }
-    }
-
-    private suspend fun showProgressDialog(context: Context) {
-        withContext(Dispatchers.Main) {
-            val builder = AlertDialog.Builder(context)
-            builder.setMessage("Enviando información, no cierre la aplicación...")
-                .setCancelable(false)
-            alertDialog = builder.create()
-            alertDialog?.show()
-        }
+    fun disableAutoReconnect() {
+        _uiState.update { it.copy(shouldReconnect = false) }
     }
 
     fun disconnect() {
-        _shouldReconnect.value = false
-        _connectionState.update { ConnectionState.Disconnected }
+        stopPeriodicWriteTask()
+        _uiState.update {
+            it.copy(
+                shouldReconnect = false,
+                connectionState = ConnectionState.Disconnected,
+                initializingMessage = null
+            )
+        }
         sensorReceiveManager.disconnect()
-        _Message.value = ""
     }
 
     fun reconnect() {
-        _shouldReconnect.value = true
+        _uiState.update {
+            it.copy(
+                shouldReconnect = true,
+                errorMessage = null
+            )
+        }
+        ensureSubscription()
         sensorReceiveManager.reconnect()
     }
 
-
-    private val _isHotspotConfigured = MutableStateFlow(false)
-    val isHotspotConfigured: StateFlow<Boolean> = _isHotspotConfigured.asStateFlow()
-
-    private val _isConnectedToHotspot = MutableStateFlow(false)
-    val isConnectedToHotspot: StateFlow<Boolean> = _isConnectedToHotspot.asStateFlow()
-
+    fun clearValores() {
+        clearReadings()
+    }
 
     fun updateHotspotConfigurationStatus(isConfigured: Boolean) {
-        _isHotspotConfigured.value = isConfigured
+        _uiState.update { it.copy(isHotspotConfigured = isConfigured) }
     }
 
     fun updateHotspotConnectionStatus(isConnected: Boolean) {
-        _isConnectedToHotspot.value = isConnected
+        _uiState.update { it.copy(isConnectedToHotspot = isConnected) }
     }
 
+    fun updateHotspotAvailability(isAvailable: Boolean) {
+        _uiState.update { it.copy(isHotspotAvailable = isAvailable) }
+    }
 
-    private val _isHotspotAvailable = mutableStateOf(false)
-    val isHotspotAvailable: State<Boolean> = _isHotspotAvailable
+    fun updateDiscoveredServices(services: String) {
+        _uiState.update { it.copy(discoveredServices = services) }
+    }
 
-    private val _hotspotConfigurationMessage = mutableStateOf("")
-    val hotspotConfigurationMessage: State<String> = _hotspotConfigurationMessage
+    fun updateAutoconsumo(enabled: Boolean) {
+        _uiState.update { it.copy(isAutoconsumo = enabled) }
+    }
 
-    suspend fun configureHotspot(ssid: String, password: String, isEnabled: Boolean) {
-        try {
+    fun writeCommand(value: String, option: Int) {
+        sensorReceiveManager.writeInitialValuese(value, option)
+    }
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    "Espere un momento, hasta que se le indique que deba conectar a la red ",
-                    Toast.LENGTH_LONG
-                ).show()
+    /**
+     * Wrappers por compatibilidad con llamadas existentes.
+     */
+    fun onwrite(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 1)
+    fun onwriteEemo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 32)
+    fun onwriteElmo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 33)
+    fun onwritesace(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 34)
+    fun onwriteEinc(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 6)
+    fun onwriteRTC(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 7)
+
+    fun writesDataHostPost(ssid: String, password: String, isWifiEnabled: Boolean) {
+        sensorReceiveManager.writesDataHostPost(ssid, password, isWifiEnabled)
+    }
+
+    fun startPeriodicWriteTask() {
+        if (periodicWriteJob?.isActive == true) return
+
+        periodicWriteJob = viewModelScope.launch {
+            while (true) {
+                sensorReceiveManager.writeInitialValuese("", 2)
+                delay(30_000)
             }
-            _hotspotConfigurationMessage.value = "Configurando red..."
-
-            writesDataHostPost(ssid, password, isEnabled)
-
-            delay(20000)
-
-            onwrite("1")
-
-            delay(1000)
-
-            _isHotspotConfigured.value = true
-            _hotspotConfigurationMessage.value = "Hotspot configurado correctamente"
-
-        } catch (e: Exception) {
-            _hotspotConfigurationMessage.value = "Error al configurar red: ${e.message}"
-            _isHotspotConfigured.value = false
         }
     }
 
+    fun stopPeriodicWriteTask() {
+        periodicWriteJob?.cancel()
+        periodicWriteJob = null
+    }
+
+    fun scheduleSingleDelayedWrite() {
+        viewModelScope.launch {
+            delay(70_000)
+            sensorReceiveManager.writeInitialValuese("", 3)
+        }
+    }
+
+    suspend fun configureHotspot(ssid: String, password: String, isEnabled: Boolean) {
+        try {
+            _events.tryEmit(
+                SensorUiEvent.ShowToast(
+                    "Espere un momento hasta que se le indique conectar a la red."
+                )
+            )
+
+            _uiState.update {
+                it.copy(
+                    hotspotConfigurationMessage = "Configurando red...",
+                    isHotspotConfigured = false,
+                    isSendingCommand = true
+                )
+            }
+
+            writesDataHostPost(ssid, password, isEnabled)
+
+            delay(20_000)
+            onwrite("1")
+            delay(1_000)
+
+            _uiState.update {
+                it.copy(
+                    hotspotConfigurationMessage = "Hotspot configurado correctamente",
+                    isHotspotConfigured = true,
+                    isSendingCommand = false
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    hotspotConfigurationMessage = "Error al configurar red: ${e.message}",
+                    isHotspotConfigured = false,
+                    isSendingCommand = false
+                )
+            }
+            _events.tryEmit(
+                SensorUiEvent.ShowError("No fue posible configurar la red.")
+            )
+        }
+    }
 
     @SuppressLint("MissingPermission", "ServiceCast")
     fun connectToHotspot(
         ssid: String,
         password: String,
-        context: Context,
         onResult: (Boolean) -> Unit
     ) {
-        val coroutineScope = CoroutineScope(Dispatchers.IO)
-
-        coroutineScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val connectivityManager =
-                        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-                    val specifier = WifiNetworkSpecifier.Builder()
-                        .setSsid(ssid)
-                        .setWpa2Passphrase(password)
-                        .build()
-
-                    val request = NetworkRequest.Builder()
-                        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                        .setNetworkSpecifier(specifier)
-                        .build()
-
-                    val networkAvailable = CompletableDeferred<Boolean>()
-
-                    val callback = object : ConnectivityManager.NetworkCallback() {
-                        override fun onAvailable(network: Network) {
-                            super.onAvailable(network)
-                            connectivityManager.bindProcessToNetwork(network)
-                            Log.d("Hotspot", "Conectado a $ssid")
-                            networkAvailable.complete(true)
-                        }
-
-                        override fun onUnavailable() {
-                            super.onUnavailable()
-                            if (!networkAvailable.isCompleted) {
-                                networkAvailable.complete(false)
-                            }
-                        }
-                    }
-
-                    connectivityManager.requestNetwork(request, callback)
-
-
-                    val result = withTimeoutOrNull(15000L) {
-                        networkAvailable.await()
-                    } ?: false
-
-                    onResult(result)
+                val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    connectToHotspotAndroidQAndAbove(ssid, password)
                 } else {
-                    val wifiManager =
-                        context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-
-                    val config = WifiConfiguration().apply {
-                        SSID = "\"$ssid\""
-                        preSharedKey = "\"$password\""
-                        allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
-                    }
-
-                    val netId = wifiManager.addNetwork(config)
-                    if (netId != -1) {
-                        wifiManager.disconnect()
-                        wifiManager.enableNetwork(netId, true)
-                        wifiManager.reconnect()
-
-                        delay(3000)
-                        Log.d("Hotspot", "Conectado a $ssid")
-                        onResult(true)
-                    } else {
-                        onResult(false)
-                    }
+                    connectToHotspotLegacy(ssid, password)
                 }
-            } catch (e: Exception) {
+
+                _uiState.update { it.copy(isConnectedToHotspot = result) }
+                onResult(result)
+            } catch (_: Exception) {
+                _uiState.update { it.copy(isConnectedToHotspot = false) }
                 onResult(false)
             }
         }
     }
 
+    private fun ensureSubscription() {
+        if (subscriptionJob?.isActive == true) return
 
-    fun writeInitialValuese(valor: String, opcion: Int) {
-        sensorReceiveManager.writeInitialValuese(valor, opcion)
+        subscriptionJob = viewModelScope.launch {
+            sensorReceiveManager.data.collect { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                connectionState = ConnectionState.CurrentlyInitializing,
+                                initializingMessage = result.message,
+                                errorMessage = null
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        stopPeriodicWriteTask()
+                        _uiState.update {
+                            it.copy(
+                                connectionState = ConnectionState.Uninitialized,
+                                initializingMessage = null,
+                                errorMessage = result.errorMessage
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        val sensorId = result.data.SensorId
+                        val rawValue = result.data.Volumen
+                        val newConnectionState = result.data.connectionState
+
+                        _uiState.update { current ->
+                            reduceIncomingPacket(
+                                current = current,
+                                sensorId = sensorId,
+                                rawValue = rawValue,
+                                connectionState = newConnectionState
+                            )
+                        }
+
+                        when (newConnectionState) {
+                            ConnectionState.Connected -> startPeriodicWriteTask()
+                            ConnectionState.Disconnected,
+                            ConnectionState.Uninitialized -> stopPeriodicWriteTask()
+
+                            else -> Unit
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    private fun reduceIncomingPacket(
+        current: SensorUiState,
+        sensorId: String,
+        rawValue: String,
+        connectionState: ConnectionState
+    ): SensorUiState {
+        val convertedValue = formatRawOrConverted(rawValue)
 
-    fun writesDataHostPost(ssid: String, password: String, isWifiEnabled: Boolean) {
+        val updatedState = when (sensorId) {
+            NetworkConfig.Volumen1_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor1 = current.sensor1.copy(
+                        volumen = "Volumen 1: $convertedValue"
+                    )
+                )
+            }
 
-        sensorReceiveManager.writesDataHostPost(ssid, password, isWifiEnabled)
+            NetworkConfig.Temperatura1_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor1 = current.sensor1.copy(
+                        temperatura = "Calidad 1: $convertedValue"
+                    )
+                )
+            }
 
+            NetworkConfig.Constante1_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor1 = current.sensor1.copy(
+                        constante = "Temperatura 1: $convertedValue"
+                    )
+                )
+            }
+
+            globalDateUuid -> {
+                current.copy(
+                    sensor1 = current.sensor1.copy(
+                        fecha = "Fecha global: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Alertas1_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor1 = current.sensor1.copy(
+                        alerta = "Alertas 1: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Volumen2_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor2 = current.sensor2.copy(
+                        volumen = "Volumen 2: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Temperatura2_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor2 = current.sensor2.copy(
+                        temperatura = "Calidad 2: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Constante2_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor2 = current.sensor2.copy(
+                        constante = "Temperatura 2: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Alertas2_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor2 = current.sensor2.copy(
+                        alerta = "Alertas 2: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Volumen3_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor3 = current.sensor3.copy(
+                        volumen = "Volumen 3: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Temperatura3_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor3 = current.sensor3.copy(
+                        temperatura = "Calidad 3: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Constante3_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor3 = current.sensor3.copy(
+                        constante = "Temperatura 3: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Fecha3_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor3 = current.sensor3.copy(
+                        fecha = "Fecha 3: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Alertas3_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor3 = current.sensor3.copy(
+                        alerta = "Alertas 3: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Volumen4_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor4 = current.sensor4.copy(
+                        volumen = "Volumen 4: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Temperatura4_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor4 = current.sensor4.copy(
+                        temperatura = "Calidad 4: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Constante4_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor4 = current.sensor4.copy(
+                        constante = "Temperatura 4: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Fecha4_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor4 = current.sensor4.copy(
+                        fecha = "Fecha 4: $convertedValue"
+                    )
+                )
+            }
+
+            NetworkConfig.Alertas4_CHARACTERISTICS_UUID -> {
+                current.copy(
+                    sensor4 = current.sensor4.copy(
+                        alerta = "Alertas 4: $convertedValue"
+                    )
+                )
+            }
+
+            ssidUuid,
+            passwordUuid,
+            wifiEnabledUuid -> {
+                current.copy(
+                    sendingState = rawValue
+                )
+            }
+
+            globalAlertsUuid -> {
+                current.copy(
+                    sensorMessage = decodeGlobalAlert(rawValue)
+                )
+            }
+
+            batteryUuid -> {
+                current.copy(
+                    bateria = "Comando: $rawValue"
+                )
+            }
+
+            else -> current
+        }
+
+        return updatedState.copy(
+            connectionState = connectionState,
+            initializingMessage = null,
+            errorMessage = null
+        )
     }
 
-    fun clearvalores() {
-        errorMessage = null
-        _Message.value = ""
-        _volumen1.value = ""
-        _volumen2.value = ""
-        _volumen3.value = ""
-        _volumen4.value = ""
-        _temperatura1.value = ""
-        _temperatura2.value = ""
-        _temperatura3.value = ""
-        _temperatura4.value = ""
-        _temperatura1.value = ""
-        _constante1.value = ""
-        _constante2.value = ""
-        _constante3.value = ""
-        _constante4.value = ""
-        _fecha1.value = ""
-        _fecha2.value = ""
-        _bateria.value = ""
-        _Message.value = ""
+    private fun clearReadings() {
+        stopPeriodicWriteTask()
+        _uiState.update { current ->
+            current.copy(
+                initializingMessage = null,
+                errorMessage = null,
+                sensor1 = SensorCardUiState(),
+                sensor2 = SensorCardUiState(),
+                sensor3 = SensorCardUiState(),
+                sensor4 = SensorCardUiState(),
+                bateria = "",
+                sensorMessage = ""
+            )
+        }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun initializeConnection() {
+    private fun loadSavedMacAddress() {
         val sharedPreferences =
-            context.getSharedPreferences("misPreferenciasFSC", Context.MODE_PRIVATE)
+            context.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
         val savedMacAddress = sharedPreferences.getString("mac", "")
 
         if (!savedMacAddress.isNullOrEmpty()) {
             NetworkConfig.nombreconfiguracion = savedMacAddress
             NetworkConfig.configuracion = "mac"
         }
+    }
 
-        errorMessage = null
-        _Message.value = ""
-        _volumen1.value = ""
-        _volumen2.value = ""
-        _volumen3.value = ""
-        _volumen4.value = ""
-        _temperatura1.value = ""
-        _temperatura2.value = ""
-        _temperatura3.value = ""
-        _temperatura4.value = ""
-        _temperatura1.value = ""
-        _constante1.value = ""
-        _constante2.value = ""
-        _constante3.value = ""
-        _constante4.value = ""
-        _fecha1.value = ""
-        _fecha2.value = ""
-        _bateria.value = ""
-        subscribeToChanges()
-        sensorReceiveManager.startReceiving()
+    private fun formatRawOrConverted(rawValue: String): String {
+        val converted = ordenarYConvertir(rawValue)
+        return converted?.let { value ->
+            String.format(Locale.getDefault(), "%.2f", value)
+        } ?: rawValue
+    }
+
+    fun ordenarYConvertir(volumen: String): Float? {
+        return try {
+            if (volumen.length % 2 != 0) return null
+
+            val volumenOrdenado = StringBuilder()
+            for (i in volumen.indices step 2) {
+                volumenOrdenado.insert(0, volumen.substring(i, i + 2))
+            }
+
+            val intBits = volumenOrdenado.toString().toLong(16).toInt()
+            Float.fromBits(intBits)
+        } catch (_: NumberFormatException) {
+            null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun decodeGlobalAlert(hexValue: String): String {
+        return try {
+            if (hexValue.length < 8) return "Alerta global: $hexValue"
+
+            val alertByte = hexValue.substring(6, 8).toInt(16)
+
+            val sensorActivo =
+                if ((alertByte and 0b0000_0001) != 0) "Sensor activo" else "Sensor inactivo"
+            val funcionando =
+                if ((alertByte and 0b0000_0100) != 0) "No está funcionando" else "Funcionando"
+            val tanque5 =
+                if ((alertByte and 0b0000_1000) != 0) "Tanque menor al 5%" else "Tanque mayor al 5%"
+            val tanque95 =
+                if ((alertByte and 0b0001_0000) != 0) "Tanque mayor al 95%" else "Tanque no mayor al 95%"
+            val cambioTemperatura =
+                if ((alertByte and 0b0010_0000) != 0) "Cambio de temperatura" else "Sin cambio de temperatura"
+            val cambioCombustible =
+                if ((alertByte and 0b0100_0000) != 0) "Cambio de combustible" else "Sin cambio de combustible"
+            val cambioNivel =
+                if ((alertByte and 0b1000_0000) != 0) "Cambio de nivel" else "Sin cambio de nivel"
+
+            buildString {
+                appendLine("Alerta global")
+                appendLine("- $sensorActivo")
+                appendLine("- $funcionando")
+                appendLine("- $tanque5")
+                appendLine("- $tanque95")
+                appendLine("- $cambioTemperatura")
+                appendLine("- $cambioCombustible")
+                append("- $cambioNivel")
+            }
+        } catch (_: Exception) {
+            "Alerta global sin decodificar: $hexValue"
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    @SuppressLint("MissingPermission")
+    private suspend fun connectToHotspotAndroidQAndAbove(
+        ssid: String,
+        password: String
+    ): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val specifier = WifiNetworkSpecifier.Builder()
+            .setSsid(ssid)
+            .setWpa2Passphrase(password)
+            .build()
+
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .setNetworkSpecifier(specifier)
+            .build()
+
+        val networkAvailable = CompletableDeferred<Boolean>()
+
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                connectivityManager.bindProcessToNetwork(network)
+                if (!networkAvailable.isCompleted) {
+                    networkAvailable.complete(true)
+                }
+            }
+
+            override fun onUnavailable() {
+                if (!networkAvailable.isCompleted) {
+                    networkAvailable.complete(false)
+                }
+            }
+
+            override fun onLost(network: Network) {
+                if (!networkAvailable.isCompleted) {
+                    networkAvailable.complete(false)
+                }
+            }
+        }
+
+        return try {
+            connectivityManager.requestNetwork(request, callback)
+            withTimeoutOrNull(15_000L) { networkAvailable.await() } ?: false
+        } finally {
+            runCatching { connectivityManager.unregisterNetworkCallback(callback) }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private suspend fun connectToHotspotLegacy(
+        ssid: String,
+        password: String
+    ): Boolean {
+        val wifiManager =
+            context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+        val config = WifiConfiguration().apply {
+            SSID = "\"$ssid\""
+            preSharedKey = "\"$password\""
+            allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
+        }
+
+        val netId = wifiManager.addNetwork(config)
+        if (netId == -1) return false
+
+        wifiManager.disconnect()
+        wifiManager.enableNetwork(netId, true)
+        wifiManager.reconnect()
+
+        delay(3_000)
+        return true
     }
 
     override fun onCleared() {
-        super.onCleared()
+        stopPeriodicWriteTask()
+        subscriptionJob?.cancel()
         sensorReceiveManager.closeConnection()
-        _Message.value = ""
+        super.onCleared()
     }
 }
