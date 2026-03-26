@@ -27,15 +27,15 @@ class GattOpQueue @Inject constructor() {
     private var pendingCharKey: String? = null
     private var pendingDescKey: String? = null
 
-    private fun charKey(ch: BluetoothGattCharacteristic): String {
+    private fun charKey(gatt: BluetoothGatt, ch: BluetoothGattCharacteristic): String {
         val svc = ch.service?.uuid?.toString() ?: "nosvc"
-        return "$svc|${ch.uuid}"
+        return "${System.identityHashCode(gatt)}|$svc|${ch.uuid}"
     }
 
-    private fun descKey(desc: BluetoothGattDescriptor): String {
+    private fun descKey(gatt: BluetoothGatt, desc: BluetoothGattDescriptor): String {
         val ch = desc.characteristic
         val svc = ch.service?.uuid?.toString() ?: "nosvc"
-        return "$svc|${ch.uuid}|${desc.uuid}"
+        return "${System.identityHashCode(gatt)}|$svc|${ch.uuid}|${desc.uuid}"
     }
 
     /** Llamar cuando te desconectas o te cambias de dispositivo */
@@ -61,12 +61,9 @@ class GattOpQueue @Inject constructor() {
         retryDelayMs: Long = 250
     ): Boolean = mutex.withLock {
 
-        if (value.isEmpty()) {
-            Log.w("GattOpQueue", "writeDescriptorAwait: value vacío para ${desc.uuid}")
-            return@withLock false
-        }
+        if (value.isEmpty()) return@withLock false
 
-        val key = descKey(desc)
+        val key = descKey(gatt, desc)
         var attempt = 0
 
         while (attempt < retries) {
@@ -129,7 +126,7 @@ class GattOpQueue @Inject constructor() {
         retryDelayMs: Long = 250
     ): Boolean = mutex.withLock {
 
-        val key = charKey(ch)
+        val key = charKey(gatt, ch)
         var attempt = 0
 
         while (attempt < retries) {
@@ -195,10 +192,12 @@ class GattOpQueue @Inject constructor() {
     ): Int? = mutex.withLock {
         val deferred = CompletableDeferred<Int>()
         pendingRssi = deferred
+
         if (!gatt.readRemoteRssi()) {
             pendingRssi = null
             return@withLock null
         }
+
         return try {
             withTimeout(timeoutMs) { deferred.await() }
         } catch (_: Exception) {
@@ -208,15 +207,15 @@ class GattOpQueue @Inject constructor() {
         }
     }
 
-    fun onDescriptorWrite(desc: BluetoothGattDescriptor, status: Int) {
-        val key = descKey(desc)
+    fun onDescriptorWrite(gatt: BluetoothGatt, desc: BluetoothGattDescriptor, status: Int) {
+        val key = descKey(gatt, desc)
         if (pendingDescKey == key) {
             pendingDesc?.complete(status)
         }
     }
 
-    fun onCharacteristicWrite(ch: BluetoothGattCharacteristic, status: Int) {
-        val key = charKey(ch)
+    fun onCharacteristicWrite(gatt: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int) {
+        val key = charKey(gatt, ch)
         if (pendingCharKey == key) {
             pendingChar?.complete(status)
         }

@@ -82,7 +82,8 @@ class ProFileSender @Inject constructor(
 
     fun setMtuAndGatt(mtu: Int) {
         this@ProFileSender.mtu = mtu
-        val service = bleConnectionManager.getGatt()?.getService(SERVICE_FIRMWARE_UUID) ?: return
+        val service =
+            bleConnectionManager.currentGatt()?.getService(SERVICE_FIRMWARE_UUID) ?: return
         controlChar = service.getCharacteristic(CONTROL_FIRMWARE_UUID) ?: return
         dataChar = service.getCharacteristic(DATA_FIRMWARE_UUID) ?: return
     }
@@ -157,7 +158,7 @@ class ProFileSender @Inject constructor(
         sensorId: String,
         maxRetries: Int = 15
     ): CtrlMsg? {
-        val bleGatt = bleConnectionManager.getGatt()
+        val bleGatt = bleConnectionManager.currentGatt()
         if (bleGatt == null || controlChar == null || dataChar == null) return null
 
         val totalSize = fileBytes.size
@@ -168,7 +169,8 @@ class ProFileSender @Inject constructor(
         // seq es 2 bytes. 
         // Si MTU=23, chunkSize máximo es 23 - 3 - 2 = 18.
         val safeChunkSize = (mtu - 5).coerceAtMost(240).coerceAtLeast(18)
-        val chunkSize = 18 // Mantenemos 18 por compatibilidad si el firmware es estricto, o usamos safeChunkSize
+        val chunkSize =
+            18 // Mantenemos 18 por compatibilidad si el firmware es estricto, o usamos safeChunkSize
 
         // Limpiar canal
         while (!ctrlChannel.isEmpty) {

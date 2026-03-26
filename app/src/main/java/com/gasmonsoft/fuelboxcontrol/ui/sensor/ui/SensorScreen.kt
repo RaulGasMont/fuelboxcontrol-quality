@@ -98,7 +98,6 @@ fun SensorRoute(
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
 
     SensorScreenContent(
-        onBack = onBack,
         bleConnectionState = bleConnectionState,
         sensorInfoState = sensorInfoState,
         permissionState = permissionState,
@@ -118,7 +117,6 @@ fun SensorRoute(
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SensorScreenContent(
-    onBack: () -> Unit,
     bleConnectionState: ConnectionState,
     sensorInfoState: SensorState,
     permissionState: MultiplePermissionsState,
@@ -696,7 +694,6 @@ fun EmptyInfoState(text: String) {
 fun SensorScreenPreview() {
     FuelBoxControlTheme {
         SensorScreenContent(
-            onBack = {},
             bleConnectionState = ConnectionState.Connected,
             sensorInfoState = SensorState(
                 sensor1 = SensorData("", false, "2024-01-01", "25°C", "100L", "Good"),
