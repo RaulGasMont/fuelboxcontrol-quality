@@ -12,32 +12,62 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = FscPrimaryDark,
+    onPrimary = FscOnPrimaryDark,
+    primaryContainer = FscPrimaryContainerDark,
+    onPrimaryContainer = FscOnPrimaryContainerDark,
+
+    secondary = FscSecondaryDark,
+    onSecondary = FscOnSecondaryDark,
+    secondaryContainer = FscSecondaryContainerDark,
+    onSecondaryContainer = FscOnSecondaryContainerDark,
+
+    tertiary = FscTertiaryDark,
+    onTertiary = FscOnTertiaryDark,
+    tertiaryContainer = FscTertiaryContainerDark,
+    onTertiaryContainer = FscOnTertiaryContainerDark,
+
+    background = FscBackgroundDark,
+    onBackground = FscOnBackgroundDark,
+    surface = FscSurfaceDark,
+    onSurface = FscOnSurfaceDark,
+
+    outline = FscOutlineDark,
+    error = FscErrorDark,
+    onError = FscOnErrorDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = FscPrimaryLight,
+    onPrimary = FscOnPrimaryLight,
+    primaryContainer = FscPrimaryContainerLight,
+    onPrimaryContainer = FscOnPrimaryContainerLight,
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondary = FscSecondaryLight,
+    onSecondary = FscOnSecondaryLight,
+    secondaryContainer = FscSecondaryContainerLight,
+    onSecondaryContainer = FscOnSecondaryContainerLight,
+
+    tertiary = FscTertiaryLight,
+    onTertiary = FscOnTertiaryLight,
+    tertiaryContainer = FscTertiaryContainerLight,
+    onTertiaryContainer = FscOnTertiaryContainerLight,
+
+    background = FscBackgroundLight,
+    onBackground = FscOnBackgroundLight,
+    surface = FscSurfaceLight,
+    onSurface = FscOnSurfaceLight,
+
+    outline = FscOutlineLight,
+    error = FscErrorLight,
+    onError = FscOnErrorLight
 )
 
 @Composable
 fun FuelBoxControlTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

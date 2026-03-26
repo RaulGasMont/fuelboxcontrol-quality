@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -531,45 +530,33 @@ fun DropdownSelectSensor(
     }
 }
 
-@Composable
-@Preview(showBackground = true, showSystemUi = true)
-fun CalibrationRoutePreview() {
-    CalibrationScreen(
-        uiState = CalibrationUiState(),
-        onTakeMeasure = { _, _ -> },
-        onSelectSensor = {},
-        onDeleteMeasurement = {},
-        onStarAnalise = {},
-        onSaveConfig = { _, _ -> }
-    )
-}
-
-@Composable
-@Preview(showBackground = true, showSystemUi = true)
-fun MeasurementsGridPreview() {
-    FuelBoxControlTheme {
-        MeasurementsTable(
-            measurements = listOf(Pair("1", "2"), Pair("3", "4"), Pair("5", "6")),
-            onDeleteMeasurement = {},
-            modifier = Modifier.safeContentPadding()
-        )
-    }
-}
-
-@Composable
 @Preview(showBackground = true)
-fun DropdownMenuSensorPreview() {
+@Composable
+fun CalibrationScreenPreview() {
     FuelBoxControlTheme {
-        DropdownSelectSensor(
-            sensors = listOf(
-                CalibrationSensor.SENSOR_1,
-                CalibrationSensor.SENSOR_2,
-                CalibrationSensor.SENSOR_3,
-                CalibrationSensor.SENSOR_4
+        CalibrationScreen(
+            uiState = CalibrationUiState(
+                sensors = listOf(
+                    CalibrationSensor.SENSOR_1,
+                    CalibrationSensor.SENSOR_2,
+                    CalibrationSensor.SENSOR_3,
+                    CalibrationSensor.SENSOR_4
+                ),
+                selectedSensor = CalibrationSensor.SENSOR_1,
+                measurements = listOf(
+                    "10.0" to "150.0",
+                    "20.0" to "300.0",
+                    "30.0" to "450.0"
+                ),
+                currentSensorValue = "500.0",
+                capacidad = 100.0,
+                capacitancia = 12.5
             ),
-            sensor = CalibrationSensor.SENSOR_1,
+            onTakeMeasure = { _, _ -> },
             onSelectSensor = {},
-            modifier = Modifier.safeContentPadding()
+            onDeleteMeasurement = {},
+            onStarAnalise = {},
+            onSaveConfig = { _, _ -> }
         )
     }
 }
