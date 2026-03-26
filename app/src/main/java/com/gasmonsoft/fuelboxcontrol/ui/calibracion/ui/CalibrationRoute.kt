@@ -217,7 +217,6 @@ fun CalibrationScreen(
                 )
             }
 
-
             SectionCard {
                 SectionTitle(
                     title = "Sensores",
