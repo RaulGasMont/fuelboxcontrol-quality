@@ -389,7 +389,7 @@ fun SensorScreenContentPreview() {
                 sensor2 = SensorData(rawData = "26.1"),
                 sensor3 = SensorData(rawData = "24.8"),
                 sensor4 = SensorData(rawData = "25.9"),
-                acelerometro = AccelerometerData(value = "0.0, 0.0, 1.0")
+                acelerometro = AccelerometerData(value = "")
             ),
             permissionState = object : MultiplePermissionsState {
                 override val allPermissionsGranted: Boolean = true

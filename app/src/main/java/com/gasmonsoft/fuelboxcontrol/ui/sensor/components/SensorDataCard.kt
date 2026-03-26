@@ -625,3 +625,34 @@ fun SensorDataCardPreview() {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun SingleSensorDataCardPreview() {
+    FuelBoxControlTheme {
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SingleSensorDataCard(
+                accelerometerData = AccelerometerData(
+                    rawData = "0.5,0.1,9.8",
+                    error = false,
+                    date = "24/05/2024 10:00",
+                    value = "9.81"
+                )
+            )
+
+            SingleSensorDataCard(
+                accelerometerData = AccelerometerData(
+                    rawData = "",
+                    error = false,
+                    date = "",
+                    value = ""
+                )
+            )
+        }
+    }
+}
