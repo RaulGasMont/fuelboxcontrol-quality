@@ -22,7 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun MeasurementsTable(
@@ -182,4 +184,38 @@ fun MeasurementCell(
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MeasurementsTablePreview() {
+    FuelBoxControlTheme {
+        MeasurementsTable(
+            measurements = listOf(
+                "100" to "10",
+                "200" to "20",
+                "300" to "30"
+            ),
+            onDeleteMeasurement = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MeasurementsTableEmptyPreview() {
+    FuelBoxControlTheme {
+        MeasurementsTable(
+            measurements = emptyList(),
+            onDeleteMeasurement = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MeasurementCellPreview() {
+    FuelBoxControlTheme {
+        MeasurementCell(value = "123.45")
+    }
 }
