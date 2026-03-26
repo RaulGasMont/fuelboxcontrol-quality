@@ -40,7 +40,7 @@ interface FuelSoftwareService {
     ): Response<List<ConfVehiclesResponse>>
 
     @Streaming
-    @GET("api/SensorCajaApi/AddSensorDataList")
+    @GET("api/SensorCajaApi/ParametrosCalibracion")
     suspend fun getDatFile(
         @Header("Authorization") token: String,
         @Body datos: CalibrationDto,

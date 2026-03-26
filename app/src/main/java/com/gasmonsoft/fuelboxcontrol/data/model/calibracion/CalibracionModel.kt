@@ -16,7 +16,9 @@ fun Calibracion.toDto(): CalibrationDto {
         capacidad = capacidad,
         capacitancia = capacitancia,
         intervalos = intervalos,
-        coefPolinomial = coefPolinomial
+        coefPolinomial = coefPolinomial,
+        sensor = idSensor,
+        idParametroCalidad = 0
     )
 }
 
@@ -47,15 +49,17 @@ data class Calibracion(
 data class TendenciasDto(
     @SerializedName("limite") val limite: Double,
     @SerializedName("pendiente") val pendiente: Double,
-    @SerializedName("ordenada") val ordenada: Double
+    @SerializedName("ordenada") val ordenada: Double,
 )
 
 data class CalibrationDto(
-    @SerializedName("id_cajaComunicaciones") val idCajaComunicaciones: Int,
-    @SerializedName("i_sensor") val idSensor: Int,
     @SerializedName("tendencias") val tendencias: List<TendenciasDto>,
     @SerializedName("capacidad") val capacidad: Double,
     @SerializedName("capacitancia") val capacitancia: Int,
     @SerializedName("intervalos") val intervalos: Int,
+    @SerializedName("sensor") val sensor: Int,
     @SerializedName("coef_polinomial") val coefPolinomial: String,
+    @SerializedName("id_cajaComunicaciones") val idCajaComunicaciones: Int,
+    @SerializedName("id_sensor") val idSensor: Int,
+    @SerializedName("id_parametroCalidad") val idParametroCalidad: Int,
 )
