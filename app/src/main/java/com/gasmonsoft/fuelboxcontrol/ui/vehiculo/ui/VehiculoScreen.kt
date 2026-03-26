@@ -58,7 +58,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.data.model.wifi.WifiConnectionState
 import com.gasmonsoft.fuelboxcontrol.domain.sensor.SensorPackage
-import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleConfiguration
 import com.gasmonsoft.fuelboxcontrol.model.vehicle.VehicleInfo
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoRow
@@ -75,7 +74,6 @@ import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.VehiculosViewModel
 @Composable
 fun VehiculosRoute(
     modifier: Modifier = Modifier,
-    onCalibrate: (idCaja: Int) -> Unit,
     viewModel: VehiculosViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState.collectAsState()
@@ -91,7 +89,6 @@ fun VehiculosRoute(
         contentAlignment = Alignment.Center
     ) {
         VehiculosScreen(
-            config = uiState.value.vehicleConfiguration,
             wifiStatus = wifiStatus.value,
             loggedUser = uiState.value.userData?.username ?: "",
             sensorData = sensorData.value,
@@ -116,8 +113,7 @@ fun VehiculosRoute(
             },
             onSelectVehicle = {
                 viewModel.getVehicleData(it)
-            },
-            onCalibrate = { onCalibrate(it) }
+            }
         )
 
         when (uiState.value.loginEvent) {
@@ -148,7 +144,6 @@ fun VehiculosRoute(
 
 @Composable
 fun VehiculosScreen(
-    config: VehicleConfiguration?,
     wifiStatus: WifiConnectionState,
     loggedUser: String,
     logData: String,
@@ -162,7 +157,6 @@ fun VehiculosScreen(
     onLoginPassword: (password: String) -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
-    onCalibrate: (idCaja: Int) -> Unit,
     onSelectVehicle: (Int) -> Unit,
     modifier: Modifier = Modifier,
     currentVehicle: VehicleInfo?,
@@ -332,11 +326,9 @@ fun VehiculosScreen(
             }
 
             VehicleSection(
-                idCaja = config?.idCaja?.toIntOrNull(),
                 vehicles = vehicles,
                 currentVehicle = currentVehicle,
                 onSelectVehicle = { onSelectVehicle(it) },
-                onCalibrate = { onCalibrate(it) }
             )
 
             SectionCard {
@@ -610,7 +602,6 @@ fun DropdownMenuVehiclePreview() {
 fun VehiculosRoutePreview() {
     FuelBoxControlTheme {
         VehiculosScreen(
-            config = null,
             loggedUser = "",
             isLogged = true,
             username = "",
@@ -630,7 +621,6 @@ fun VehiculosRoutePreview() {
             onLogout = {},
             wifiStatus = WifiConnectionState(),
             logData = "2025/04/24,-555,-555,-555",
-            onCalibrate = {}
         )
     }
 }

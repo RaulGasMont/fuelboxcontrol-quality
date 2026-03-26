@@ -59,7 +59,6 @@ import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun CalibracionRoute(
-    idCaja: Int,
     modifier: Modifier = Modifier,
     viewModel: CalibrationViewModel = hiltViewModel()
 ) {

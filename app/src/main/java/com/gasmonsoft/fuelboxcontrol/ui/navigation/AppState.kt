@@ -27,6 +27,7 @@ class AppState(
         val currentDestination = currentDestination()
         return currentDestination?.hierarchy?.any { destination ->
             destination.hasRoute<ScreenRoute.Sensores>() ||
+                    destination.hasRoute<ScreenRoute.Calibracion>() ||
                     destination.hasRoute<ScreenRoute.DatosVehiculos>()
         } == true
     }
