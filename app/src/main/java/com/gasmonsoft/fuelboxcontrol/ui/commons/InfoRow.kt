@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,16 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun InfoRow(
     title: String,
     value: String,
-    icon: ImageVector
+    icon: ImageVector,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
     ) {
         Box(
@@ -65,5 +70,17 @@ fun InfoRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun InfoRowPreview() {
+    FuelBoxControlTheme {
+        InfoRow(
+            title = "Capacidad del tanque",
+            value = "100 L",
+            icon = Icons.Filled.Preview
+        )
     }
 }

@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ElectricBolt
+import androidx.compose.material.icons.filled.OilBarrel
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +29,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,9 +41,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,12 +58,15 @@ import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationUiState
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.SenderCalibrationEvent
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoRow
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SuccessDialog
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
+import com.gasmonsoft.fuelboxcontrol.utils.sanitizeDecimalInput
+import com.gasmonsoft.fuelboxcontrol.utils.toPositiveDoubleOrNull
 
 @Composable
 fun CalibracionRoute(
@@ -117,7 +128,7 @@ fun CalibracionRoute(
                 )
             }
 
-            else -> {}
+            else -> Unit
         }
     }
 }
@@ -140,18 +151,31 @@ fun CalibrationScreen(
         )
     )
 
-    var litros by remember { mutableStateOf("") }
-    var valor by remember { mutableStateOf("") }
-    var capacidad by remember { mutableStateOf("") }
-    var capacitancia by remember { mutableStateOf("") }
-    var userIsTryingToEdit by remember { mutableStateOf(false) }
-    var userEditedManually by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var medidaLitros by remember { mutableStateOf("") }
+    var medidaValor by remember { mutableStateOf("") }
+    var configCapacidad by remember { mutableStateOf("") }
+    var configCapacitancia by remember { mutableStateOf("") }
+
+    var userIsTryingToEditValor by remember { mutableStateOf(false) }
+    var userEditedValorManually by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.currentSensorValue) {
-        if (!userIsTryingToEdit && !userEditedManually) {
-            valor = uiState.currentSensorValue
+        if (!userIsTryingToEditValor && !userEditedValorManually) {
+            medidaValor = sanitizeDecimalInput(uiState.currentSensorValue)
         }
     }
+
+    val capacidadValida = configCapacidad.toPositiveDoubleOrNull() != null
+    val capacitanciaValida = configCapacitancia.toPositiveDoubleOrNull() != null
+    val valorValido = medidaValor.toPositiveDoubleOrNull() != null
+    val litrosValido = medidaLitros.toPositiveDoubleOrNull() != null
+
+    val canSaveConfig = uiState.selectedSensor != null && capacidadValida && capacitanciaValida
+    val canTakeMeasure = uiState.selectedSensor != null && valorValido && litrosValido
+    val canStartAnalysis = uiState.measurements.size >= 3
 
     Box(
         modifier = modifier
@@ -166,7 +190,7 @@ fun CalibrationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             ScreenHeaderCard(
-                title = "Calibracion",
+                title = "Calibración",
                 subtitle = "",
                 icon = Icons.Filled.Sensors,
             )
@@ -182,58 +206,85 @@ fun CalibrationScreen(
                 DropdownSelectSensor(
                     sensors = uiState.sensors,
                     sensor = uiState.selectedSensor,
-                    onSelectSensor = { onSelectSensor(it) }
+                    onSelectSensor = onSelectSensor
                 )
             }
 
             SectionCard {
                 SectionTitle(
                     title = "Datos de configuración",
-                    subtitle = "Ingrese la capacidad del tanque y la capacitancia"
+                    subtitle = "Ingresa la capacidad del tanque y la capacitancia inicial"
                 )
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
+                Text(
+                    text = "Configuraciones actuales",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = MaterialTheme.typography.titleMedium.fontWeight
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
+                Row {
 
-                Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))) {
-                    OutlinedTextField(
-                        enabled = uiState.selectedSensor != null,
-                        value = capacitancia,
-                        onValueChange = { newText ->
-                            capacitancia = newText
-                        },
-                        label = { Text("Capacitancia") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
+                    InfoRow(
+                        title = "Capacidad",
+                        value = "${uiState.capacidad} L",
+                        icon = Icons.Filled.OilBarrel,
+                        modifier = Modifier.weight(1f)
                     )
 
-                    OutlinedTextField(
+                    InfoRow(
+                        title = "Capacitancia",
+                        value = "${uiState.capacitancia} F",
+                        icon = Icons.Default.ElectricBolt,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))
+                ) {
+                    DecimalInputField(
                         enabled = uiState.selectedSensor != null,
-                        value = capacidad,
-                        onValueChange = { newText ->
-                            litros = newText
-                        },
-                        label = { Text("Capacidad") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
+                        value = configCapacitancia,
+                        onValueChange = { configCapacitancia = it },
+                        label = "Capacitancia",
+                        supportingText = "Ingresa un número mayor a 0",
+                        isError = configCapacitancia.isNotBlank() && !capacitanciaValida,
+                        errorText = "Capacitancia inválida",
+                        imeAction = ImeAction.Next,
+                        onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
+
+                    DecimalInputField(
+                        enabled = uiState.selectedSensor != null,
+                        value = configCapacidad,
+                        onValueChange = { configCapacidad = it },
+                        label = "Capacidad del tanque",
+                        suffix = "L",
+                        supportingText = "Ingresa un número mayor a 0",
+                        isError = configCapacidad.isNotBlank() && !capacidadValida,
+                        errorText = "Capacidad inválida",
+                        imeAction = ImeAction.Done,
+                        onImeAction = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
 
                 Button(
-                    enabled = uiState.selectedSensor != null,
+                    enabled = canSaveConfig,
                     onClick = {
-                        onSaveConfig(capacidad, capacitancia)
-                        capacidad = ""
-                        capacitancia = ""
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        onSaveConfig(configCapacidad, configCapacitancia)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -251,70 +302,95 @@ fun CalibrationScreen(
             SectionCard {
                 SectionTitle(
                     title = "Tomar medida",
-                    subtitle = "Tomar medición de combustible para realizar el  análisis"
+                    subtitle = "Captura una medición de combustible para el análisis"
                 )
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))) {
-                    OutlinedTextField(
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))
+                ) {
+                    DecimalInputField(
                         enabled = uiState.selectedSensor != null,
-                        value = valor,
-                        onValueChange = { newText ->
-                            valor = newText
-                            userEditedManually = true
+                        value = medidaValor,
+                        onValueChange = {
+                            medidaValor = it
+                            userEditedValorManually = true
                         },
-                        label = { Text("Valor") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
-                        modifier = Modifier
-                            .onFocusChanged { focusState ->
-                                userIsTryingToEdit = focusState.isFocused
-                            }
-                            .weight(1f),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
+                        label = "Valor del sensor",
+                        supportingText = if (!userEditedValorManually) {
+                            "Se autocompleta con la lectura actual del sensor"
+                        } else {
+                            "Editado manualmente"
+                        },
+                        isError = medidaValor.isNotBlank() && !valorValido,
+                        errorText = "Valor inválido",
+                        imeAction = ImeAction.Next,
+                        onImeAction = { focusManager.moveFocus(FocusDirection.Down) },
+                        modifier = Modifier.onFocusChanged { focusState ->
+                            userIsTryingToEditValor = focusState.isFocused
+                        }
                     )
 
-                    OutlinedTextField(
+                    DecimalInputField(
                         enabled = uiState.selectedSensor != null,
-                        value = litros,
-                        onValueChange = { newText ->
-                            litros = newText
-
-                        },
-                        label = { Text("Litros") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
+                        value = medidaLitros,
+                        onValueChange = { medidaLitros = it },
+                        label = "Litros",
+                        suffix = "L",
+                        supportingText = "Ingresa un número mayor a 0",
+                        isError = medidaLitros.isNotBlank() && !litrosValido,
+                        errorText = "Litros inválidos",
+                        imeAction = ImeAction.Done,
+                        onImeAction = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
 
-                Button(
-                    enabled = uiState.selectedSensor != null,
-                    onClick = {
-                        onTakeMeasure(litros, valor)
-                        litros = ""
-                        valor = ""
-                        userIsTryingToEdit = false
-                        userEditedManually = false
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = "Tomar medida")
+                    OutlinedButton(
+                        enabled = uiState.selectedSensor != null,
+                        onClick = {
+                            medidaValor = sanitizeDecimalInput(uiState.currentSensorValue)
+                            userEditedValorManually = false
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Text("Usar lectura actual")
+                    }
+
+                    Button(
+                        enabled = canTakeMeasure,
+                        onClick = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            onTakeMeasure(medidaLitros, medidaValor)
+
+                            medidaLitros = ""
+                            medidaValor = sanitizeDecimalInput(uiState.currentSensorValue)
+                            userIsTryingToEditValor = false
+                            userEditedValorManually = false
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(text = "Tomar medida")
+                    }
                 }
             }
 
@@ -325,22 +401,77 @@ fun CalibrationScreen(
                 )
             }
 
-            Button(
-                onClick = onStarAnalise,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(18.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                enabled = uiState.measurements.isNotEmpty() && uiState.measurements.size >= 3
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "Iniciar análisis")
+                if (!canStartAnalysis) {
+                    Text(
+                        text = "Se requieren al menos 3 mediciones para iniciar el análisis",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Button(
+                    onClick = onStarAnalise,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    enabled = canStartAnalysis
+                ) {
+                    Text(text = "Iniciar análisis")
+                }
             }
         }
     }
+}
+
+@Composable
+fun DecimalInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    suffix: String? = null,
+    supportingText: String? = null,
+    isError: Boolean = false,
+    errorText: String? = null,
+    imeAction: ImeAction = ImeAction.Done,
+    onImeAction: () -> Unit = {}
+) {
+    OutlinedTextField(
+        enabled = enabled,
+        value = value,
+        onValueChange = { newText ->
+            onValueChange(sanitizeDecimalInput(newText))
+        },
+        label = { Text(label) },
+        singleLine = true,
+        shape = RoundedCornerShape(dimensionResource(R.dimen.medium_padding)),
+        modifier = modifier.fillMaxWidth(),
+        isError = isError,
+        suffix = suffix?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = imeAction
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onImeAction() },
+            onDone = { onImeAction() }
+        ),
+        supportingText = {
+            when {
+                isError && !errorText.isNullOrBlank() -> Text(errorText)
+                !supportingText.isNullOrBlank() -> Text(supportingText)
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -379,12 +510,10 @@ fun DropdownSelectSensor(
             shape = RoundedCornerShape(18.dp),
             containerColor = MaterialTheme.colorScheme.surface
         ) {
-            sensors.forEach { sensor ->
+            sensors.forEach { item ->
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            text = sensor.value
-                        )
+                        Text(text = item.value)
                     },
                     leadingIcon = {
                         Icon(
@@ -394,7 +523,7 @@ fun DropdownSelectSensor(
                     },
                     onClick = {
                         expanded = false
-                        onSelectSensor(sensor)
+                        onSelectSensor(item)
                     }
                 )
             }
