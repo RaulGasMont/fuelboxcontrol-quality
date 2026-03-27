@@ -74,10 +74,10 @@ class VehiculosViewModel @Inject constructor(
                         }
                     }
                 },
-                onFailure = {
-                    val errorMessage = it.message ?: "Error desconocido"
-                    _uiState.update {
-                        it.copy(
+                onFailure = { failure ->
+                    val errorMessage = failure.message ?: "Error desconocido"
+                    _uiState.update { currentUiState ->
+                        currentUiState.copy(
                             isLoggedIn = false,
                             loginEvent = NetworkEvent.Error("Error del servidor: $errorMessage")
                         )
