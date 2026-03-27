@@ -134,7 +134,7 @@ fun MeasurementsTable(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Button(
                 onClick = onClearAllTable,
                 modifier = Modifier

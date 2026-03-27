@@ -13,9 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,15 +28,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoDialog(
-    modifier: Modifier = Modifier,
-    title: String,
     message: String,
+    modifier: Modifier = Modifier,
+    title: String = "Aviso",
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -71,20 +75,20 @@ fun InfoDialog(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.errorContainer),
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.ErrorOutline,
+                            imageVector = Icons.Rounded.Info,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            tint = MaterialTheme.colorScheme.onTertiary,
                             modifier = Modifier.size(26.dp)
                         )
                     }
 
                     Column {
                         Text(
-                            text = "Ocurrió un problema",
+                            text = title,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -95,7 +99,7 @@ fun InfoDialog(
 
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
                 ) {
                     Text(
                         text = message,
@@ -107,21 +111,59 @@ fun InfoDialog(
                     )
                 }
 
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(16.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text(
-                        text = "Aceptar",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .height(50.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(
+                            text = "Regresar",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
                         )
-                    )
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier
+                            .height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            Color.Green.copy(
+                                blue = 0.1f,
+                                green = 0.6f
+                            )
+                        )
+                    ) {
+                        Text(
+                            text = "Aceptar",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun InfoDialogPreview() {
+    FuelBoxControlTheme {
+        InfoDialog(
+            title = "Error",
+            message = "This is a test of emergency",
+            onDismiss = {},
+            onConfirm = {},
+        )
     }
 }

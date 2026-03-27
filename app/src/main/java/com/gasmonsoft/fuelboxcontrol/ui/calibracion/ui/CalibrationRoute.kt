@@ -61,6 +61,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationUiState
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.SenderCalibrationEvent
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoRow
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
@@ -79,9 +80,27 @@ fun CalibracionRoute(
     viewModel: CalibrationViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.calibrationUiState.collectAsState()
+    var showWarningDialog by remember { mutableStateOf(false) }
+    var pendingSensor by remember { mutableStateOf<CalibrationSensor?>(null) }
 
     BackHandler {
         onBack()
+    }
+
+    if (showWarningDialog) {
+        InfoDialog(
+            message = "Se perderán los datos actuales al cambiar de sensor",
+            onDismiss = {
+                showWarningDialog = false
+                pendingSensor = null
+            }
+        ) {
+            pendingSensor?.let {
+                viewModel.selectSensor(it)
+            }
+            showWarningDialog = false
+            pendingSensor = null
+        }
     }
 
     Box(
@@ -93,7 +112,17 @@ fun CalibracionRoute(
             onTakeMeasure = { litros, valor ->
                 viewModel.takeMeasurement(litros, valor)
             },
-            onSelectSensor = { viewModel.selectSensor(it) },
+            onSelectSensor = { sensor ->
+                if ((uiState.value.measurements.isNotEmpty() || uiState.value.capacidad != 0.0 ||
+                            uiState.value.capacitancia != 0.0) &&
+                    uiState.value.selectedSensor != sensor
+                ) {
+                    pendingSensor = sensor
+                    showWarningDialog = true
+                } else {
+                    viewModel.selectSensor(sensor)
+                }
+            },
             onDeleteMeasurement = { viewModel.eliminarUltimaMedicion() },
             onStarAnalise = { viewModel.startAnalise(idCaja) },
             onSaveConfig = { capacidad, capacitancia ->
