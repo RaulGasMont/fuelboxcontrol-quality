@@ -903,6 +903,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 uuid == "487a5fee-d25e-49fd-aa7a-92c292dee4b6" ||
                 uuid == "69ad5dc1-e2b5-43cb-9c3c-494c1876d86d" ||
                 uuid == "00001800-0000-1000-8000-00805f9b34fb" ||
-                uuid == "cae8124d-a939-422a-a0af-a74313013811"
+                uuid == "cae8124d-a939-422a-a0af-a74313013811" ||
+                uuid == "958ae39e-2fb0-4389-9e63-0c68cb134426"
     }
 }

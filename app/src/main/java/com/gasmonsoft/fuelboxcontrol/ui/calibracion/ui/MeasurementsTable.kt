@@ -98,11 +98,11 @@ fun MeasurementsTable(
                                 modifier = Modifier.weight(1f)
                             )
                             MeasurementCell(
-                                value = item.first,
+                                value = item.second,
                                 modifier = Modifier.weight(1f)
                             )
                             MeasurementCell(
-                                value = item.second,
+                                value = item.first,
                                 modifier = Modifier.weight(1f)
                             )
                         }

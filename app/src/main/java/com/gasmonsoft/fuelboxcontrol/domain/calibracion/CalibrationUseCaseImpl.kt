@@ -492,8 +492,8 @@ class CalibrationUseCaseImpl @Inject constructor(
 
     companion object {
         private const val MIN_POINTS_PER_SEGMENT = 3
-        private const val FACTOR_TOLERANCIA = 1.8
-        private const val TOLERANCIA_MINIMA = 0.10
-        private const val FACTOR_CRECIMIENTO_RMSE = 1.35
+        private const val FACTOR_TOLERANCIA = 1.25
+        private const val TOLERANCIA_MINIMA = 0.001
+        private const val FACTOR_CRECIMIENTO_RMSE = 1.20
     }
 }
