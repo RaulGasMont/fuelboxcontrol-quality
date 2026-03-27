@@ -59,9 +59,6 @@ class SensorViewModel @Inject constructor(
     private val _events = MutableSharedFlow<SensorUiEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<SensorUiEvent> = _events.asSharedFlow()
 
-    /**
-     * Derivados útiles por compatibilidad si todavía no migras toda la UI.
-     */
     val connectionState: StateFlow<ConnectionState> =
         uiState.map { it.connectionState }
             .stateIn(
@@ -81,10 +78,6 @@ class SensorViewModel @Inject constructor(
     private var subscriptionJob: Job? = null
     private var periodicWriteJob: Job? = null
 
-    /**
-     * Si todavía la UI usa esto en otra parte, puedes conservarlo.
-     * Pero idealmente la pantalla debería usar uiState.
-     */
     val sensorInfoState = sensorReceiveManager.sensorData
 
     fun initializeConnection() {
@@ -103,8 +96,8 @@ class SensorViewModel @Inject constructor(
     }
 
     fun disconnect() {
-        stopPeriodicWriteTask() // Detiene envíos de [INFO]
-        subscriptionJob?.cancel() // Detiene la escucha de nuevos paquetes del sensor
+        stopPeriodicWriteTask()
+        subscriptionJob?.cancel()
 
         _uiState.update {
             it.copy(
@@ -113,7 +106,7 @@ class SensorViewModel @Inject constructor(
                 initializingMessage = null
             )
         }
-        sensorReceiveManager.disconnect() // Cierra el BluetoothGatt
+        sensorReceiveManager.disconnect()
     }
 
     fun reconnect() {
@@ -155,9 +148,6 @@ class SensorViewModel @Inject constructor(
         sensorReceiveManager.writeInitialValuese(value, option)
     }
 
-    /**
-     * Wrappers por compatibilidad con llamadas existentes.
-     */
     fun onwrite(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 1)
     fun onwriteEemo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 32)
     fun onwriteElmo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 33)
@@ -522,7 +512,7 @@ class SensorViewModel @Inject constructor(
     private fun loadSavedMacAddress() {
         val sharedPreferences =
             context.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
-        val savedMacAddress = sharedPreferences.getString("mac", "")
+        val savedMacAddress = sharedPreferences.getString("last_mac", "") // Corregido: "last_mac"
 
         if (!savedMacAddress.isNullOrEmpty()) {
             NetworkConfig.nombreconfiguracion = savedMacAddress
@@ -666,10 +656,10 @@ class SensorViewModel @Inject constructor(
         return true
     }
 
-    override fun onCleared() {
-        stopPeriodicWriteTask()
-        subscriptionJob?.cancel()
-        sensorReceiveManager.closeConnection()
-        super.onCleared()
-    }
+//    override fun onCleared() {
+//        stopPeriodicWriteTask()
+//        subscriptionJob?.cancel()
+//        sensorReceiveManager.closeConnection()
+//        super.onCleared()
+//    }
 }

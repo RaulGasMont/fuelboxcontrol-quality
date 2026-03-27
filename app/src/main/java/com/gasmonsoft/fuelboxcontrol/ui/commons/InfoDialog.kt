@@ -124,7 +124,7 @@ fun InfoDialog(
                     ) {
                         Text(
                             text = "Regresar",
-                            style = MaterialTheme.typography.titleMedium.copy(
+                            style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
                         )
@@ -144,7 +144,7 @@ fun InfoDialog(
                     ) {
                         Text(
                             text = "Aceptar",
-                            style = MaterialTheme.typography.titleMedium.copy(
+                            style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
                         )

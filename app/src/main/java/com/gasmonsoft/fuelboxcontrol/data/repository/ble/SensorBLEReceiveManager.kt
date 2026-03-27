@@ -40,8 +40,10 @@ import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig.nombreconfiguracion
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -93,6 +95,7 @@ class SensorBLEReceiveManager @Inject constructor(
     private var scanAttempts = 0
     private val MAX_SCAN_ATTEMPTS = 30
     private val MAXIMUM_CONNECTION_ATTEMPTS = 6
+    private val INITIALIZATION_TIMEOUT_MS = 15000L
 
     private var currentConnectionAttempt = 1
     private var currentMtu = 23
@@ -101,6 +104,7 @@ class SensorBLEReceiveManager @Inject constructor(
     private var isScanning = false
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var initializationTimeoutJob: Job? = null
 
     private val bleScanner by lazy { bluetoothAdapter.bluetoothLeScanner }
 
@@ -129,6 +133,24 @@ class SensorBLEReceiveManager @Inject constructor(
 
     private val _sensorState = MutableStateFlow(SensorState())
     override val sensorData = _sensorState.asStateFlow()
+
+    private fun startInitializationTimeout() {
+        initializationTimeoutJob?.cancel()
+        initializationTimeoutJob = scope.launch {
+            delay(INITIALIZATION_TIMEOUT_MS)
+            if (connectionState.replayCache.lastOrNull() == ConnectionState.CurrentlyInitializing) {
+                Log.w("SensorBLEReceiver", "Initialization timeout reached. Resetting connection.")
+                teardownGatt(clearMac = false)
+                connectionState.emit(ConnectionState.Disconnected)
+                data.emit(Resource.Error(errorMessage = "Tiempo de espera de conexión agotado. Intente nuevamente."))
+            }
+        }
+    }
+
+    private fun cancelInitializationTimeout() {
+        initializationTimeoutJob?.cancel()
+        initializationTimeoutJob = null
+    }
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -182,6 +204,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     bleScanner.stopScan(this)
 
                     scope.launch {
+                        cancelInitializationTimeout()
                         connectionState.emit(ConnectionState.Disconnected)
                         data.emit(
                             Resource.Error(
@@ -220,6 +243,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     }
                     startReceiving()
                 } else {
+                    cancelInitializationTimeout()
                     gattQueue.onDisconnected()
                     currentConnectionAttempt = 1
                     bleConnectionManager.markError()
@@ -262,6 +286,7 @@ class SensorBLEReceiveManager @Inject constructor(
                     )
 
                     scope.launch {
+                        cancelInitializationTimeout()
                         connectionState.emit(ConnectionState.Disconnected)
                         data.emit(
                             Resource.Success(
@@ -346,6 +371,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 }
 
                 bleConnectionManager.markReady()
+                cancelInitializationTimeout()
 
                 connectionState.emit(ConnectionState.Connected)
                 data.emit(Resource.Loading(message = "Dispositivo listo para operar"))
@@ -408,6 +434,9 @@ class SensorBLEReceiveManager @Inject constructor(
         scanAttempts = 0
 
         val targetMac = resolveTargetMac()
+        if (!targetMac.isNullOrBlank()) {
+            sharedPrefs.edit().putString(KEY_LAST_MAC, targetMac).apply()
+        }
         bleConnectionManager.startNewScan(targetMac)
 
         val bluetoothManager =
@@ -420,6 +449,7 @@ class SensorBLEReceiveManager @Inject constructor(
             scope.launch {
                 connectionState.emit(ConnectionState.CurrentlyInitializing)
                 data.emit(Resource.Loading(message = "Reconectando a dispositivo conocido..."))
+                startInitializationTimeout()
             }
 
             val newGatt = phantomDevice.connectGatt(
@@ -436,6 +466,7 @@ class SensorBLEReceiveManager @Inject constructor(
         scope.launch {
             connectionState.emit(ConnectionState.CurrentlyInitializing)
             data.emit(Resource.Loading(message = "Escaneando dispositivo BLE..."))
+            startInitializationTimeout()
         }
 
         isScanning = true
@@ -482,6 +513,7 @@ class SensorBLEReceiveManager @Inject constructor(
         configuracion = ""
         sharedPrefs.edit().remove(KEY_LAST_MAC).apply()
         scope.launch {
+            cancelInitializationTimeout()
             connectionState.emit(ConnectionState.Disconnected)
         }
         bleConnectionManager.markDisconnectingByUser()
@@ -629,7 +661,7 @@ class SensorBLEReceiveManager @Inject constructor(
     }
 
     override fun closeConnection() {
-        teardownGatt(clearMac = true)
+        teardownGatt(clearMac = false)
     }
 
     private suspend fun subscribeToDiscoveredCharacteristics(
@@ -723,6 +755,7 @@ class SensorBLEReceiveManager @Inject constructor(
         gattToClose: BluetoothGatt? = bleConnectionManager.currentGatt(),
         clearMac: Boolean
     ) {
+        cancelInitializationTimeout()
         gattQueue.onDisconnected()
 
         resetDiscoveredState()

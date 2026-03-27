@@ -140,7 +140,7 @@ fun MeasurementsTable(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
-                    .height(46.dp)
+                    .height(54.dp)
                     .weight(1f),
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
@@ -163,7 +163,7 @@ fun MeasurementsTable(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
-                    .height(46.dp)
+                    .height(54.dp)
                     .weight(1f),
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),

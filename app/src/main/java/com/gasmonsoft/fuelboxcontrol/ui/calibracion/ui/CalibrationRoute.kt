@@ -68,6 +68,9 @@ import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SuccessDialog
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.ConnectionStatusRow
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SectionHeader
+import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorSectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.sanitizeDecimalInput
 import com.gasmonsoft.fuelboxcontrol.utils.toPositiveDoubleOrNull
@@ -129,7 +132,10 @@ fun CalibracionRoute(
                 viewModel.saveCapacidadAndCapacitancia(capacidad, capacitancia)
             },
             onBack = onBack,
-            onClearTable = { viewModel.clearTable() }
+            onClearTable = { viewModel.clearTable() },
+            onReconnect = {},
+            onInitializeConnection = {},
+            onDisconnect = {},
         )
 
         when (uiState.value.calibrationEvent) {
@@ -183,6 +189,9 @@ fun CalibrationScreen(
     onStarAnalise: () -> Unit,
     onSaveConfig: (capacidad: String, capacitancia: String) -> Unit,
     onBack: () -> Unit,
+    onReconnect: () -> Unit,
+    onInitializeConnection: () -> Unit,
+    onDisconnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundBrush = Brush.verticalGradient(
@@ -219,6 +228,13 @@ fun CalibrationScreen(
     val canTakeMeasure = uiState.selectedSensor != null && valorValido && litrosValido
     val canStartAnalysis = uiState.measurements.size >= 3
 
+    if (uiState.calibrationEvent == SenderCalibrationEvent.Success) {
+        configCapacidad = ""
+        configCapacitancia = ""
+        medidaLitros = ""
+        medidaValor = ""
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -248,6 +264,24 @@ fun CalibrationScreen(
                 )
             }
 
+            SensorSectionCard {
+                SectionHeader(
+                    title = "Conexión del dispositivo",
+                    subtitle = "Revise el estado actual de la caja y gestione la conexión."
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                ConnectionStatusRow(
+                    state = uiState.connectionState,
+                    initializingMessage = uiState.initializingMessage,
+                    errorMessage = uiState.errorMessage,
+                    onReconnect = onReconnect,
+                    onInitialize = onInitializeConnection,
+                    onDisconnect = onDisconnect
+                )
+            }
+
             SectionCard {
                 SectionTitle(
                     title = "Sensores",
@@ -259,7 +293,13 @@ fun CalibrationScreen(
                 DropdownSelectSensor(
                     sensors = uiState.sensors,
                     sensor = uiState.selectedSensor,
-                    onSelectSensor = onSelectSensor
+                    onSelectSensor = {
+                        configCapacidad = ""
+                        configCapacitancia = ""
+                        medidaLitros = ""
+                        medidaValor = ""
+                        onSelectSensor(it)
+                    }
                 )
             }
 
@@ -613,7 +653,10 @@ fun CalibrationScreenPreview() {
             onStarAnalise = {},
             onSaveConfig = { _, _ -> },
             onBack = {},
-            onClearTable = {}
+            onClearTable = {},
+            onReconnect = {},
+            onInitializeConnection = {},
+            onDisconnect = {}
         )
     }
 }

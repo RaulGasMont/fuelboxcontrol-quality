@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
 import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Calibracion
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
@@ -9,7 +10,9 @@ import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.service.firmware.NTF_ACK
 import com.gasmonsoft.fuelboxcontrol.data.service.firmware.UpgradeFileType
 import com.gasmonsoft.fuelboxcontrol.domain.calibracion.CalibrationUseCaseImpl
+import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +25,7 @@ import javax.inject.Inject
 class CalibrationViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
     private val calibrationUseCase: CalibrationUseCaseImpl,
-    private val repository: FuelSoftwareControlRepository
+    private val repository: FuelSoftwareControlRepository,
 ) : ViewModel() {
     private val sensorData = sensorReceiveManager.sensorData.stateIn(
         scope = viewModelScope,
@@ -31,10 +34,60 @@ class CalibrationViewModel @Inject constructor(
     )
     private var _calibrationUiState = MutableStateFlow(CalibrationUiState())
     val calibrationUiState = _calibrationUiState.asStateFlow()
+    private var subscriptionJob: Job? = null
+    private var periodicWriteJob: Job? = null
 
     init {
         observeSensorData()
+        ensureSubscription()
     }
+
+    private fun ensureSubscription() {
+        if (subscriptionJob?.isActive == true) return
+
+        subscriptionJob = viewModelScope.launch {
+            sensorReceiveManager.data.collect { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        _calibrationUiState.update {
+                            it.copy(
+                                connectionState = ConnectionState.CurrentlyInitializing,
+                                initializingMessage = result.message,
+                                errorMessage = null
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        stopPeriodicWriteTask()
+                        _calibrationUiState.update {
+                            it.copy(
+                                connectionState = ConnectionState.Uninitialized,
+                                initializingMessage = null,
+                                errorMessage = result.errorMessage
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _calibrationUiState.update {
+                            it.copy(
+                                connectionState = result.data.connectionState,
+                                initializingMessage = null,
+                                errorMessage = null
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun stopPeriodicWriteTask() {
+        periodicWriteJob?.cancel()
+        periodicWriteJob = null
+    }
+
 
     fun observeSensorData() {
         viewModelScope.launch {
@@ -168,6 +221,8 @@ class CalibrationViewModel @Inject constructor(
         if (result.type == NTF_ACK) {
             _calibrationUiState.update { currentUiState ->
                 currentUiState.copy(
+                    capacidad = 0.0,
+                    capacitancia = 0.0,
                     calibrationEvent = SenderCalibrationEvent.Success
                 )
             }

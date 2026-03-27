@@ -1,5 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel
 
+import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
+
 
 enum class CalibrationSensor(val value: String, val id: String) {
     SENSOR_1("Sensor 1", "1"),
@@ -16,6 +18,9 @@ data class CalibrationUiState(
         CalibrationSensor.SENSOR_4
     ),
     val selectedSensor: CalibrationSensor? = null,
+    val connectionState: ConnectionState = ConnectionState.Uninitialized,
+    val initializingMessage: String? = null,
+    val errorMessage: String? = null,
     val measurements: List<Pair<String, String>> = emptyList(),
     val currentSensorValue: String = "",
     val calibrationEvent: SenderCalibrationEvent = SenderCalibrationEvent.Idle,
