@@ -89,11 +89,6 @@ fun ErrorDialog(
                             ),
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "Revisa el mensaje para continuar",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 

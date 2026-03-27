@@ -30,7 +30,8 @@ import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 fun MeasurementsTable(
     measurements: List<Pair<String, String>>,
     modifier: Modifier = Modifier,
-    onDeleteMeasurement: () -> Unit
+    onDeleteMeasurement: () -> Unit,
+    onClearAllTable: () -> Unit
 ) {
     val shape = RoundedCornerShape(16.dp)
 
@@ -133,24 +134,52 @@ fun MeasurementsTable(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = onDeleteMeasurement,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .height(54.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError
-            ),
-            enabled = measurements.isNotEmpty()
-        ) {
-            Text(
-                text = "Eliminar medición",
-                style = MaterialTheme.typography.labelLarge
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = onClearAllTable,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .height(46.dp)
+                    .weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                enabled = measurements.isNotEmpty()
+            ) {
+                Text(
+                    text = "Limpiar tabla",
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
+
+            Button(
+                onClick = onDeleteMeasurement,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .height(46.dp)
+                    .weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                enabled = measurements.isNotEmpty()
+            ) {
+                Text(
+                    text = "Eliminar medición",
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
         }
     }
 }
@@ -196,7 +225,8 @@ fun MeasurementsTablePreview() {
                 "200" to "20",
                 "300" to "30"
             ),
-            onDeleteMeasurement = {}
+            onDeleteMeasurement = {},
+            onClearAllTable = {}
         )
     }
 }
@@ -207,7 +237,8 @@ fun MeasurementsTableEmptyPreview() {
     FuelBoxControlTheme {
         MeasurementsTable(
             measurements = emptyList(),
-            onDeleteMeasurement = {}
+            onDeleteMeasurement = {},
+            onClearAllTable = {}
         )
     }
 }

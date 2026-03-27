@@ -63,7 +63,9 @@ class CalibrationViewModel @Inject constructor(
             currentUiState.copy(
                 selectedSensor = sensor,
                 measurements = emptyList(),
-                currentSensorValue = ""
+                currentSensorValue = "",
+                capacidad = 0.0,
+                capacitancia = 0.0
             )
         }
     }
@@ -134,8 +136,6 @@ class CalibrationViewModel @Inject constructor(
                     )
                 }
             }
-
-
         }
     }
 
@@ -171,6 +171,7 @@ class CalibrationViewModel @Inject constructor(
                     calibrationEvent = SenderCalibrationEvent.Success
                 )
             }
+            clearTable()
         } else {
             _calibrationUiState.update { currentUiState ->
                 currentUiState.copy(
@@ -189,6 +190,14 @@ class CalibrationViewModel @Inject constructor(
             measurements.removeLastOrNull()
             currentUiState.copy(
                 measurements = measurements
+            )
+        }
+    }
+
+    fun clearTable() {
+        _calibrationUiState.update { currentUiState ->
+            currentUiState.copy(
+                measurements = emptyList()
             )
         }
     }

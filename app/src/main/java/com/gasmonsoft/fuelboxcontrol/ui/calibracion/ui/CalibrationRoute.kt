@@ -99,7 +99,8 @@ fun CalibracionRoute(
             onSaveConfig = { capacidad, capacitancia ->
                 viewModel.saveCapacidadAndCapacitancia(capacidad, capacitancia)
             },
-            onBack = onBack
+            onBack = onBack,
+            onClearTable = { viewModel.clearTable() }
         )
 
         when (uiState.value.calibrationEvent) {
@@ -149,6 +150,7 @@ fun CalibrationScreen(
     onTakeMeasure: (litros: String, valor: String) -> Unit,
     onSelectSensor: (CalibrationSensor) -> Unit,
     onDeleteMeasurement: () -> Unit,
+    onClearTable: () -> Unit,
     onStarAnalise: () -> Unit,
     onSaveConfig: (capacidad: String, capacitancia: String) -> Unit,
     onBack: () -> Unit,
@@ -419,7 +421,8 @@ fun CalibrationScreen(
             SectionCard {
                 MeasurementsTable(
                     measurements = uiState.measurements,
-                    onDeleteMeasurement = onDeleteMeasurement
+                    onDeleteMeasurement = onDeleteMeasurement,
+                    onClearAllTable = onClearTable
                 )
             }
 
@@ -580,7 +583,8 @@ fun CalibrationScreenPreview() {
             onDeleteMeasurement = {},
             onStarAnalise = {},
             onSaveConfig = { _, _ -> },
-            onBack = {}
+            onBack = {},
+            onClearTable = {}
         )
     }
 }

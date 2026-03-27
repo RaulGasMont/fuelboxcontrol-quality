@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircleOutline
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,16 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SuccessDialog(
+fun InfoDialog(
+    modifier: Modifier = Modifier,
+    title: String,
     message: String,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    onConfirm: () -> Unit
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
@@ -53,7 +53,7 @@ fun SuccessDialog(
             ),
             border = BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                MaterialTheme.colorScheme.error.copy(alpha = 0.18f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 14.dp)
         ) {
@@ -71,20 +71,20 @@ fun SuccessDialog(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(MaterialTheme.colorScheme.errorContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.CheckCircleOutline,
+                            imageVector = Icons.Rounded.ErrorOutline,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.size(26.dp)
                         )
                     }
 
                     Column {
                         Text(
-                            text = "Operación exitosa",
+                            text = "Ocurrió un problema",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -95,7 +95,7 @@ fun SuccessDialog(
 
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
                 ) {
                     Text(
                         text = message,
@@ -123,14 +123,5 @@ fun SuccessDialog(
                 }
             }
         }
-    }
-}
-
-
-@Preview(showSystemUi = true)
-@Composable
-fun SuccessDialogPreview() {
-    FuelBoxControlTheme {
-        SuccessDialog(message = "This is a test of emergency", onDismiss = {})
     }
 }
