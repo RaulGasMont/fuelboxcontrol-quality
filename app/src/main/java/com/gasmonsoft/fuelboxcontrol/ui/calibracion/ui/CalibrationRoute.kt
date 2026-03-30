@@ -171,9 +171,11 @@ fun CalibracionRoute(
             },
             onBack = onBack,
             onClearTable = { viewModel.clearTable() },
-            onReconnect = {},
-            onInitializeConnection = {},
-            onDisconnect = {},
+            onReconnect = viewModel::reconnect,
+            onInitializeConnection = { },
+            onDisconnect = {
+                viewModel.disconnect()
+            },
             onDownloadDat = {
                 val nombreArchivo =
                     "archivoDat_${uiState.value.selectedSensor?.id}_${System.currentTimeMillis()}.txt"

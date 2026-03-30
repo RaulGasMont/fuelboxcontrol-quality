@@ -41,7 +41,7 @@ class ExcelCalibrationReader @Inject constructor() {
                         }
 
                         if (medida.isNotBlank() && litros.isNotBlank()) {
-                            add(medida to litros)
+                            add(litros to medida)
                         }
                     }
                 }

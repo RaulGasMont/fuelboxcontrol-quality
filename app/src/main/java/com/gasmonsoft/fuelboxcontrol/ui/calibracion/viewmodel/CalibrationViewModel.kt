@@ -347,4 +347,27 @@ class CalibrationViewModel @Inject constructor(
             )
         }
     }
+
+    fun disconnect() {
+        stopPeriodicWriteTask()
+        subscriptionJob?.cancel()
+
+        _calibrationUiState.update {
+            it.copy(
+                connectionState = ConnectionState.Disconnected,
+                initializingMessage = null
+            )
+        }
+        sensorReceiveManager.disconnect()
+    }
+
+    fun reconnect() {
+        _calibrationUiState.update {
+            it.copy(
+                errorMessage = null
+            )
+        }
+        ensureSubscription()
+        sensorReceiveManager.reconnect()
+    }
 }
