@@ -172,7 +172,7 @@ fun CalibracionRoute(
             onBack = onBack,
             onClearTable = { viewModel.clearTable() },
             onReconnect = viewModel::reconnect,
-            onInitializeConnection = { },
+            onInitializeConnection = viewModel::initializeConnection,
             onDisconnect = {
                 viewModel.disconnect()
             },

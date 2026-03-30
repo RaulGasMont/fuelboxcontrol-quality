@@ -370,4 +370,9 @@ class CalibrationViewModel @Inject constructor(
         ensureSubscription()
         sensorReceiveManager.reconnect()
     }
+
+    fun initializeConnection() {
+        ensureSubscription()
+        sensorReceiveManager.startReceiving()
+    }
 }
