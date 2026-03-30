@@ -38,7 +38,10 @@ class CalibrationUseCaseImpl @Inject constructor(
                 }
 
                 if (puntos.size < 2) {
-                    return@withContext AnalisisRegresion(formula = "", message = "")
+                    return@withContext AnalisisRegresion(
+                        coefPolinomial = "",
+                        tendencias = emptyList()
+                    )
                 }
 
                 val tendencias = construirTendenciasDinamicas(puntos).toMutableList()
@@ -74,11 +77,13 @@ class CalibrationUseCaseImpl @Inject constructor(
                 }
 
                 AnalisisRegresion(
-                    formula = "", message = ""
+                    coefPolinomial = "",
+                    tendencias = emptyList()
                 )
             } catch (_: Exception) {
                 AnalisisRegresion(
-                    formula = "", message = ""
+                    coefPolinomial = "",
+                    tendencias = emptyList()
                 )
             }
         }

@@ -1,6 +1,10 @@
 package com.gasmonsoft.fuelboxcontrol.ui.calibracion.ui
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +23,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.filled.ElectricBolt
-import androidx.compose.material.icons.filled.OilBarrel
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,37 +34,34 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationSensor
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationUiState
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.CalibrationViewModel
+import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.GeneralEvent
 import com.gasmonsoft.fuelboxcontrol.ui.calibracion.viewmodel.SenderCalibrationEvent
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoDialog
-import com.gasmonsoft.fuelboxcontrol.ui.commons.InfoRow
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ScreenHeaderCard
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
@@ -74,6 +73,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorSectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.sanitizeDecimalInput
 import com.gasmonsoft.fuelboxcontrol.utils.toPositiveDoubleOrNull
+import kotlinx.coroutines.launch
 
 @Composable
 fun CalibracionRoute(
@@ -82,12 +82,49 @@ fun CalibracionRoute(
     modifier: Modifier = Modifier,
     viewModel: CalibrationViewModel = hiltViewModel()
 ) {
-    val uiState = viewModel.calibrationUiState.collectAsState()
+    val uiState = viewModel.calibrationUiState.collectAsStateWithLifecycle()
     var showWarningDialog by remember { mutableStateOf(false) }
     var pendingSensor by remember { mutableStateOf<CalibrationSensor?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     BackHandler {
         onBack()
+    }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri: Uri? ->
+        if (uri == null) {
+            Toast.makeText(context, "Descarga cancelada", Toast.LENGTH_SHORT).show()
+            return@rememberLauncherForActivityResult
+        }
+
+        scope.launch {
+            try {
+                viewModel.guardarByteArrayEnUri(
+                    uri = uri,
+                    data = uiState.value.datFile ?: byteArrayOf()
+                )
+
+                Toast.makeText(context, "Archivo descargado correctamente", Toast.LENGTH_SHORT)
+                    .show()
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    "Error al descargar: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    val excelPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importExcelMeasurements(context, uri)
+        }
     }
 
     if (showWarningDialog) {
@@ -118,7 +155,8 @@ fun CalibracionRoute(
             onSelectSensor = { sensor ->
                 if ((uiState.value.measurements.isNotEmpty() || uiState.value.capacidad != 0.0 ||
                             uiState.value.capacitancia != 0.0) &&
-                    uiState.value.selectedSensor != sensor
+                    uiState.value.selectedSensor != sensor &&
+                    uiState.value.datFile != null
                 ) {
                     pendingSensor = sensor
                     showWarningDialog = true
@@ -136,6 +174,20 @@ fun CalibracionRoute(
             onReconnect = {},
             onInitializeConnection = {},
             onDisconnect = {},
+            onDownloadDat = {
+                val nombreArchivo =
+                    "archivoDat_${uiState.value.selectedSensor?.id}_${System.currentTimeMillis()}.txt"
+                createDocumentLauncher.launch(nombreArchivo)
+            },
+            onLoadData = {
+                excelPicker.launch(
+                    arrayOf(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/vnd.ms-excel"
+                    )
+                )
+            },
+            byteArray = uiState.value.datFile
         )
 
         when (uiState.value.calibrationEvent) {
@@ -176,22 +228,52 @@ fun CalibracionRoute(
 
             else -> Unit
         }
+
+        when (uiState.value.excelReadingEvent) {
+            is GeneralEvent.Error -> {
+                ErrorDialog(
+                    message = (uiState.value.excelReadingEvent as GeneralEvent.Error).message,
+                    onDismiss = { viewModel.restarExcelReadingState() },
+                )
+            }
+
+            GeneralEvent.Loading -> {
+                LoadingDialog(
+                    title = (uiState.value.excelReadingEvent as GeneralEvent.Loading).title,
+                    message = "Espera un momento mientras procesamos la información",
+                )
+            }
+
+            GeneralEvent.Success -> {
+                LaunchedEffect(Unit) {
+                    Toast.makeText(context, "Datos importados correctamente", Toast.LENGTH_SHORT)
+                        .show()
+                    viewModel.restarExcelReadingState()
+                }
+            }
+
+            else -> Unit
+        }
+
     }
 }
 
 @Composable
 fun CalibrationScreen(
+    byteArray: ByteArray?,
     uiState: CalibrationUiState,
     onTakeMeasure: (litros: String, valor: String) -> Unit,
     onSelectSensor: (CalibrationSensor) -> Unit,
     onDeleteMeasurement: () -> Unit,
     onClearTable: () -> Unit,
     onStarAnalise: () -> Unit,
+    onDownloadDat: () -> Unit,
     onSaveConfig: (capacidad: String, capacitancia: String) -> Unit,
     onBack: () -> Unit,
     onReconnect: () -> Unit,
     onInitializeConnection: () -> Unit,
     onDisconnect: () -> Unit,
+    onLoadData: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundBrush = Brush.verticalGradient(
@@ -201,9 +283,6 @@ fun CalibrationScreen(
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
         )
     )
-
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     var medidaLitros by remember { mutableStateOf("") }
     var medidaValor by remember { mutableStateOf("") }
@@ -226,7 +305,10 @@ fun CalibrationScreen(
 
     val canSaveConfig = uiState.selectedSensor != null && capacidadValida && capacitanciaValida
     val canTakeMeasure = uiState.selectedSensor != null && valorValido && litrosValido
-    val canStartAnalysis = uiState.measurements.size >= 3
+    val canStartAnalysis = uiState.measurements.size >= 3 &&
+            uiState.selectedSensor != null &&
+            capacidadValida && capacitanciaValida
+
 
     if (uiState.calibrationEvent == SenderCalibrationEvent.Success) {
         configCapacidad = ""
@@ -303,189 +385,33 @@ fun CalibrationScreen(
                 )
             }
 
-            SectionCard {
-                SectionTitle(
-                    title = "Datos de configuración",
-                    subtitle = "Ingresa la capacidad del tanque y la capacitancia inicial"
-                )
+            ConfigDataSection(
+                configCapacitancia = configCapacitancia,
+                configCapacidad = configCapacidad,
+                canSaveConfig = canSaveConfig,
+                capacidadValida = capacidadValida,
+                capacitanciaValida = capacitanciaValida,
+                uiState = uiState,
+                onSaveConfig = onSaveConfig,
+                onCapacitanciaChange = { configCapacitancia = it },
+                onCapacidadChange = { configCapacidad = it }
+            )
 
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-                Text(
-                    text = "Configuraciones actuales",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = MaterialTheme.typography.titleMedium.fontWeight
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-                Row {
-
-                    InfoRow(
-                        title = "Capacidad",
-                        value = "${uiState.capacidad} L",
-                        icon = Icons.Filled.OilBarrel,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    InfoRow(
-                        title = "Capacitancia",
-                        value = "${uiState.capacitancia} F",
-                        icon = Icons.Default.ElectricBolt,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))
-                ) {
-                    DecimalInputField(
-                        enabled = uiState.selectedSensor != null,
-                        value = configCapacitancia,
-                        onValueChange = { configCapacitancia = it },
-                        label = "Capacitancia",
-                        supportingText = "Ingresa un número mayor a 0",
-                        isError = configCapacitancia.isNotBlank() && !capacitanciaValida,
-                        errorText = "Capacitancia inválida",
-                        imeAction = ImeAction.Next,
-                        onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
-
-                    DecimalInputField(
-                        enabled = uiState.selectedSensor != null,
-                        value = configCapacidad,
-                        onValueChange = { configCapacidad = it },
-                        label = "Capacidad del tanque",
-                        suffix = "L",
-                        supportingText = "Ingresa un número mayor a 0",
-                        isError = configCapacidad.isNotBlank() && !capacidadValida,
-                        errorText = "Capacidad inválida",
-                        imeAction = ImeAction.Done,
-                        onImeAction = {
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-
-                Button(
-                    enabled = canSaveConfig,
-                    onClick = {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        onSaveConfig(configCapacidad, configCapacitancia)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text(text = "Guardar")
-                }
-            }
-
-            SectionCard {
-                SectionTitle(
-                    title = "Tomar medida",
-                    subtitle = "Captura una medición de combustible para el análisis"
-                )
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.medium_padding))
-                ) {
-                    DecimalInputField(
-                        enabled = uiState.selectedSensor != null,
-                        value = medidaValor,
-                        onValueChange = {
-                            medidaValor = it
-                            userEditedValorManually = true
-                        },
-                        label = "Valor del sensor",
-                        supportingText = if (!userEditedValorManually) {
-                            "Se autocompleta con la lectura actual del sensor"
-                        } else {
-                            "Editado manualmente"
-                        },
-                        isError = medidaValor.isNotBlank() && !valorValido,
-                        errorText = "Valor inválido",
-                        imeAction = ImeAction.Next,
-                        onImeAction = { focusManager.moveFocus(FocusDirection.Down) },
-                        modifier = Modifier.onFocusChanged { focusState ->
-                            userIsTryingToEditValor = focusState.isFocused
-                        }
-                    )
-
-                    DecimalInputField(
-                        enabled = uiState.selectedSensor != null,
-                        value = medidaLitros,
-                        onValueChange = { medidaLitros = it },
-                        label = "Litros",
-                        suffix = "L",
-                        supportingText = "Ingresa un número mayor a 0",
-                        isError = medidaLitros.isNotBlank() && !litrosValido,
-                        errorText = "Litros inválidos",
-                        imeAction = ImeAction.Done,
-                        onImeAction = {
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.medium_padding)))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        enabled = uiState.selectedSensor != null,
-                        onClick = {
-                            medidaValor = sanitizeDecimalInput(uiState.currentSensorValue)
-                            userEditedValorManually = false
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Text("Usar lectura actual")
-                    }
-
-                    Button(
-                        enabled = canTakeMeasure,
-                        onClick = {
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                            onTakeMeasure(medidaLitros, medidaValor)
-
-                            medidaLitros = ""
-                            medidaValor = sanitizeDecimalInput(uiState.currentSensorValue)
-                            userIsTryingToEditValor = false
-                            userEditedValorManually = false
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(54.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(text = "Tomar medida")
-                    }
-                }
-            }
+            TomarMedidasSection(
+                medidaValor = medidaValor,
+                medidaLitros = medidaLitros,
+                valorValido = valorValido,
+                litrosValido = litrosValido,
+                canTakeMeasure = canTakeMeasure,
+                userEditedValorManually = userEditedValorManually,
+                uiState = uiState,
+                onTakeMeasure = onTakeMeasure,
+                onMedidaValorChange = { medidaValor = it },
+                onMedidaLitrosChange = { medidaLitros = it },
+                onUserIsTryingToEditValorChange = { userIsTryingToEditValor = it },
+                onUserEditedValorManuallyChange = { userEditedValorManually = it },
+                onLoadData = onLoadData
+            )
 
             SectionCard {
                 MeasurementsTable(
@@ -504,6 +430,21 @@ fun CalibrationScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                Button(
+                    onClick = onDownloadDat,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    enabled = byteArray != null
+                ) {
+                    Text(text = "Descargar DAT")
                 }
 
                 Button(
@@ -656,7 +597,10 @@ fun CalibrationScreenPreview() {
             onClearTable = {},
             onReconnect = {},
             onInitializeConnection = {},
-            onDisconnect = {}
+            onDisconnect = {},
+            onDownloadDat = {},
+            onLoadData = {},
+            byteArray = null
         )
     }
 }

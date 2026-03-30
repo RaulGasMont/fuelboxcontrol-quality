@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.calibracion.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -134,12 +135,15 @@ fun MeasurementsTable(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Button(
                 onClick = onClearAllTable,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
                     .height(54.dp)
                     .weight(1f),
                 shape = RoundedCornerShape(16.dp),
@@ -162,7 +166,6 @@ fun MeasurementsTable(
                 onClick = onDeleteMeasurement,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
                     .height(54.dp)
                     .weight(1f),
                 shape = RoundedCornerShape(16.dp),
@@ -175,7 +178,7 @@ fun MeasurementsTable(
             ) {
                 Text(
                     text = "Eliminar medición",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onError
                 )
