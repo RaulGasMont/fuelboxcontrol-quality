@@ -112,4 +112,7 @@ dependencies {
 
     // Use androidTestImplementation for instrumented tests
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+
+    // Excel
+    implementation("org.apache.poi:poi-ooxml:5.5.1")
 }
