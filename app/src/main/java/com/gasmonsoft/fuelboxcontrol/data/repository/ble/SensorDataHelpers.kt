@@ -26,7 +26,7 @@ fun getSensorData(sensorData: List<String>): SensorData {
         val calidad = data[0].toIntOrNull()
         val volumen = data[1].toIntOrNull()
         if (temp == null || calidad == null || volumen == null) return@any true
-        data.size != 3 && volumen > 0 && calidad > 0 && temp > 0
+        data.size != 3 || (volumen > 0 && calidad > 0 && temp > 0)
     }
     return SensorData(
         date = date,
