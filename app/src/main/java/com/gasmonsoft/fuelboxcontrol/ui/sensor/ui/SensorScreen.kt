@@ -40,7 +40,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorState
@@ -52,7 +51,6 @@ import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SectionHeader
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCaption
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorDataCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SensorSectionCard
-import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.SingleSensorDataCard
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorUiEvent
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorUiState
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.viewmodel.SensorViewModel
@@ -342,32 +340,16 @@ fun SensorScreenContent(
 
                 item {
                     val sensor1 = sensorInfoState.sensor1.rawData
-                    val sensor2 = sensorInfoState.sensor2.rawData
-                    val sensor3 = sensorInfoState.sensor3.rawData
-                    val sensor4 = sensorInfoState.sensor4.rawData
 
                     val allSensorDataAvailability =
-                        (sensor1 != "-555" && sensor1.isNotBlank()) &&
-                                (sensor2 != "-555" && sensor2.isNotBlank()) &&
-                                (sensor3 != "-555" && sensor3.isNotBlank()) &&
-                                (sensor4 != "-555" && sensor4.isNotBlank())
+                        (sensor1 != "-555" && sensor1.isNotBlank())
 
                     SensorDataCaption(
-                        isAccelerometer = sensorInfoState.acelerometro.value.isNotBlank(),
                         isAllSensorData = allSensorDataAvailability,
                     )
                 }
 
                 item { SensorDataCard(numSensor = "1", sensorData = sensorInfoState.sensor1) }
-                item { SensorDataCard(numSensor = "2", sensorData = sensorInfoState.sensor2) }
-                item { SensorDataCard(numSensor = "3", sensorData = sensorInfoState.sensor3) }
-                item { SensorDataCard(numSensor = "4", sensorData = sensorInfoState.sensor4) }
-
-                item {
-                    SingleSensorDataCard(
-                        accelerometerData = sensorInfoState.acelerometro
-                    )
-                }
             }
         }
     }
@@ -385,11 +367,7 @@ fun SensorScreenContentPreview() {
                 sensorMessage = "Todo normal"
             ),
             sensorInfoState = SensorState(
-                sensor1 = SensorData(rawData = "25.4", error = true),
-                sensor2 = SensorData(rawData = "26.1"),
-                sensor3 = SensorData(rawData = "24.8"),
-                sensor4 = SensorData(rawData = "25.9"),
-                acelerometro = AccelerometerData(value = "")
+                sensor1 = SensorData(rawData = "25.4", error = true)
             ),
             permissionState = object : MultiplePermissionsState {
                 override val allPermissionsGranted: Boolean = true

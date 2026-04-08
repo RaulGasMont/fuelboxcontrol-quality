@@ -17,12 +17,7 @@ import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CCCD_UUID
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_ACELEROMETRO
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_ALERTAS_GLOBALES
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_1
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_2
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_3
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_4
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CONTROL_FIRMWARE_UUID
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorResult
@@ -796,88 +791,6 @@ class SensorBLEReceiveManager @Inject constructor(
                     }
                 }
                 _sensorEvents.tryEmit(SensorEvent(SensorDataType.FIRST, value))
-            }
-
-            CHAR_UUID_SENSOR_2 -> {
-                val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
-                if (sensorData.size == 5) {
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor2 = getSensorData(sensorData)
-                        )
-                    }
-                } else {
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor2 = setErrorSensor(value.toString(Charsets.UTF_8))
-                        )
-                    }
-                }
-                _sensorEvents.tryEmit(SensorEvent(SensorDataType.SECOND, value))
-
-            }
-
-            CHAR_UUID_SENSOR_3 -> {
-                val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
-                if (sensorData.size == 5) {
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor3 = getSensorData(sensorData)
-                        )
-                    }
-                } else {
-                    _sensorState.update {
-                        it.copy(
-                            sensor3 = setErrorSensor(value.toString(Charsets.UTF_8))
-                        )
-                    }
-                }
-                _sensorEvents.tryEmit(SensorEvent(SensorDataType.THIRD, value))
-            }
-
-            CHAR_UUID_SENSOR_4 -> {
-                val sensorData = value.toString(Charsets.UTF_8).trim().split(" ")
-                if (sensorData.size == 5) {
-                    _sensorState.update { current ->
-                        current.copy(
-                            sensor4 = getSensorData(sensorData)
-                        )
-                    }
-                } else {
-                    _sensorState.update {
-                        it.copy(
-                            sensor4 = setErrorSensor(value.toString(Charsets.UTF_8))
-                        )
-                    }
-                }
-                _sensorEvents.tryEmit(SensorEvent(SensorDataType.FOURTH, value))
-            }
-
-            CHAR_UUID_ACELEROMETRO -> {
-                val sensorData = value.toString(Charsets.UTF_8).split(" ")
-                if (sensorData.size == 3) {
-                    _sensorState.update { current ->
-                        current.copy(
-                            acelerometro = getAcelerometroData(sensorData)
-                        )
-                    }
-                } else {
-                    _sensorState.update { current ->
-                        current.copy(
-                            acelerometro = setErrorAccelerometer(value.toString(Charsets.UTF_8))
-                        )
-                    }
-                }
-                _sensorEvents.tryEmit(SensorEvent(SensorDataType.ACCELEROMETER, value))
-            }
-
-            CHAR_UUID_ALERTAS_GLOBALES -> {
-                val sensorData = value.toString(Charsets.UTF_8)
-                _sensorState.update { current ->
-                    current.copy(
-                        alertas = sensorData
-                    )
-                }
             }
 
             CONTROL_FIRMWARE_UUID -> {

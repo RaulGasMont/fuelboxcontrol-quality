@@ -1,32 +1,15 @@
 package com.gasmonsoft.fuelboxcontrol.data.repository.ble
 
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
-
-fun getAcelerometroData(sensorData: List<String>): AccelerometerData {
-    val date = "${sensorData[0]} ${sensorData[1]}"
-    return AccelerometerData(
-        date = date,
-        value = sensorData.drop(2).last()
-    )
-}
-
-fun setErrorAccelerometer(rawData: String): AccelerometerData {
-    return AccelerometerData(
-        rawData = rawData,
-        error = true
-    )
-}
 
 fun getSensorData(sensorData: List<String>): SensorData {
     val date = "${sensorData[0]} ${sensorData[1]}"
     val data = sensorData.drop(2)
     val isError = data.any {
-        val temp = data[2].toIntOrNull()
+        val temp = data[1].toIntOrNull()
         val calidad = data[0].toIntOrNull()
-        val volumen = data[1].toIntOrNull()
-        if (temp == null || calidad == null || volumen == null) return@any true
-        data.size != 3 || (volumen > 0 && calidad > 0 && temp > 0)
+        if (temp == null || calidad == null) return@any true
+        data.size != 2 || (calidad > 0 && temp > 0)
     }
     return SensorData(
         date = date,

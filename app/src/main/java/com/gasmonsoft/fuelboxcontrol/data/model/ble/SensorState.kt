@@ -1,12 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.data.model.ble
 
 data class SensorState(
-    val sensor1: SensorData = SensorData(),
-    val sensor2: SensorData = SensorData(),
-    val sensor3: SensorData = SensorData(),
-    val sensor4: SensorData = SensorData(),
-    val acelerometro: AccelerometerData = AccelerometerData(),
-    val alertas: String = ""
+    val sensor1: SensorData = SensorData()
 )
 
 data class SensorData(
@@ -14,13 +9,5 @@ data class SensorData(
     val error: Boolean = false,
     val date: String = "",
     val temperatura: String = "",
-    val volumen: String = "",
     val calidad: String = ""
-)
-
-data class AccelerometerData(
-    val rawData: String = "",
-    val error: Boolean = false,
-    val date: String = "",
-    val value: String = "",
 )

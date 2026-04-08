@@ -16,11 +16,9 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SensorsOff
-import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material.icons.rounded.WarningAmber
-import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -38,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gasmonsoft.fuelboxcontrol.data.model.ble.AccelerometerData
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.SensorData
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.utils.SensorVisualStatus
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.utils.toDisplayValue
@@ -148,12 +145,6 @@ fun SensorDataCard(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        SensorMetricRow(
-                            title = "Volumen",
-                            value = sensorData.volumen.toDisplayValue(),
-                            icon = Icons.Rounded.WaterDrop
-                        )
-
                         SensorMetricRow(
                             title = "Calidad",
                             value = sensorData.calidad.toDisplayValue(),
@@ -425,99 +416,13 @@ fun SensorEmptyData(
 }
 
 @Composable
-fun SingleSensorDataCard(
-    accelerometerData: AccelerometerData,
-    modifier: Modifier = Modifier
-) {
-    val hasData = accelerometerData.value.isNotBlank()
-
-    val elevation = if (hasData) 6.dp else 0.dp
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasData) {
-                MaterialTheme.colorScheme.surface
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-            }
-        ),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Acelerómetro",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-
-                    SensorStatusChip(
-                        status = if (hasData) SensorVisualStatus.Ok else SensorVisualStatus.Empty
-                    )
-                }
-
-                UpdatedBadge(
-                    date = accelerometerData.date,
-                    isError = false
-                )
-            }
-
-            HorizontalDivider(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
-            )
-
-            if (hasData) {
-                SensorMetricRow(
-                    title = "Lectura",
-                    value = accelerometerData.value.toDisplayValue(),
-                    icon = Icons.Rounded.Speed
-                )
-            } else {
-                SensorEmptyData(
-                    title = "Sin lectura disponible",
-                    description = "Aún no se recibe información del acelerómetro."
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun SensorDataCaption(
-    isAccelerometer: Boolean,
     isAllSensorData: Boolean,
     modifier: Modifier = Modifier
 ) {
     val message = when {
-        isAccelerometer && isAllSensorData ->
-            "Se reciben lecturas del acelerómetro y de todos los sensores."
-
-        isAccelerometer && !isAllSensorData ->
-            "Se recibe acelerómetro, pero faltan lecturas en uno o más sensores."
-
-        !isAccelerometer && isAllSensorData ->
-            "Se reciben lecturas de sensores, pero no del acelerómetro."
+        isAllSensorData ->
+            "Se reciben lectura del sensor."
 
         else ->
             "Todavía no se reciben lecturas completas. Revise conexión y alimentación."
@@ -600,57 +505,7 @@ fun SensorDataCardPreview() {
                     error = false,
                     date = "24/05/2024 10:00",
                     temperatura = "25.5",
-                    volumen = "500.0",
                     calidad = "98.0"
-                )
-            )
-
-            SensorDataCard(
-                numSensor = "2",
-                sensorData = SensorData(
-                    rawData = "-555",
-                    error = true,
-                    date = "24/05/2024 10:05"
-                )
-            )
-
-            SensorDataCard(
-                numSensor = "3",
-                sensorData = SensorData(
-                    rawData = "",
-                    error = false,
-                    date = ""
-                )
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SingleSensorDataCardPreview() {
-    FuelBoxControlTheme {
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            SingleSensorDataCard(
-                accelerometerData = AccelerometerData(
-                    rawData = "0.5,0.1,9.8",
-                    error = false,
-                    date = "24/05/2024 10:00",
-                    value = "9.81"
-                )
-            )
-
-            SingleSensorDataCard(
-                accelerometerData = AccelerometerData(
-                    rawData = "",
-                    error = false,
-                    date = "",
-                    value = ""
                 )
             )
         }
