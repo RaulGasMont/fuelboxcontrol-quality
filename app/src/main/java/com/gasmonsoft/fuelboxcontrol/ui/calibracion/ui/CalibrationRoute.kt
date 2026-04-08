@@ -231,18 +231,20 @@ fun CalibracionRoute(
             else -> Unit
         }
 
-        when (uiState.value.excelReadingEvent) {
+        when (val event = uiState.value.excelReadingEvent) {
             is GeneralEvent.Error -> {
                 ErrorDialog(
-                    message = (uiState.value.excelReadingEvent as GeneralEvent.Error).message,
+                    message = event.message,
                     onDismiss = { viewModel.restarExcelReadingState() },
                 )
             }
 
             GeneralEvent.Loading -> {
+                Toast.makeText(context, "Cargando datos", Toast.LENGTH_SHORT)
+                    .show()
                 LoadingDialog(
-                    title = (uiState.value.excelReadingEvent as GeneralEvent.Loading).title,
-                    message = "Espera un momento mientras procesamos la información",
+                    title = "Importando datos",
+                    message = "Por favor espera mientras extraemos la información del archivo Excel.",
                 )
             }
 

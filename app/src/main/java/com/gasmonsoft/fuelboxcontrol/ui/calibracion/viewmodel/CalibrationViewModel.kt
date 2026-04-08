@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import javax.inject.Inject
 
 @HiltViewModel
@@ -289,15 +289,17 @@ class CalibrationViewModel @Inject constructor(
         }
     }
 
-    suspend fun guardarByteArrayEnUri(
+    fun guardarByteArrayEnUri(
         uri: Uri,
         data: ByteArray
     ) {
-        withContext(Dispatchers.IO) {
-            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                outputStream.write(data)
-                outputStream.flush()
-            } ?: return@withContext
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(data)
+                    outputStream.flush()
+                } ?: return@withContext
+            }
         }
     }
 
@@ -308,33 +310,33 @@ class CalibrationViewModel @Inject constructor(
                 it.copy(excelReadingEvent = GeneralEvent.Loading)
             }
 
-            yield()
-
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     excelCalibrationReader(context, uri)
                 }
             }
 
-            _calibrationUiState.update {
-                it.copy(
-                    measurements = result.getOrDefault(emptyList()),
-                    excelReadingEvent = result.fold(
-                        onSuccess = { list ->
-                            if (list.isEmpty()) {
-                                GeneralEvent.Error(
-                                    message = "El archivo no contiene datos válidos en las columnas A y B."
-                                )
-                            } else {
-                                GeneralEvent.Success
-                            }
-                        },
-                        onFailure = { throwable ->
-                            GeneralEvent.Error(
-                                message = throwable.message ?: "No se pudo leer el archivo Excel."
+            _calibrationUiState.update { current ->
+                result.fold(
+                    onSuccess = { list ->
+                        if (list.isEmpty()) {
+                            current.copy(
+                                excelReadingEvent = GeneralEvent.Error("El archivo no contiene datos válidos.")
+                            )
+                        } else {
+                            current.copy(
+                                measurements = list,
+                                excelReadingEvent = GeneralEvent.Success
                             )
                         }
-                    )
+                    },
+                    onFailure = { throwable ->
+                        current.copy(
+                            excelReadingEvent = GeneralEvent.Error(
+                                throwable.message ?: "Error al procesar el archivo Excel"
+                            )
+                        )
+                    }
                 )
             }
         }

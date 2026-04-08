@@ -22,7 +22,11 @@ fun getSensorData(sensorData: List<String>): SensorData {
     val date = "${sensorData[0]} ${sensorData[1]}"
     val data = sensorData.drop(2)
     val isError = data.any {
-        data.size >= 3 && data[2] == "-555" && data[1] == "-555" && data[0] == "-555"
+        val temp = data[2].toIntOrNull()
+        val calidad = data[0].toIntOrNull()
+        val volumen = data[1].toIntOrNull()
+        if (temp == null || calidad == null || volumen == null) return@any true
+        data.size != 3 && volumen > 0 && calidad > 0 && temp > 0
     }
     return SensorData(
         date = date,
