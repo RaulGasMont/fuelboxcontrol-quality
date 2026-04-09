@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -14,16 +13,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gasmonsoft.fuelboxcontrol.ui.home.HomeScreen
+import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionsScreen
 import com.gasmonsoft.fuelboxcontrol.ui.sensorconfig.SensorConfigHome
-import com.gasmonsoft.fuelboxcontrol.ui.permissions.BluetoothPermissionScreen
-import com.gasmonsoft.fuelboxcontrol.ui.permissions.LocationPermissionScreen
-import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionResultScreen
 
 sealed class FuelBoxControlRoute(val route: String) {
-    object Welcome : FuelBoxControlRoute("welcome")
-    object Bluetooth : FuelBoxControlRoute("bluetooth")
-    object Location : FuelBoxControlRoute("location")
-    object Result : FuelBoxControlRoute("result")
+    object Permissions : FuelBoxControlRoute("permissions")
     object Home : FuelBoxControlRoute("home")
     object Sensor : FuelBoxControlRoute("sensor")
 }
@@ -33,61 +27,32 @@ fun FuelBoxControlFlowNav() {
     val navController = rememberNavController()
     val modifier = Modifier.safeContentPadding()
     val currentContext = LocalContext.current
-    
+
     // Recuperar última MAC para ver si debemos saltar a Sensores tras Process Death
     val sharedPrefs = currentContext.getSharedPreferences("ble_prefs", Context.MODE_PRIVATE)
     val lastMac = sharedPrefs.getString("last_mac", "")
-    
+
+    val hasAllPermissions = hasAllPermissions(currentContext)
+    val startDest = if (hasAllPermissions) {
+        if (!lastMac.isNullOrBlank()) FuelBoxControlRoute.Sensor.route else FuelBoxControlRoute.Home.route
+    } else {
+        FuelBoxControlRoute.Permissions.route
+    }
+
     NavHost(
         navController = navController,
-        startDestination = FuelBoxControlRoute.Welcome.route
+        startDestination = startDest
     ) {
-        composable(FuelBoxControlRoute.Welcome.route) {
-            val hasAllPermissions = hasAllPermissions(currentContext)
-            
-            LaunchedEffect(hasAllPermissions) {
-                if (hasAllPermissions) {
-                    val targetRoute = if (!lastMac.isNullOrBlank()) {
-                        FuelBoxControlRoute.Sensor.route
-                    } else {
-                        FuelBoxControlRoute.Home.route
-                    }
-                    
-                    navController.navigate(targetRoute) {
-                        popUpTo(FuelBoxControlRoute.Welcome.route) { inclusive = true }
-                    }
-                }
-            }
-
-            if (!hasAllPermissions) {
-                WelcomeScreen {
-                    navController.navigate(FuelBoxControlRoute.Bluetooth.route)
-                }
-            }
-        }
-
-        composable(FuelBoxControlRoute.Bluetooth.route) {
-            BluetoothPermissionScreen {
-                navController.navigate(FuelBoxControlRoute.Location.route)
-            }
-        }
-
-        composable(FuelBoxControlRoute.Location.route) {
-            LocationPermissionScreen {
-                navController.navigate(FuelBoxControlRoute.Result.route)
-            }
-        }
-
-        composable(FuelBoxControlRoute.Result.route) {
-            PermissionResultScreen(
-                onFinish = {
+        composable(FuelBoxControlRoute.Permissions.route) {
+            PermissionsScreen(
+                onAllGranted = {
                     val targetRoute = if (!lastMac.isNullOrBlank()) {
                         FuelBoxControlRoute.Sensor.route
                     } else {
                         FuelBoxControlRoute.Home.route
                     }
                     navController.navigate(targetRoute) {
-                        popUpTo(FuelBoxControlRoute.Result.route) { inclusive = true }
+                        popUpTo(FuelBoxControlRoute.Permissions.route) { inclusive = true }
                     }
                 }
             )
@@ -101,8 +66,11 @@ fun FuelBoxControlFlowNav() {
 
         composable(FuelBoxControlRoute.Sensor.route) {
             SensorConfigHome(
-                onBack = { 
-                    val popped = navController.popBackStack(FuelBoxControlRoute.Home.route, inclusive = false)
+                onBack = {
+                    val popped = navController.popBackStack(
+                        FuelBoxControlRoute.Home.route,
+                        inclusive = false
+                    )
                     if (!popped) {
                         navController.navigate(FuelBoxControlRoute.Home.route) {
                             popUpTo(0) { inclusive = true }
