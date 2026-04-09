@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.gasmonsoft.fuelboxcontrol.ui.calibracion.ui.CalibracionRoute
+import com.gasmonsoft.fuelboxcontrol.ui.detector.ui.DetectorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.ui.SensorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui.VehiculosRoute
 
@@ -27,15 +27,15 @@ fun AppNavHost(
             )
         }
 
-        composable<ScreenRoute.Calibracion> { backStackEntry ->
-            val calibrationRoute = backStackEntry.toRoute<ScreenRoute.Calibracion>()
+        composable<ScreenRoute.Deteccion> { backStackEntry ->
+            val calibrationRoute = backStackEntry.toRoute<ScreenRoute.Deteccion>()
             val idCaja = calibrationRoute.idCaja
-            CalibracionRoute(idCaja = idCaja, onBack = { navController.popBackStack() })
+            DetectorRoute()
         }
 
         composable<ScreenRoute.DatosVehiculos> {
             VehiculosRoute(onCalibrate = { idCaja ->
-                navController.navigate(ScreenRoute.Calibracion(idCaja))
+                navController.navigate(ScreenRoute.Deteccion(idCaja))
             })
         }
     }

@@ -13,9 +13,8 @@ fun getSensorData(sensorData: List<String>): SensorData {
     }
     return SensorData(
         date = date,
-        temperatura = if (data.size >= 3) data[2] else "",
-        volumen = if (data.isNotEmpty()) data[0] else "",
-        calidad = if (data.size >= 2) data[1] else "",
+        temperatura = if (data.size >= 2) data[1] else "",
+        calidad = if (data.isNotEmpty()) data[0] else "",
         error = isError,
         rawData = data.joinToString(",")
     )

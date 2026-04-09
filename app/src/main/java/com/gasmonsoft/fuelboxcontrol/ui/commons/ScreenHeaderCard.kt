@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -23,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun ScreenHeaderCard(
@@ -81,5 +85,18 @@ fun ScreenHeaderCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScreenHeaderCardPreview() {
+    FuelBoxControlTheme {
+        ScreenHeaderCard(
+            title = "Título del Encabezado",
+            subtitle = "Este es un subtítulo de ejemplo para la tarjeta",
+            icon = Icons.Default.Info,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

@@ -1,7 +1,6 @@
-package com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel
+package com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,7 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class DetectorViewModel @Inject constructor() : ViewModel() {
+class SelectTankViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(SelectTankUiState())
     val uiState: StateFlow<SelectTankUiState> = _uiState.asStateFlow()
+
 }

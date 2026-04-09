@@ -10,10 +10,13 @@ sealed interface ScreenRoute {
     data object Sensores : ScreenRoute
 
     @Serializable
-    data class Calibracion(val idCaja: Int) : ScreenRoute
+    data class Deteccion(val idCaja: Int) : ScreenRoute
 
     @Serializable
     data object DatosVehiculos : ScreenRoute
+
+    @Serializable
+    data class SelectTank(val idCaja: Int) : ScreenRoute
 }
 
 data class ScreenDestination(
@@ -28,11 +31,11 @@ val destinations = listOf(
         title = "Sensores",
         icon = R.drawable.ic_sensor
     ),
-//    ScreenDestination(
-//        route = ScreenRoute.Calibracion(0),
-//        title = "Calibración",
-//        icon = R.drawable.dat
-//    ),
+    ScreenDestination(
+        route = ScreenRoute.Deteccion(0),
+        title = "Calibración",
+        icon = R.drawable.gas_meter_24px
+    ),
     ScreenDestination(
         route = ScreenRoute.DatosVehiculos,
         title = "Servidor",

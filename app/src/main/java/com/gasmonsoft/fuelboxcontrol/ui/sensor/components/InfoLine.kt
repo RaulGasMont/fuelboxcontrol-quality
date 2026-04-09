@@ -22,6 +22,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun InfoLine(
@@ -70,6 +74,20 @@ fun InfoLine(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun InfoLinePreview() {
+    FuelBoxControlTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            InfoLine(
+                title = "Estado del Sensor",
+                value = "Conectado y operando",
+                icon = Icons.Rounded.Info
+            )
         }
     }
 }
