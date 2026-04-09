@@ -1,7 +1,9 @@
 package com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle
 
-enum class TankType(val label: String = "") {
-    VEHICLE, OTHER
+
+interface TankType {
+    object VEHICLE : TankType
+    object OTHER : TankType
 }
 
 interface Tank {
