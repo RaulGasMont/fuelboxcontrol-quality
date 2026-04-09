@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.selecttank.ui
+package com.gasmonsoft.fuelboxcontrol.ui.selecttank.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

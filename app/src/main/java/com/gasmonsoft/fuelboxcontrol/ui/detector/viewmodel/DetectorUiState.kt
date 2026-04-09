@@ -1,6 +1,6 @@
 package com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel
 
-import com.gasmonsoft.fuelboxcontrol.ui.detector.ui.FuelType
+import com.gasmonsoft.fuelboxcontrol.ui.detector.screen.FuelType
 
 data class DetectorUiState(
     val station: String = "",

@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.gasmonsoft.fuelboxcontrol.ui.detector.ui.DetectorRoute
+import com.gasmonsoft.fuelboxcontrol.ui.detector.screen.DetectorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.ui.SensorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui.VehiculosRoute
 

@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.detector.ui
+package com.gasmonsoft.fuelboxcontrol.ui.detector.screen
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat

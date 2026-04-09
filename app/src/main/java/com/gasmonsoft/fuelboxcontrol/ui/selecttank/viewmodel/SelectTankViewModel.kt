@@ -11,5 +11,4 @@ import javax.inject.Inject
 class SelectTankViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(SelectTankUiState())
     val uiState: StateFlow<SelectTankUiState> = _uiState.asStateFlow()
-
 }

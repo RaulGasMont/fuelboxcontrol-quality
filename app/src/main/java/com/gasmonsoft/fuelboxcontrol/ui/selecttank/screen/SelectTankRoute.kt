@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.selecttank.ui
+package com.gasmonsoft.fuelboxcontrol.ui.selecttank.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +21,10 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +48,12 @@ fun SelectTankScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showDialog) {
+        SelectTankDialog()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {

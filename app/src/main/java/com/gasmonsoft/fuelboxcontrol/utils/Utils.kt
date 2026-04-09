@@ -21,3 +21,10 @@ fun String.toPositiveDoubleOrNull(): Double? {
     val value = this.toDoubleOrNull() ?: return null
     return if (value > 0) value else null
 }
+
+interface ProcessingEvent {
+    object Idle : ProcessingEvent
+    object Loading : ProcessingEvent
+    object Success: ProcessingEvent
+    object Error: ProcessingEvent
+}

@@ -91,9 +91,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(libs.okhttp.logging)
 
-    // Glance (Widgets)
-    implementation("androidx.glance:glance:1.1.1")
-
     implementation("androidx.compose.material:material-icons-extended")
 
     // Herramientas de Matemáticas
