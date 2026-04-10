@@ -21,23 +21,40 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel.DetectorUiState
+import com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel.DetectorViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.InfoLine
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
-fun DetectorRoute(modifier: Modifier = Modifier) {
-    DetectorScreen(uiState = DetectorUiState(), modifier = modifier)
+fun DetectorRoute(
+    modifier: Modifier = Modifier,
+    viewModel: DetectorViewModel = hiltViewModel(),
+    onSelectTank: () -> Unit
+) {
+    val uiState = viewModel.uiState.collectAsState()
+    DetectorScreen(
+        uiState = uiState.value,
+        modifier = modifier,
+        onSelectTank = onSelectTank
+    ) { viewModel.analyzeData() }
 }
 
 @Composable
-fun DetectorScreen(uiState: DetectorUiState, modifier: Modifier = Modifier) {
+fun DetectorScreen(
+    uiState: DetectorUiState,
+    modifier: Modifier = Modifier,
+    onSelectTank: () -> Unit,
+    onAnalyze: () -> Unit
+) {
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
@@ -56,7 +73,7 @@ fun DetectorScreen(uiState: DetectorUiState, modifier: Modifier = Modifier) {
                 tonalElevation = 2.dp
             ) {
                 Button(
-                    onClick = {},
+                    onClick = onAnalyze,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
@@ -88,7 +105,7 @@ fun DetectorScreen(uiState: DetectorUiState, modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp),
-                        onClick = { },
+                        onClick = onSelectTank,
                         shape = MaterialTheme.shapes.large
                     ) {
                         Text(text = "Seleccionar tanque")
@@ -111,8 +128,8 @@ fun DetectorScreen(uiState: DetectorUiState, modifier: Modifier = Modifier) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         AnimatedFuelTank(
-                            fuelType = FuelType.DIESEL,
-                            level = 0.91f,
+                            fuelType = uiState.fuelType,
+                            level = uiState.level,
                             modifier = Modifier.size(240.dp, 400.dp)
                         )
                     }
@@ -129,6 +146,8 @@ fun DetectorScreenPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
             uiState = DetectorUiState(),
+            onAnalyze = {},
+            onSelectTank = {}
         )
     }
 }

@@ -4,7 +4,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.detector.screen.FuelType
 
 data class DetectorUiState(
     val station: String = "",
-    val fuelType: FuelType = FuelType.UNKNOWN,
+    val fuelType: FuelType = FuelType.DESCONOCIDO,
     val level: Float = 0.0f
 )
 

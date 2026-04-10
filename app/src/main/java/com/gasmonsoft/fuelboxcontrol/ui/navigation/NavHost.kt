@@ -30,7 +30,9 @@ fun AppNavHost(
         composable<ScreenRoute.Deteccion> { backStackEntry ->
             val calibrationRoute = backStackEntry.toRoute<ScreenRoute.Deteccion>()
             val idCaja = calibrationRoute.idCaja
-            DetectorRoute()
+            DetectorRoute(onSelectTank = {
+                navController.navigate(ScreenRoute.SelectTank)
+            })
         }
 
         composable<ScreenRoute.DatosVehiculos> {

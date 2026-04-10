@@ -45,17 +45,17 @@ enum class FuelType(
     val bottomColor: Color,
     val waveColor: Color
 ) {
-    REGULAR(
-        label = "Regular",
-        topColor = Color(0xFF34D399),
-        bottomColor = Color(0xFF059669),
-        waveColor = Color(0xFF6EE7B7)
+    DESCONOCIDO(
+        label = "Desconocido",
+        topColor = Color(0xFF9CA3AF),
+        bottomColor = Color(0xFF6B7280),
+        waveColor = Color(0xFFD1D5DB)
     ),
-    PREMIUM(
-        label = "Premium",
-        topColor = Color(0xFFF87171),
-        bottomColor = Color(0xFFDC2626),
-        waveColor = Color(0xFFFCA5A5)
+    AIRE(
+        label = "Aire",
+        topColor = Color(0xFFBEE3F8),
+        bottomColor = Color(0xFF63B3ED),
+        waveColor = Color(0xFFE0F2FE)
     ),
     DIESEL(
         label = "Diesel",
@@ -63,23 +63,29 @@ enum class FuelType(
         bottomColor = Color(0xFFD97706),
         waveColor = Color(0xFFFCD34D)
     ),
-    JET_A1(
-        label = "Jet A-1",
+    ACEITE(
+        label = "Aceite",
+        topColor = Color(0xFF4B5563),
+        bottomColor = Color(0xFF111827),
+        waveColor = Color(0xFF9CA3AF)
+    ),
+    ALCOHOL(
+        label = "Alcohol",
+        topColor = Color(0xFFF9A8D4),
+        bottomColor = Color(0xFFEC4899),
+        waveColor = Color(0xFFFBCFE8)
+    ),
+    AGUA(
+        label = "Agua",
         topColor = Color(0xFF60A5FA),
         bottomColor = Color(0xFF2563EB),
-        waveColor = Color(0xFF93C5FD)
+        waveColor = Color(0xFFBFDBFE)
     ),
-    AVGAS(
-        label = "Avgas",
-        topColor = Color(0xFFA78BFA),
-        bottomColor = Color(0xFF7C3AED),
-        waveColor = Color(0xFFC4B5FD)
-    ),
-    UNKNOWN(
-        label = "Combustible",
-        topColor = Color(0xFF94A3B8),
-        bottomColor = Color(0xFF64748B),
-        waveColor = Color(0xFFCBD5E1)
+    ADULTERADO(
+        label = "Adulterado",
+        topColor = Color(0xFFEF4444),
+        bottomColor = Color(0xFF991B1B),
+        waveColor = Color(0xFFFCA5A5)
     )
 }
 
@@ -303,19 +309,19 @@ private fun AnimatedFuelTankPreview() {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         AnimatedFuelTank(
-            fuelType = FuelType.REGULAR,
+            fuelType = FuelType.DIESEL,
             level = 0.32f,
             modifier = Modifier.size(120.dp, 250.dp)
         )
 
         AnimatedFuelTank(
-            fuelType = FuelType.PREMIUM,
+            fuelType = FuelType.ALCOHOL,
             level = 0.68f,
             modifier = Modifier.size(120.dp, 250.dp)
         )
 
         AnimatedFuelTank(
-            fuelType = FuelType.DIESEL,
+            fuelType = FuelType.ACEITE,
             level = 0.91f,
             modifier = Modifier.size(120.dp, 250.dp)
         )
