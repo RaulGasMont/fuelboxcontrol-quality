@@ -34,10 +34,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -69,30 +66,35 @@ fun HomeScreen(
     val connectionStatus by viewModel.connectionStatus.collectAsState(
         initial = ConnectionState.Disconnected
     )
-    var showLogoutError by rememberSaveable { mutableStateOf(false) }
+    val user by viewModel.currentUser.collectAsState(initial = null)
 
     val hasConfiguration = NetworkConfig.nombreconfiguracion.isNotEmpty()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(logoutEvent) {
-        when (logoutEvent) {
-            is ProcessingEvent.Error -> {
-                showLogoutError = true
-            }
-
-            is ProcessingEvent.Success -> {
-                onNavToLogin()
-            }
-
-            else -> {}
+    // Redirigir a Login si no hay sesión activa
+    LaunchedEffect(user) {
+        if (user == null && logoutEvent !is ProcessingEvent.Loading) {
+            onNavToLogin()
         }
     }
 
-    if (showLogoutError) {
-        ErrorDialog(
-            message = "No se pudo cerrar la sesión. Intente de nuevo.",
-            onDismiss = viewModel::dismissLogoutError,
-        )
+    when (logoutEvent) {
+        is ProcessingEvent.Error -> {
+            ErrorDialog(
+                message = "No se pudo cerrar la sesión. Intente de nuevo.",
+                onDismiss = viewModel::dismissLogoutError,
+            )
+        }
+
+        is ProcessingEvent.Success -> {
+            onNavToLogin()
+        }
+
+        is ProcessingEvent.Loading -> {
+            LoadingDialog()
+        }
+
+        else -> {}
     }
 
     // Trigger scan every time the screen becomes visible (Resume)

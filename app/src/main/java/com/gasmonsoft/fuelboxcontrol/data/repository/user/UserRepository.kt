@@ -4,24 +4,16 @@ import com.gasmonsoft.fuelboxcontrol.data.model.database.UserEntity
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.data.service.user.UserLocalDataSource
 import com.gasmonsoft.fuelboxcontrol.data.service.user.UserRemoteDataSource
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
     private val localDataSource: UserLocalDataSource,
     private val remoteDataSource: UserRemoteDataSource
 ) {
-//    fun getUser(): Flow<UserEntity> {
-//        return localDataSource.getUserById()
-//            .map<UserEntity?, UserUiState> { user ->
-//                UserUiState.Success(user)
-//            }
-//            .onStart {
-//                emit(UserUiState.Loading)
-//            }
-//            .catch { e ->
-//                emit(UserUiState.Error(e.message ?: "Error desconocido"))
-//            }
-//    }
+    fun getUser(): Flow<UserEntity?> {
+        return localDataSource.getUser()
+    }
 
     suspend fun saveUser(user: String, password: String): Result<Unit> {
         return try {

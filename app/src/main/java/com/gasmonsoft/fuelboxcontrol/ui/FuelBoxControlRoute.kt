@@ -86,7 +86,11 @@ fun FuelBoxControlFlowNav() {
         }
 
         composable(FuelBoxControlRoute.Login.route) {
-            LoginRoute()
+            LoginRoute(onHome = {
+                navController.navigate(FuelBoxControlRoute.Home.route) {
+                    popUpTo(FuelBoxControlRoute.Login.route) { inclusive = true }
+                }
+            })
         }
     }
 }

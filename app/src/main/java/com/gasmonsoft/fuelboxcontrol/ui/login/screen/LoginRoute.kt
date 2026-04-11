@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.login.viewmodel.LoginViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
@@ -50,6 +51,10 @@ fun LoginRoute(
             ErrorDialog(message = "No se pudo iniciar sesión. Intente de nuevo.") {
                 viewModel.dismissLoginError()
             }
+        }
+
+        is ProcessingEvent.Loading -> {
+            LoadingDialog()
         }
 
         else -> {}

@@ -9,6 +9,8 @@ import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,6 +21,12 @@ class HomeViewModel @Inject constructor(
     var logoutEvent: MutableStateFlow<ProcessingEvent> = MutableStateFlow(ProcessingEvent.Idle)
     val connectionStatus = sensorReceiveManager.connectionState
     val availableDevices = sensorReceiveManager.discoveredDevices
+
+    val currentUser = userRepository.getUser().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
     fun scanDevices() {
         sensorReceiveManager.startReceiving()
