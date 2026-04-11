@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.gasmonsoft.fuelboxcontrol.ui.FuelBoxControlFlowNav
+import com.gasmonsoft.fuelboxcontrol.ui.mainnav.screen.FuelBoxControlFlowNav
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

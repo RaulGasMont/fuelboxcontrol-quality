@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui.home
+package com.gasmonsoft.fuelboxcontrol.ui.home.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +50,7 @@ import com.gasmonsoft.fuelboxcontrol.data.repository.ble.Device
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
+import com.gasmonsoft.fuelboxcontrol.ui.home.viewmodel.HomeViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent

@@ -8,4 +8,5 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val token: String,
+    val timestamp: Long
 )

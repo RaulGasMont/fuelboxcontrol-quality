@@ -28,7 +28,8 @@ class UserRepository @Inject constructor(
                     localDataSource.upsertUser(
                         user = UserEntity(
                             name = it.first().fld_usuario,
-                            token = it.first().token
+                            token = it.first().token,
+                            timestamp = System.currentTimeMillis()
                         )
                     )
                     Result.success(Unit)

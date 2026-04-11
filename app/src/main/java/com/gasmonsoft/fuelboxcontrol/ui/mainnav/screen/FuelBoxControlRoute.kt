@@ -1,4 +1,4 @@
-package com.gasmonsoft.fuelboxcontrol.ui
+package com.gasmonsoft.fuelboxcontrol.ui.mainnav.screen
 
 import android.Manifest
 import android.content.Context
@@ -6,14 +6,17 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.gasmonsoft.fuelboxcontrol.ui.home.HomeScreen
+import com.gasmonsoft.fuelboxcontrol.ui.home.screen.HomeScreen
 import com.gasmonsoft.fuelboxcontrol.ui.login.screen.LoginRoute
+import com.gasmonsoft.fuelboxcontrol.ui.mainnav.viewmodel.FbcViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionsScreen
 import com.gasmonsoft.fuelboxcontrol.ui.sensorconfig.SensorConfigHome
 
@@ -26,7 +29,8 @@ sealed class FuelBoxControlRoute(val route: String) {
 }
 
 @Composable
-fun FuelBoxControlFlowNav() {
+fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
+    val state = viewModel.state.collectAsState()
     val navController = rememberNavController()
     val modifier = Modifier.safeContentPadding()
     val currentContext = LocalContext.current
@@ -36,10 +40,15 @@ fun FuelBoxControlFlowNav() {
     val lastMac = sharedPrefs.getString("last_mac", "")
 
     val hasAllPermissions = hasAllPermissions(currentContext)
-    val startDest = if (hasAllPermissions) {
-        if (!lastMac.isNullOrBlank()) FuelBoxControlRoute.Sensor.route else FuelBoxControlRoute.Home.route
+
+    val startDest = if (state.value.sessionExpired) {
+        FuelBoxControlRoute.Login.route
     } else {
-        FuelBoxControlRoute.Permissions.route
+        if (hasAllPermissions) {
+            if (!lastMac.isNullOrBlank()) FuelBoxControlRoute.Sensor.route else FuelBoxControlRoute.Home.route
+        } else {
+            FuelBoxControlRoute.Permissions.route
+        }
     }
 
     NavHost(
