@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ErrorDialog(
     message: String,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,

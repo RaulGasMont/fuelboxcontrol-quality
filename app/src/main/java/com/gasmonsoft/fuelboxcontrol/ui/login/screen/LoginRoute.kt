@@ -4,8 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -18,26 +22,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.R
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.login.viewmodel.LoginViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 @Composable
-fun LoginRoute(modifier: Modifier = Modifier, viewModel: LoginViewModel = hiltViewModel()) {
+fun LoginRoute(
+    onHome: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = hiltViewModel()
+) {
     val uiState = viewModel.uiState.collectAsState()
 
-
-    when (val event = uiState.value.loginEvent) {
+    when (uiState.value.loginEvent) {
         is ProcessingEvent.Success -> {
-            // Navegar a la siguiente pantalla
+            onHome()
         }
 
         is ProcessingEvent.Error -> {
-            // Mostrar un mensaje de error
+            ErrorDialog(message = "No se pudo iniciar sesión. Intente de nuevo.") {
+                viewModel.dismissLoginError()
+            }
         }
 
         else -> {}
@@ -68,16 +80,29 @@ fun LoginScreen(
                 painter = painterResource(R.drawable.fbc_icon),
                 contentDescription = null,
             )
-            Text("FuelBoxControl: Calidad")
+
+            Text(
+                text = "FuelBoxControl: Calidad", style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                )
+            )
+
             TextField(value = user, onValueChange = { user = it }, label = {
-                Text("Usuario")
-            })
-            TextField(value = pin, onValueChange = { pin = it }, label = {
-                Text("Pin")
+                Text(text = "Usuario")
             })
 
-            Button(onClick = { onLogin(user, pin) }, modifier = Modifier.padding(16.dp)) {
-                Text("Iniciar sesión")
+            TextField(value = pin, onValueChange = { pin = it }, label = {
+                Text("Pin")
+            }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword))
+
+            Button(
+                onClick = { onLogin(user, pin) },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(text = "Iniciar sesión", style = MaterialTheme.typography.titleMedium)
             }
         }
     }

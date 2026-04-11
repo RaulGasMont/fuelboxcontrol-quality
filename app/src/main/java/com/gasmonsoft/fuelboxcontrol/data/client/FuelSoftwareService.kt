@@ -19,6 +19,9 @@ import retrofit2.http.Streaming
 interface FuelSoftwareService {
 
     @POST("api/authenticate")
+    suspend fun boxLogin(@Body loginDto: LoginDto): Response<List<LoginResponse>>
+
+    @POST("api/authenticate")
     suspend fun login(@Body loginDto: LoginDto): Response<List<LoginResponse>>
 
     @POST("api/SensorCajaApi/AddSensorDataList")

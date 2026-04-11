@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gasmonsoft.fuelboxcontrol.ui.home.HomeScreen
+import com.gasmonsoft.fuelboxcontrol.ui.login.screen.LoginRoute
 import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionsScreen
 import com.gasmonsoft.fuelboxcontrol.ui.sensorconfig.SensorConfigHome
 
@@ -20,6 +21,8 @@ sealed class FuelBoxControlRoute(val route: String) {
     object Permissions : FuelBoxControlRoute("permissions")
     object Home : FuelBoxControlRoute("home")
     object Sensor : FuelBoxControlRoute("sensor")
+
+    object Login : FuelBoxControlRoute("login")
 }
 
 @Composable
@@ -59,7 +62,9 @@ fun FuelBoxControlFlowNav() {
         }
 
         composable(FuelBoxControlRoute.Home.route) {
-            HomeScreen(modifier) {
+            HomeScreen(modifier, onNavToLogin = {
+                navController.navigate(FuelBoxControlRoute.Login.route)
+            }) {
                 navController.navigate(FuelBoxControlRoute.Sensor.route)
             }
         }
@@ -78,6 +83,10 @@ fun FuelBoxControlFlowNav() {
                     }
                 }
             )
+        }
+
+        composable(FuelBoxControlRoute.Login.route) {
+            LoginRoute()
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AssistChip
@@ -23,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -32,7 +34,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -45,24 +50,50 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.Device
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
+import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
-    onNavToSensorView: () -> Unit
+    onNavToLogin: () -> Unit,
+    onNavToSensorView: () -> Unit,
 ) {
+    val logoutEvent by viewModel.logoutEvent.collectAsState()
     val devices by viewModel.availableDevices.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState(
         initial = ConnectionState.Disconnected
     )
+    var showLogoutError by rememberSaveable { mutableStateOf(false) }
 
     val hasConfiguration = NetworkConfig.nombreconfiguracion.isNotEmpty()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(logoutEvent) {
+        when (logoutEvent) {
+            is ProcessingEvent.Error -> {
+                showLogoutError = true
+            }
+
+            is ProcessingEvent.Success -> {
+                onNavToLogin()
+            }
+
+            else -> {}
+        }
+    }
+
+    if (showLogoutError) {
+        ErrorDialog(
+            message = "No se pudo cerrar la sesión. Intente de nuevo.",
+            onDismiss = viewModel::dismissLogoutError,
+        )
+    }
 
     // Trigger scan every time the screen becomes visible (Resume)
     DisposableEffect(lifecycleOwner) {
@@ -92,6 +123,9 @@ fun HomeScreen(
             },
             onRescan = {
                 viewModel.scanDevices()
+            },
+            onLogout = {
+                viewModel.logout()
             }
         )
 
@@ -111,6 +145,7 @@ fun HomeScreenContent(
     connectionStatus: ConnectionState,
     onConnect: (mac: String) -> Unit,
     onRescan: () -> Unit,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sortedDevices = remember(devices) {
@@ -125,12 +160,29 @@ fun HomeScreenContent(
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Image(
-                    painter = painterResource(R.drawable.fbc_icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp)
-                )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.fbc_icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp)
+                    )
+
+                    IconButton(onClick = onLogout) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.Logout,
+                            contentDescription = null,
+                        )
+                    }
+                }
+
                 SectionTitle(
                     title = "Dispositivos encontrados",
                     subtitle = "Seleccione uno de los dispositivos DIESEL para conectarse."
@@ -301,7 +353,8 @@ fun HomeScreenPreview() {
             ),
             connectionStatus = ConnectionState.Disconnected,
             onConnect = {},
-            onRescan = {}
+            onRescan = {},
+            onLogout = {}
         )
     }
 }
