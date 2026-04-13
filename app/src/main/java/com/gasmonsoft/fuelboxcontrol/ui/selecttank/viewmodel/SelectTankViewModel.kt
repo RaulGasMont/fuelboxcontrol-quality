@@ -51,7 +51,7 @@ class SelectTankViewModel @Inject constructor(
         }
     }
 
-    fun dismissedDialog() {
+    fun dismissedError() {
         _uiState.update { currentUiState ->
             currentUiState.copy(
                 seeTankEvent = ProcessingEvent.Error

@@ -98,9 +98,12 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
             }
 
             composable<ScreenRoute.SelectTank> {
-                SelectTankRoute(onBack = {
-                    appState.navController.popBackStack()
-                })
+                SelectTankRoute(
+                    onBack = {
+                        appState.navController.popBackStack()
+                    },
+                    onTankSelected = {}
+                )
             }
         }
     }

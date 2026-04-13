@@ -1,14 +1,25 @@
 package com.gasmonsoft.fuelboxcontrol.ui.selecttank.screen
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.LocalGasStation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,12 +31,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,27 +43,43 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Other
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Tank
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Vehicle
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankUiState
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectVehicleScreen
+import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 @Composable
 fun SelectTankRoute(
     onBack: () -> Unit,
+    onTankSelected: (Tank) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SelectTankViewModel = hiltViewModel(),
 ) {
-
-    val uiState = viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getTankList()
     }
 
+    when (uiState.seeTankEvent) {
+        is ProcessingEvent.Loading -> LoadingDialog()
+        is ProcessingEvent.Error -> {
+            ErrorDialog(
+                message = "No se pudo obtener la lista de tanques",
+                onDismiss = viewModel::dismissedError
+            )
+        }
+
+        else -> Unit
+    }
+
     SelectTankScreen(
-        uiState = uiState.value,
+        uiState = uiState,
         onBack = onBack,
-        onChangeScreen = { viewModel.changeScreen(it) },
+        onTankSelected = onTankSelected,
+        onChangeScreen = viewModel::changeScreen,
         modifier = modifier
     )
 }
@@ -63,92 +89,148 @@ fun SelectTankRoute(
 fun SelectTankScreen(
     uiState: SelectTankUiState,
     onBack: () -> Unit,
+    onTankSelected: (Tank) -> Unit,
     onChangeScreen: (screen: SelectVehicleScreen) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showDialog by rememberSaveable { mutableStateOf(false) }
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+        )
+    )
 
-    if (showDialog) {
-        SelectTankDialog()
-    }
-
-    Column(modifier = modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 16.dp)
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
-            }
-            Text(
-                text = "Seleccionar Tanque",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-        PrimaryTabRow(
-            selectedTabIndex = uiState.screen.index,
-        ) {
-            Tab(
-                selected = uiState.screen.index == SelectVehicleScreen.Vehicles().index,
-                onClick = { onChangeScreen(SelectVehicleScreen.Vehicles()) },
-                text = {
-                    Text(
-                        text = SelectVehicleScreen.Vehicles().name,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            )
-
-            Tab(
-                selected = uiState.screen.index == SelectVehicleScreen.Otros().index,
-                onClick = { onChangeScreen(SelectVehicleScreen.Otros()) },
-                text = {
-                    Text(
-                        text = SelectVehicleScreen.Otros().name,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            )
-        }
-
-        when (uiState.screen) {
-            is SelectVehicleScreen.Otros -> {
-                SelectTankOtherScreen(otros = uiState.otros)
-            }
-
-            is SelectVehicleScreen.Vehicles -> {
-                SelectTankVehicleScreen(vehicles = uiState.vehicles)
-            }
-        }
-    }
-}
-
-@Composable
-fun SelectTankVehicleScreen(vehicles: List<Tank>) {
-    LazyColumn(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(backgroundBrush)
     ) {
-        items(vehicles.size, key = { index -> vehicles[index].id }) { index ->
-            TankCard(tank = vehicles[index], onClick = {})
+        Column(modifier = modifier.fillMaxSize()) {
+            // ── Toolbar ──
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 12.dp)
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                }
+                Text(
+                    text = "Seleccionar Tanque",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+
+            // ── Tabs ──
+            val tabs = listOf(SelectVehicleScreen.Vehicles(), SelectVehicleScreen.Otros())
+
+            PrimaryTabRow(selectedTabIndex = uiState.screen.index) {
+                tabs.forEach { screen ->
+                    Tab(
+                        selected = uiState.screen.index == screen.index,
+                        onClick = { onChangeScreen(screen) },
+                        text = {
+                            Text(
+                                text = screen.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    )
+                }
+            }
+
+            // ── Contenido con transición animada ──
+            AnimatedContent(
+                targetState = uiState.screen,
+                transitionSpec = {
+                    val direction = if (targetState.index > initialState.index)
+                        AnimatedContentTransitionScope.SlideDirection.Start
+                    else
+                        AnimatedContentTransitionScope.SlideDirection.End
+
+                    slideIntoContainer(direction, tween(300)) togetherWith
+                            slideOutOfContainer(direction, tween(300))
+                },
+                label = "tab_transition"
+            ) { screen ->
+                val tanks = when (screen) {
+                    is SelectVehicleScreen.Vehicles -> uiState.vehicles
+                    is SelectVehicleScreen.Otros -> uiState.otros
+                }
+                val emptyMessage = when (screen) {
+                    is SelectVehicleScreen.Vehicles -> "No hay vehículos disponibles"
+                    is SelectVehicleScreen.Otros -> "No hay tanques disponibles"
+                }
+
+                TankList(
+                    tanks = tanks,
+                    emptyMessage = emptyMessage,
+                    onTankSelected = onTankSelected
+                )
+            }
         }
     }
 }
 
 @Composable
-fun SelectTankOtherScreen(otros: List<Tank>, modifier: Modifier = Modifier) {
-    Box(modifier = Modifier.padding(16.dp)) {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(otros.size, key = { index -> otros[index].id }) { index ->
-                TankCard(tank = otros[index], onClick = {})
-            }
+private fun TankList(
+    tanks: List<Tank>,
+    emptyMessage: String,
+    onTankSelected: (Tank) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (tanks.isEmpty()) {
+        EmptyState(message = emptyMessage)
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(tanks, key = { it.id }) { tank ->
+            TankCard(
+                tank = tank,
+                onClick = { onTankSelected(tank) },
+                modifier = Modifier.animateItem()   // animación al reordenar / eliminar
+            )
+        }
+
+        // Espacio extra al final para que el último card no quede pegado al borde
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun EmptyState(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.LocalGasStation,   // o el ícono que prefieras
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -175,6 +257,7 @@ fun SelectTankScreenPreview() {
             vehicles = onlyVehicles,
             otros = onlyOthers,
         ), onBack = {},
-        onChangeScreen = {}
+        onChangeScreen = {},
+        onTankSelected = {}
     )
 }

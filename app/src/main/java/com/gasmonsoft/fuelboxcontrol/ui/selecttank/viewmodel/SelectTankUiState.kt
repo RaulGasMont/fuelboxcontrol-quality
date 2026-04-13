@@ -1,16 +1,14 @@
 package com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel
 
-import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Other
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Tank
-import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Vehicle
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 data class SelectTankUiState(
     val search: String = "",
     val selectedContainer: Tank? = null,
     val screen: SelectVehicleScreen = SelectVehicleScreen.Vehicles(),
-    val vehicles: List<Vehicle> = emptyList(),
-    val otros: List<Other> = emptyList(),
+    val vehicles: List<Tank> = emptyList(),
+    val otros: List<Tank> = emptyList(),
     val seeTankEvent: ProcessingEvent = ProcessingEvent.Idle,
     val saveTankEvent: ProcessingEvent = ProcessingEvent.Idle
 )
