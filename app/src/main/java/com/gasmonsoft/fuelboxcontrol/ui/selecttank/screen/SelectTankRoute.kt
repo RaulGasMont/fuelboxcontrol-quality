@@ -18,6 +18,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,14 +27,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Other
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Tank
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Vehicle
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankUiState
+import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectVehicleScreen
 
 @Composable
-fun SelectTankRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun SelectTankRoute(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SelectTankViewModel = hiltViewModel(),
+) {
+    LaunchedEffect(Unit) {
+        viewModel.getTankList()
+    }
+
     SelectTankScreen(uiState = SelectTankUiState(), onBack = onBack, modifier = modifier)
 }
 

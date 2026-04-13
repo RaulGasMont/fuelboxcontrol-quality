@@ -39,7 +39,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
     val startDest: ScreenRoute = when {
         state.value.sessionExpired -> ScreenRoute.Login
         !hasAllPermissions -> ScreenRoute.Permissions
-        else -> ScreenRoute.Home
+        else -> ScreenRoute.Sensores
     }
 
     Scaffold(
@@ -64,7 +64,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
 
             composable<ScreenRoute.Login> {
                 LoginRoute(onHome = {
-                    appState.navController.navigate(ScreenRoute.Home) {
+                    appState.navController.navigate(ScreenRoute.Sensores) {
                         popUpTo(ScreenRoute.Login) { inclusive = true }
                     }
                 })

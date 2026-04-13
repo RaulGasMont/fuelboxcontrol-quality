@@ -1,5 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle
 
+import com.google.gson.annotations.SerializedName
+
 
 interface TankType {
     object VEHICLE : TankType
@@ -26,8 +28,8 @@ data class Other(
 
 data class ContenedoresAMedirResponse(
     val id: Int,
-    val name: String,
-    val type: TankType
+    @SerializedName("fld_descripcion") val name: String,
+    @SerializedName("tipo") val type: Int
 )
 
 
