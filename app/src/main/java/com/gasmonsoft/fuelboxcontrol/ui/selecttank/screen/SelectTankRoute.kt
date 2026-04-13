@@ -3,6 +3,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.selecttank.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,24 +12,24 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Other
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Tank
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Vehicle
@@ -42,11 +43,19 @@ fun SelectTankRoute(
     modifier: Modifier = Modifier,
     viewModel: SelectTankViewModel = hiltViewModel(),
 ) {
+
+    val uiState = viewModel.uiState.collectAsState()
+
     LaunchedEffect(Unit) {
         viewModel.getTankList()
     }
 
-    SelectTankScreen(uiState = SelectTankUiState(), onBack = onBack, modifier = modifier)
+    SelectTankScreen(
+        uiState = uiState.value,
+        onBack = onBack,
+        onChangeScreen = { viewModel.changeScreen(it) },
+        modifier = modifier
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +63,7 @@ fun SelectTankRoute(
 fun SelectTankScreen(
     uiState: SelectTankUiState,
     onBack: () -> Unit,
+    onChangeScreen: (screen: SelectVehicleScreen) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -62,59 +72,54 @@ fun SelectTankScreen(
         SelectTankDialog()
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(title = { }, navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
-                }
-            })
+    Column(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 16.dp)
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
+            }
+            Text(
+                text = "Seleccionar Tanque",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
         }
-    ) { paddingValues ->
-        Surface(modifier = Modifier.padding(paddingValues)) {
-            Column {
-                PrimaryTabRow(
-                    selectedTabIndex = uiState.screen.index,
-                ) {
-                    Tab(
-                        selected = uiState.screen.index == SelectVehicleScreen.Vehicles().index,
-                        onClick = {
-
-                        },
-                        text = {
-                            Text(
-                                text = SelectVehicleScreen.Vehicles().name,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    )
-
-                    Tab(
-                        selected = uiState.screen.index == SelectVehicleScreen.Otros().index,
-                        onClick = {
-
-                        },
-                        text = {
-                            Text(
-                                text = SelectVehicleScreen.Otros().name,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+        PrimaryTabRow(
+            selectedTabIndex = uiState.screen.index,
+        ) {
+            Tab(
+                selected = uiState.screen.index == SelectVehicleScreen.Vehicles().index,
+                onClick = { onChangeScreen(SelectVehicleScreen.Vehicles()) },
+                text = {
+                    Text(
+                        text = SelectVehicleScreen.Vehicles().name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+            )
 
-                when (uiState.screen) {
-                    is SelectVehicleScreen.Otros -> {
-                        SelectTankOtherScreen(otros = uiState.otros)
-                    }
-
-                    is SelectVehicleScreen.Vehicles -> {
-                        SelectTankVehicleScreen(vehicles = uiState.vehicles)
-                    }
+            Tab(
+                selected = uiState.screen.index == SelectVehicleScreen.Otros().index,
+                onClick = { onChangeScreen(SelectVehicleScreen.Otros()) },
+                text = {
+                    Text(
+                        text = SelectVehicleScreen.Otros().name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+            )
+        }
+
+        when (uiState.screen) {
+            is SelectVehicleScreen.Otros -> {
+                SelectTankOtherScreen(otros = uiState.otros)
+            }
+
+            is SelectVehicleScreen.Vehicles -> {
+                SelectTankVehicleScreen(vehicles = uiState.vehicles)
             }
         }
     }
@@ -168,7 +173,8 @@ fun SelectTankScreenPreview() {
         uiState = SelectTankUiState(
             screen = SelectVehicleScreen.Otros(),
             vehicles = onlyVehicles,
-            otros = onlyOthers
-        ), onBack = {}
+            otros = onlyOthers,
+        ), onBack = {},
+        onChangeScreen = {}
     )
 }

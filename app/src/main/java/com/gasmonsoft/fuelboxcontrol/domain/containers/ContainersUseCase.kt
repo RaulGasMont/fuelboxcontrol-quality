@@ -13,7 +13,7 @@ data class ContenedoresResult(
 )
 
 class ContainersUseCase @Inject constructor() {
-    operator fun invoke(list: List<ContenedoresAMedirResponse>) {
+    operator fun invoke(list: List<ContenedoresAMedirResponse>): ContenedoresResult {
         val vehicleList = mutableListOf<Vehicle>()
         val othersList = mutableListOf<Other>()
         list.forEach {
@@ -23,5 +23,6 @@ class ContainersUseCase @Inject constructor() {
                 othersList.add(it.toOther())
             }
         }
+        return ContenedoresResult(vehicleList, othersList)
     }
 }

@@ -32,12 +32,19 @@ class SelectTankViewModel @Inject constructor(
 
             userRepository.getContainers()
                 .onSuccess {
-                    containersUseCase(it)
+                    val result = containersUseCase(it)
+                    _uiState.update { currentUiState ->
+                        currentUiState.copy(
+                            seeTankEvent = ProcessingEvent.Success,
+                            vehicles = result.vehicleList,
+                            otros = result.othersList
+                        )
+                    }
                 }
                 .onFailure {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
-                            seeTankEvent = ProcessingEvent.Success
+                            seeTankEvent = ProcessingEvent.Error
                         )
                     }
                 }
@@ -48,6 +55,19 @@ class SelectTankViewModel @Inject constructor(
         _uiState.update { currentUiState ->
             currentUiState.copy(
                 seeTankEvent = ProcessingEvent.Error
+            )
+        }
+    }
+
+    fun changeScreen(screen: SelectTankScreen) {
+        val screenToChange = if (screen == SelectVehicleScreen.Vehicles()) {
+            SelectVehicleScreen.Vehicles()
+        } else {
+            SelectVehicleScreen.Otros()
+        }
+        _uiState.update { currentUiState ->
+            currentUiState.copy(
+                screen = screenToChange
             )
         }
     }

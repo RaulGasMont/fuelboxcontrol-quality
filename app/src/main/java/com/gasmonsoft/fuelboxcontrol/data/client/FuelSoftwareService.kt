@@ -23,7 +23,7 @@ interface FuelSoftwareService {
     @POST("api/authenticateCalidad")
     suspend fun boxLogin(@Body loginDto: LoginDto): Response<List<CalidadLoginResponse>>
 
-    @POST("api/SensorCalidadCajaApi/ContenedoresAMedirCalidad")
+    @GET("api/SensorCalidadCajaApi/ContenedoresAMedirCalidad")
     suspend fun getContenedoresAMedir(
         @Header("Authorization") token: String,
         @Query("id_empresa") idEmpresa: String,
