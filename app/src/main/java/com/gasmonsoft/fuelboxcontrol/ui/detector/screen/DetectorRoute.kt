@@ -2,11 +2,11 @@ package com.gasmonsoft.fuelboxcontrol.ui.detector.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,35 +62,11 @@ fun DetectorScreen(
         )
     )
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding(),
-                tonalElevation = 2.dp
-            ) {
-                Button(
-                    onClick = onAnalyze,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(52.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Text("Analizar")
-                }
-            }
-        }
-    ) { paddingValues ->
-        Surface(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(backgroundBrush)
-        ) {
+    Surface(
+        modifier = Modifier
+            .background(backgroundBrush)
+    ) {
+        Box(contentAlignment = Alignment.BottomEnd) {
             Column(
                 modifier = modifier
                     .fillMaxSize()
@@ -121,7 +96,7 @@ fun DetectorScreen(
 
                 }
 
-                SectionCard {
+                SectionCard(modifier = Modifier.height(340.dp)) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
@@ -134,6 +109,19 @@ fun DetectorScreen(
                         )
                     }
                 }
+            }
+
+            Button(
+                onClick = onAnalyze,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(52.dp),
+                elevation = ButtonDefaults.buttonElevation(4.dp),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors()
+            ) {
+                Text("Analizar")
             }
         }
     }

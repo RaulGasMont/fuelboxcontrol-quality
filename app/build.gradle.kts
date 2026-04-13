@@ -78,19 +78,18 @@ dependencies {
 
     // Dependency Injection - Hilt
     implementation(libs.hilt.android)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.ui.graphics)
     ksp(libs.hilt.compiler)
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
     implementation("androidx.hilt:hilt-work:1.3.0")
     ksp("androidx.hilt:hilt-compiler:1.3.0")
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Location & Permissions
     implementation(libs.play.services.location)
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
     // Room
-    val roomVersion = "2.8.4"
+    val roomVersion = "2.7.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")

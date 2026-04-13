@@ -20,11 +20,11 @@ class SelectTankViewModel @Inject constructor(private val userRepository: UserRe
     fun getTankList() {
         viewModelScope.launch {
             val containers = userRepository.getContainers()
-//            _uiState.update { currentUiState ->
-//                currentUiState.copy(
+            _uiState.update { currentUiState ->
+                currentUiState.copy(
 //                    tankList = containers
-//                )
-//            }
+                )
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class FbcState(
+    val isCheckingSession: Boolean = true,
     val sessionExpired: Boolean = false,
     val sessionProcessEvent: ProcessingEvent = ProcessingEvent.Idle
 )
@@ -30,10 +31,10 @@ class FbcViewModel @Inject constructor(
             userRepository.getUser().collect { user ->
                 sessionUseCase(user).fold(
                     onSuccess = {
-                        _uiState.update { it.copy(sessionExpired = false) }
+                        _uiState.update { it.copy(sessionExpired = false, isCheckingSession = false) }
                     },
                     onFailure = {
-                        _uiState.update { it.copy(sessionExpired = true) }
+                        _uiState.update { it.copy(sessionExpired = true, isCheckingSession = false) }
                     }
                 )
             }

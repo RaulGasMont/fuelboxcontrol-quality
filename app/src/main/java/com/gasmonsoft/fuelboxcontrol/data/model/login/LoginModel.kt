@@ -21,6 +21,21 @@ fun Login.toDto(): LoginDto = LoginDto(
     fbToken = token
 )
 
+data class CalidadLoginResponse(
+    @SerializedName("id") var id: Int,
+    @SerializedName("message") var message: String,
+    @SerializedName("c_tipo_usuario") var c_tipo_usuario: Int,
+    @SerializedName("id_usuario") var id_usuario: Int,
+    @SerializedName("fld_usuario") var fld_usuario: String,
+    @SerializedName("id_empresa") var id_empresa: Int,
+    @SerializedName("fld_nombreCompleto") var nombreCompleto: String,
+    @SerializedName("fld_correo") var fld_correo: String,
+    @SerializedName("token") var token: String,
+    @SerializedName("fld_nombreEmpresa") var nombreEmpresa: String,
+    @SerializedName("fld_terminos") var terminos: Boolean,
+    @SerializedName("fld_cajasCalidad") val cajasCalidad: String
+)
+
 data class LoginResponse(
     @SerializedName("id") var id: Int,
     @SerializedName("message") var message: String,

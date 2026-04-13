@@ -1,6 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.data.client
 
 import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.CalibrationDto
+import com.gasmonsoft.fuelboxcontrol.data.model.login.CalidadLoginResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.ContenedoresAMedirResponse
@@ -20,7 +21,7 @@ import retrofit2.http.Streaming
 interface FuelSoftwareService {
 
     @POST("api/authenticateCalidad")
-    suspend fun boxLogin(@Body loginDto: LoginDto): Response<List<LoginResponse>>
+    suspend fun boxLogin(@Body loginDto: LoginDto): Response<List<CalidadLoginResponse>>
 
     @POST("api/SensorCalidadCajaApi/ContenedoresAMedirCalidad")
     suspend fun getContenedoresAMedir(

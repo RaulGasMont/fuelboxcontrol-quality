@@ -23,16 +23,19 @@ class UserRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 // El DTO espera (fld_password, fld_usuario, fld_id)
-                val responseList = remoteDataSource.login(LoginDto(password, user, "0")).getOrThrow()
+                val responseList =
+                    remoteDataSource.login(LoginDto(password, user, "0")).getOrThrow()
 
                 // Operaciones de base de datos
                 localDataSource.deleteUser()
                 localDataSource.upsertUser(
                     UserEntity(
-                        name = responseList.fld_usuario,
+                        user = responseList.fld_usuario,
                         token = responseList.token,
                         timestamp = System.currentTimeMillis(),
-                        idEmpresa = responseList.id_empresa
+                        idEmpresa = responseList.id_empresa,
+                        name = responseList.nombreCompleto,
+                        cajasCalidad = responseList.cajasCalidad
                     )
                 )
             }

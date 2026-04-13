@@ -7,30 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppNavHost
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute
-import com.gasmonsoft.fuelboxcontrol.ui.navigation.rememberAppState
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
-
-@Composable
-fun SensorConfigHome(
-    modifier: Modifier = Modifier,
-    onBack: () -> Unit
-) {
-    val appState = rememberAppState()
-
-    SensorConfigContent(
-        shouldShowBottomBar = appState.shouldShowBottomBar(),
-        bottomBar = { SensorConfigBottomBar(appState = appState) },
-        modifier = modifier
-    ) { innerPadding ->
-        AppNavHost(
-            navController = appState.navController,
-            modifier = Modifier.padding(innerPadding),
-            onGeneralBack = onBack
-        )
-    }
-}
 
 @Composable
 private fun SensorConfigContent(

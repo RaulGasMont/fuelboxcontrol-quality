@@ -20,6 +20,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.AppState
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.DatosVehiculos
+import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.Deteccion
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.ScreenRoute.Sensores
 import com.gasmonsoft.fuelboxcontrol.ui.navigation.destinations
 
@@ -39,6 +40,12 @@ fun SensorConfigBottomBar(appState: AppState) {
                 DatosVehiculos -> {
                     currentDestination?.hierarchy?.any {
                         it.hasRoute<DatosVehiculos>()
+                    } == true
+                }
+
+                is Deteccion -> {
+                    currentDestination?.hierarchy?.any {
+                        it.hasRoute<Deteccion>() || it.hasRoute<ScreenRoute.SelectTank>()
                     } == true
                 }
 

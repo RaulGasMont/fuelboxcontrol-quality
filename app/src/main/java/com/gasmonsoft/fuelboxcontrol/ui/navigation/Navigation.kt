@@ -5,7 +5,17 @@ import com.gasmonsoft.fuelboxcontrol.R
 import kotlinx.serialization.Serializable
 
 
+@Serializable
 sealed interface ScreenRoute {
+    @Serializable
+    data object Permissions : ScreenRoute
+
+    @Serializable
+    data object Login : ScreenRoute
+
+    @Serializable
+    data object Home : ScreenRoute
+
     @Serializable
     data object Sensores : ScreenRoute
 
