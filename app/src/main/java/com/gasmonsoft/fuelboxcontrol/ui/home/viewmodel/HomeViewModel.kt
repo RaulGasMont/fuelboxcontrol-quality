@@ -4,29 +4,49 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
+import com.gasmonsoft.fuelboxcontrol.domain.session.SessionUseCase
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class HomeState(
+    val logoutEvent: ProcessingEvent = ProcessingEvent.Idle,
+    val sessionExpired: Boolean = false
+)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val sessionUseCase: SessionUseCase
 ) : ViewModel() {
+
+    private val _state = MutableStateFlow(HomeState())
+    val state = _state.asStateFlow()
+
     var logoutEvent: MutableStateFlow<ProcessingEvent> = MutableStateFlow(ProcessingEvent.Idle)
     val connectionStatus = sensorReceiveManager.connectionState
     val availableDevices = sensorReceiveManager.discoveredDevices
 
-    val currentUser = userRepository.getUser().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Companion.WhileSubscribed(5000),
-        initialValue = null
-    )
+    init {
+        viewModelScope.launch {
+            userRepository.getUser().collect { user ->
+                sessionUseCase(user).fold(
+                    onSuccess = {
+                        _state.update { it.copy(sessionExpired = false) }
+                    },
+                    onFailure = {
+                        _state.update { it.copy(sessionExpired = true) }
+                    }
+                )
+            }
+        }
+    }
 
     fun scanDevices() {
         sensorReceiveManager.startReceiving()
@@ -35,22 +55,37 @@ class HomeViewModel @Inject constructor(
     fun selectDevice(mac: String) {
         NetworkConfig.nombreconfiguracion = mac
         NetworkConfig.configuracion = "mac"
-        // Disparamos el proceso de conexión inmediatamente
         sensorReceiveManager.startReceiving()
     }
 
     fun logout() {
         viewModelScope.launch {
-            logoutEvent.value = ProcessingEvent.Loading
+            _state.update { currentUiState ->
+                currentUiState.copy(
+                    logoutEvent = ProcessingEvent.Loading
+                )
+            }
             userRepository.deleteUser().onSuccess {
-                logoutEvent.value = ProcessingEvent.Success
+                _state.update { currentUiState ->
+                    currentUiState.copy(
+                        logoutEvent = ProcessingEvent.Success
+                    )
+                }
             }.onFailure {
-                logoutEvent.value = ProcessingEvent.Error
+                _state.update { currentUiState ->
+                    currentUiState.copy(
+                        logoutEvent = ProcessingEvent.Error
+                    )
+                }
             }
         }
     }
 
     fun dismissLogoutError() {
-        logoutEvent.value = ProcessingEvent.Idle
+        _state.update { currentUiState ->
+            currentUiState.copy(
+                logoutEvent = ProcessingEvent.Idle
+            )
+        }
     }
 }

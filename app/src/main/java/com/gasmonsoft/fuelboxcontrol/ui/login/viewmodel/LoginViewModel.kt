@@ -1,8 +1,10 @@
 package com.gasmonsoft.fuelboxcontrol.ui.login.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
+import com.gasmonsoft.fuelboxcontrol.utils.LBEncryptionUtils
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +31,9 @@ class LoginViewModel @Inject constructor(
                 currentUiState.copy(loginEvent = ProcessingEvent.Loading)
             }
 
-            userRepository.saveUser(
+            userRepository.login(
                 user = user,
-                password = pin
+                password = LBEncryptionUtils.encrypt(pin)
             ).onSuccess {
                 _uiState.update { currentUiState ->
                     currentUiState.copy(loginEvent = ProcessingEvent.Success)

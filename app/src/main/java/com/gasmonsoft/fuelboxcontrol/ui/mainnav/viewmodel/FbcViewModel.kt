@@ -22,18 +22,18 @@ class FbcViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val sessionUseCase: SessionUseCase
 ) : ViewModel() {
-    private var uiState = MutableStateFlow(FbcState())
-    val state = uiState.asStateFlow()
+    private var _uiState = MutableStateFlow(FbcState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             userRepository.getUser().collect { user ->
                 sessionUseCase(user).fold(
                     onSuccess = {
-                        uiState.update { it.copy(sessionExpired = false) }
+                        _uiState.update { it.copy(sessionExpired = false) }
                     },
                     onFailure = {
-                        uiState.update { it.copy(sessionExpired = true) }
+                        _uiState.update { it.copy(sessionExpired = true) }
                     }
                 )
             }

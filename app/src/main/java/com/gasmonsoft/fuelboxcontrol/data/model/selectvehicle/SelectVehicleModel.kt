@@ -24,4 +24,10 @@ data class Other(
     override val type: TankType = TankType.OTHER
 ) : Tank
 
+data class ContenedoresAMedirResponse(
+    val id: Int,
+    val name: String,
+    val type: TankType
+)
+
 

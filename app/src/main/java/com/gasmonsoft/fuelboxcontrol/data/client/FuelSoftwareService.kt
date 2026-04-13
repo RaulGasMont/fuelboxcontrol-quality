@@ -3,6 +3,7 @@ package com.gasmonsoft.fuelboxcontrol.data.client
 import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.CalibrationDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginResponse
+import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.ContenedoresAMedirResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitarioRequest
 import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
 import com.gasmonsoft.fuelboxcontrol.data.model.sensor.UploadSensorResponse
@@ -18,8 +19,14 @@ import retrofit2.http.Streaming
 
 interface FuelSoftwareService {
 
-    @POST("api/authenticate")
+    @POST("api/authenticateCalidad")
     suspend fun boxLogin(@Body loginDto: LoginDto): Response<List<LoginResponse>>
+
+    @POST("api/SensorCalidadCajaApi/ContenedoresAMedirCalidad")
+    suspend fun getContenedoresAMedir(
+        @Header("Authorization") token: String,
+        @Query("id_empresa") idEmpresa: String,
+    ): Response<List<ContenedoresAMedirResponse>>
 
     @POST("api/authenticate")
     suspend fun login(@Body loginDto: LoginDto): Response<List<LoginResponse>>

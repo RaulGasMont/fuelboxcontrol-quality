@@ -24,13 +24,12 @@ sealed class FuelBoxControlRoute(val route: String) {
     object Permissions : FuelBoxControlRoute("permissions")
     object Home : FuelBoxControlRoute("home")
     object Sensor : FuelBoxControlRoute("sensor")
-
     object Login : FuelBoxControlRoute("login")
 }
 
 @Composable
 fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
-    val state = viewModel.state.collectAsState()
+    val state = viewModel.uiState.collectAsState()
     val navController = rememberNavController()
     val modifier = Modifier.safeContentPadding()
     val currentContext = LocalContext.current
@@ -103,7 +102,6 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
         }
     }
 }
-
 
 private fun hasAllPermissions(context: Context): Boolean {
     val requiredPermission = mutableListOf(

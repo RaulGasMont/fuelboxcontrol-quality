@@ -62,19 +62,20 @@ fun HomeScreen(
     onNavToLogin: () -> Unit,
     onNavToSensorView: () -> Unit,
 ) {
+    val state by viewModel.state.collectAsState()
     val logoutEvent by viewModel.logoutEvent.collectAsState()
     val devices by viewModel.availableDevices.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState(
         initial = ConnectionState.Disconnected
     )
-    val user by viewModel.currentUser.collectAsState(initial = null)
 
     val hasConfiguration = NetworkConfig.nombreconfiguracion.isNotEmpty()
     val lifecycleOwner = LocalLifecycleOwner.current
 
+
     // Redirigir a Login si no hay sesión activa
-    LaunchedEffect(user) {
-        if (user == null && logoutEvent !is ProcessingEvent.Loading) {
+    LaunchedEffect(state.sessionExpired) {
+        if (state.sessionExpired && logoutEvent !is ProcessingEvent.Loading) {
             onNavToLogin()
         }
     }

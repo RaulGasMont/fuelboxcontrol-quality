@@ -12,7 +12,7 @@ interface UserDao {
     fun getUser(): Flow<UserEntity?>
 
     @Upsert
-    fun upsertUser(user: UserEntity)
+    suspend fun upsertUser(user: UserEntity)
 
     @Query("DELETE FROM user")
     suspend fun deleteUser()

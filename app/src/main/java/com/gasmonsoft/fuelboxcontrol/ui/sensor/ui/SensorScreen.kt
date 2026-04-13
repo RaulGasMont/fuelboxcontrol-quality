@@ -245,12 +245,12 @@ fun SensorScreenContent(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryFixed
+                                        containerColor = MaterialTheme.colorScheme.secondary
                                     )
                                 ) {
                                     Text(
                                         text = "Eje X",
-                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                 }
 
@@ -260,12 +260,12 @@ fun SensorScreenContent(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryFixed
+                                        containerColor = MaterialTheme.colorScheme.secondary
                                     )
                                 ) {
                                     Text(
                                         text = "Eje Y",
-                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                 }
 
@@ -275,12 +275,12 @@ fun SensorScreenContent(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryFixed
+                                        containerColor = MaterialTheme.colorScheme.secondary
                                     )
                                 ) {
                                     Text(
                                         text = "Eje Z",
-                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                 }
                             }
@@ -303,12 +303,12 @@ fun SensorScreenContent(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryFixed
+                                        containerColor = MaterialTheme.colorScheme.secondary
                                     )
                                 ) {
                                     Text(
                                         text = "Actualizar fecha",
-                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                 }
 
@@ -318,12 +318,12 @@ fun SensorScreenContent(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryFixed
+                                        containerColor = MaterialTheme.colorScheme.secondary
                                     )
                                 ) {
                                     Text(
                                         text = "Actualizar hora",
-                                        color = MaterialTheme.colorScheme.onSecondaryFixed
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                 }
                             }

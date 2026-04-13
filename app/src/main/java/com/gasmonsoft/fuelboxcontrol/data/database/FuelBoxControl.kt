@@ -7,7 +7,7 @@ import com.gasmonsoft.fuelboxcontrol.data.dao.UserDao
 import com.gasmonsoft.fuelboxcontrol.data.model.database.UserEntity
 
 @Keep
-@Database(entities = [UserEntity::class], version = 1, exportSchema = false)
+@Database(entities = [UserEntity::class], version = 4, exportSchema = false)
 abstract class FuelBoxControlDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 }
