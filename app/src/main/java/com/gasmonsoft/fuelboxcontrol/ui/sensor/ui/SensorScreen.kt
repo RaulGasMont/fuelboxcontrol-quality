@@ -115,12 +115,15 @@ fun SensorRoute(
         permissionState = permissionState,
         onDisconnect = {
             viewModelSensor.disconnect()
+        },
+        onBack = {
+            viewModelSensor.disconnect()
             onBack()
         },
         onReconnect = viewModelSensor::reconnect,
         onInitializeConnection = viewModelSensor::initializeConnection,
-        onWriteEinc = viewModelSensor::onwriteEinc,
-        onWriteRTC = viewModelSensor::onwriteRTC
+        onWriteEinc = viewModelSensor::onWriteEinc,
+        onWriteRTC = viewModelSensor::onWriteRTC
     )
 }
 
@@ -131,13 +134,14 @@ fun SensorScreenContent(
     sensorInfoState: SensorState,
     permissionState: MultiplePermissionsState,
     onDisconnect: () -> Unit,
+    onBack: () -> Unit,
     onReconnect: () -> Unit,
     onInitializeConnection: () -> Unit,
     onWriteEinc: (String) -> Unit,
     onWriteRTC: (String) -> Unit
 ) {
     BackHandler {
-        onDisconnect()
+        onBack()
     }
 
     val isConnected = uiState.connectionState == ConnectionState.Connected
@@ -156,7 +160,7 @@ fun SensorScreenContent(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onDisconnect) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Regresar"
@@ -376,6 +380,7 @@ fun SensorScreenContentPreview() {
                 override fun launchMultiplePermissionRequest() {}
             },
             onDisconnect = {},
+            onBack = {},
             onReconnect = {},
             onInitializeConnection = {},
             onWriteEinc = {},

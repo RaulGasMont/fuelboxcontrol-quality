@@ -31,6 +31,12 @@ class DataStoreRepository @Inject constructor(
             TankSelection(tankId, nameTankId, tankType)
         }
 
+    val selectedCaja: Flow<Int> = dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { preferences ->
+            preferences[ID_CAJA] ?: -1
+        }
+
     suspend fun saveTank(tank: TankSelection) {
         dataStore.edit { preferences ->
             preferences[TANK_ID] = tank.tankId
@@ -39,11 +45,18 @@ class DataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun saveIdCaja(idCaja: Int) {
+        dataStore.edit { preferences ->
+            preferences[ID_CAJA] = idCaja
+        }
+    }
+
     suspend fun clearTank() {
         dataStore.edit { it.clear() }
     }
 
     companion object {
+        val ID_CAJA = intPreferencesKey("caja_id")
         val TANK_ID = intPreferencesKey("tank_id")
         val NAME_TANK_ID = stringPreferencesKey("name_tank_id")
         val TANK_TYPE = booleanPreferencesKey("tank_type")

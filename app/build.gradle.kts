@@ -120,4 +120,9 @@ dependencies {
 
     // Excel
     implementation("org.apache.poi:poi-ooxml:5.5.1")
+
+    // DataStore
+    val dataStore = "1.2.1"
+    implementation("androidx.datastore:datastore-preferences:$dataStore")
+    implementation("androidx.datastore:datastore:$dataStore")
 }

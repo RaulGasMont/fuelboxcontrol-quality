@@ -71,9 +71,11 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
 
             composable<ScreenRoute.Home> {
                 HomeScreen(onNavToLogin = {
-                    appState.navController.navigate(ScreenRoute.Login)
+                    appState.navController.navigate(ScreenRoute.Login) {
+                        popUpTo(ScreenRoute.Home) { inclusive = true }
+                    }
                 }) {
-                    appState.navController.navigate(ScreenRoute.Sensores)
+                    appState.navigateToTopLevel(ScreenRoute.Sensores)
                 }
             }
 
@@ -83,20 +85,13 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
                 })
             }
 
-            composable<ScreenRoute.Deteccion> { backStackEntry ->
-                val route = backStackEntry.toRoute<ScreenRoute.Deteccion>()
+            composable<ScreenRoute.Deteccion> {
                 DetectorRoute(
                     onSelectTank = {
-                        appState.navController.navigate(ScreenRoute.SelectTank(route.idCaja))
+                        appState.navController.navigate(ScreenRoute.SelectTank(0))
                     }
                 )
             }
-
-//            composable<ScreenRoute.DatosVehiculos> {
-//                VehiculosRoute(onCalibrate = { idCaja ->
-//                    appState.navController.navigate(ScreenRoute.Deteccion(idCaja))
-//                })
-//            }
 
             composable<ScreenRoute.SelectTank> {
                 SelectTankRoute(

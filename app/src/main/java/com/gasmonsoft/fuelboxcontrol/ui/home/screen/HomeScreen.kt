@@ -107,7 +107,8 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(connectionStatus, hasConfiguration) {
+    LaunchedEffect(connectionStatus) {
+        val hasConfiguration = NetworkConfig.nombreconfiguracion.isNotEmpty()
         if (hasConfiguration && connectionStatus == ConnectionState.Connected) {
             onNavToSensorView()
         }
@@ -116,8 +117,8 @@ fun HomeScreen(
     Box(modifier = modifier.fillMaxSize()) {
         HomeScreenContent(
             devices = uiState.boxes,
-            onConnect = { mac ->
-                viewModel.selectDevice(mac)
+            onConnect = { mac, idCaja ->
+                viewModel.selectDevice(mac, idCaja)
             },
             onLogout = {
                 viewModel.logout()
@@ -137,7 +138,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     devices: List<QualityBox>,
-    onConnect: (mac: String) -> Unit,
+    onConnect: (mac: String, idCaja: Int) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -186,16 +187,6 @@ fun HomeScreenContent(
             }
         }
 
-//        item {
-//            OutlinedButton(
-//                onClick = onRescan,
-//                modifier = Modifier.fillMaxWidth(),
-//                enabled = connectionStatus != ConnectionState.CurrentlyInitializing
-//            ) {
-//                Text("Buscar nuevamente")
-//            }
-//        }
-
         if (devices.isEmpty()) {
             item {
                 EmptyDevicesCard()
@@ -203,7 +194,7 @@ fun HomeScreenContent(
         } else {
             item {
                 Text(
-                    text = "Los dispositivos más cercanos son:",
+                    text = "Los dispositivos asignados son:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -215,7 +206,7 @@ fun HomeScreenContent(
                 DeviceCard(
                     device = device,
                     enabled = true,
-                    onClick = { onConnect(device.mac) }
+                    onClick = { onConnect(device.mac, device.id) }
                 )
             }
         }

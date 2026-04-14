@@ -83,6 +83,10 @@ class SensorViewModel @Inject constructor(
     val sensorInfoState = sensorReceiveManager.sensorData
 
     fun initializeConnection() {
+        if (uiState.value.connectionState == ConnectionState.Connected ||
+            uiState.value.connectionState == ConnectionState.CurrentlyInitializing) {
+            return
+        }
         loadSavedMacAddress()
         clearReadings()
         ensureSubscription()
@@ -157,8 +161,8 @@ class SensorViewModel @Inject constructor(
     fun onwriteEemo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 32)
     fun onwriteElmo(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 33)
     fun onwritesace(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 34)
-    fun onwriteEinc(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 6)
-    fun onwriteRTC(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 7)
+    fun onWriteEinc(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 6)
+    fun onWriteRTC(defaultSensorResponse: String) = writeCommand(defaultSensorResponse, 7)
 
     fun writesDataHostPost(ssid: String, password: String, isWifiEnabled: Boolean) {
         sensorReceiveManager.writesDataHostPost(ssid, password, isWifiEnabled)

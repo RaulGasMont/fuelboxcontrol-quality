@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadData
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
@@ -33,18 +34,46 @@ class DetectorViewModel @Inject constructor(
         null
     )
 
+
+    val selectedBox = dataStoreRepository.selectedCaja.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        null
+    )
+
     private val sensorData = sensorReceiveManager.sensorData
 
     init {
+        observeTankSelection()
+        observeBoxSelection()
+    }
+
+    fun observeBoxSelection() {
         viewModelScope.launch {
-            selectedTankState.collect {
+            selectedBox.collect {
                 if (it != null) {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
-                            tankId = it.tankId,
-                            tankType = it.tankType,
-                            tankName = it.nameTankId.ifEmpty { "Tanque ${it.tankId}" }
+                            idCaja = it
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    fun observeTankSelection() {
+        viewModelScope.launch {
+            viewModelScope.launch {
+                selectedTankState.collect {
+                    if (it != null) {
+                        _uiState.update { currentUiState ->
+                            currentUiState.copy(
+                                tankId = it.tankId,
+                                tankType = it.tankType,
+                                tankName = it.nameTankId.ifEmpty { "Tanque ${it.tankId}" }
+                            )
+                        }
                     }
                 }
             }
@@ -55,14 +84,15 @@ class DetectorViewModel @Inject constructor(
         updateDetectionEvent(ProcessingEvent.Loading)
         viewModelScope.launch {
             val result = detectorUseCase(sensorData)
-//            fscApiRepository.sendAlertGenerales(
-//                body = SensorAlertasUnitario(
-//                    idCajaComunicaciones = TODO(),
-//                    idUsuario = TODO(),
-//                    fecha = TODO(),
-//                    alertas = TODO()
-//                )
-//            )
+
+            fscApiRepository.sendSensorCalidadData(
+                SensorCalidadData(
+                    idCajaCalidad = _uiState.value.idCaja,
+                    idTipoContenedor = _uiState.value.tankType,
+                    calidad = result.value?.toDouble() ?: 0.0,
+                    temperatura = result.temperature?.toDouble() ?: 0.0
+                )
+            )
 
             _uiState.update { currentUiState ->
                 currentUiState.copy(
@@ -71,7 +101,7 @@ class DetectorViewModel @Inject constructor(
                 )
             }
 
-            updateDetectionEvent(ProcessingEvent.Loading)
+            updateDetectionEvent(ProcessingEvent.Success)
         }
     }
 

@@ -6,15 +6,15 @@ fun getSensorData(sensorData: List<String>): SensorData {
     val date = "${sensorData[0]} ${sensorData[1]}"
     val data = sensorData.drop(2)
     val isError = data.any {
-        val temp = data[1].toIntOrNull()
-        val calidad = data[0].toIntOrNull()
+        val temp = data[2].toDoubleOrNull()
+        val calidad = data[1].toDoubleOrNull()
         if (temp == null || calidad == null) return@any true
-        data.size != 2 || (calidad > 0 && temp > 0)
+        (calidad < 0 && temp < 0)
     }
     return SensorData(
         date = date,
-        temperatura = if (data.size >= 2) data[1] else "",
-        calidad = if (data.isNotEmpty()) data[0] else "",
+        temperatura = if (data.size >= 2) data[2] else "",
+        calidad = if (data.isNotEmpty()) data[1] else "",
         error = isError,
         rawData = data.joinToString(",")
     )

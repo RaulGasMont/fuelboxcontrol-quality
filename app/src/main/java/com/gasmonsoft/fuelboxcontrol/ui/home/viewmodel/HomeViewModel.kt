@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.boxlogin.QualityBox
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
 import com.gasmonsoft.fuelboxcontrol.domain.session.SessionUseCase
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
@@ -25,7 +26,8 @@ data class HomeState(
 class HomeViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
     private val userRepository: UserRepository,
-    private val sessionUseCase: SessionUseCase
+    private val sessionUseCase: SessionUseCase,
+    private val dataStoreRepository: DataStoreRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -59,41 +61,28 @@ class HomeViewModel @Inject constructor(
         sensorReceiveManager.startReceiving()
     }
 
-    fun selectDevice(mac: String) {
-        NetworkConfig.nombreconfiguracion = mac
-        NetworkConfig.configuracion = "mac"
-        sensorReceiveManager.startReceiving()
+    fun selectDevice(mac: String, idCaja: Int) {
+        viewModelScope.launch {
+            NetworkConfig.nombreconfiguracion = mac
+            NetworkConfig.configuracion = "mac"
+            dataStoreRepository.saveIdCaja(idCaja)
+            sensorReceiveManager.startReceiving()
+        }
     }
 
     fun logout() {
         viewModelScope.launch {
-            _state.update { currentUiState ->
-                currentUiState.copy(
-                    logoutEvent = ProcessingEvent.Loading
-                )
-            }
+            logoutEvent.value = ProcessingEvent.Loading
             userRepository.deleteUser().onSuccess {
-                _state.update { currentUiState ->
-                    currentUiState.copy(
-                        logoutEvent = ProcessingEvent.Success
-                    )
-                }
+                logoutEvent.value = ProcessingEvent.Success
             }.onFailure {
-                _state.update { currentUiState ->
-                    currentUiState.copy(
-                        logoutEvent = ProcessingEvent.Error
-                    )
-                }
+                logoutEvent.value = ProcessingEvent.Error
             }
         }
     }
 
     fun dismissLogoutError() {
-        _state.update { currentUiState ->
-            currentUiState.copy(
-                logoutEvent = ProcessingEvent.Idle
-            )
-        }
+        logoutEvent.value = ProcessingEvent.Idle
     }
 
     private fun rawBoxesToBoxes(rawBoxes: String): List<QualityBox> {
@@ -104,7 +93,7 @@ class HomeViewModel @Inject constructor(
             if (boxInfo.size >= 2 && boxId != null) {
                 QualityBox(
                     id = boxId,
-                    mac = boxDataConnection.last(),
+                    mac = "10:06:1C:71:80:1E",
                     name = boxInfo.drop(1).joinToString(" ")
                 )
             } else null

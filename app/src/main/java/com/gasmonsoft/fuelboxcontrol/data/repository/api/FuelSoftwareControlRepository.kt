@@ -1,17 +1,17 @@
 package com.gasmonsoft.fuelboxcontrol.data.repository.api
 
-import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.Calibracion
-import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.toDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.Login
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.login.toDto
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadData
 import com.gasmonsoft.fuelboxcontrol.data.model.sensor.UploadSensorResponse
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.toDto
 import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehicle
 import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehiclesResponse
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.BleDataSource
 import com.gasmonsoft.fuelboxcontrol.data.service.ble.RemoteFscDataSource
+import com.gasmonsoft.fuelboxcontrol.utils.getCurrentDate
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -35,12 +35,16 @@ class FuelSoftwareControlRepository @Inject constructor(
         )
     }
 
-    suspend fun sendSensorCalidadData(body: SensorCalidadUnitario): Result<UploadSensorResponse> {
-        val token = userRepository.getUser().first()?.token
-            ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
+    suspend fun sendSensorCalidadData(body: SensorCalidadData): Result<UploadSensorResponse> {
+        val user = userRepository.getUser().first() ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
+        val token = user.token
+        val idUsuario = user.id
         return remoteFscDataSource.addSensorDatosUnitariaList(
             token = token,
-            body = body
+            body = body.toDto(
+                idUsuario = idUsuario,
+                fecha = getCurrentDate()
+            )
         )
     }
 

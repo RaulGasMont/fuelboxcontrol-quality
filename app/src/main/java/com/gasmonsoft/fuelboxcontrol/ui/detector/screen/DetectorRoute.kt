@@ -27,11 +27,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
+import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionCard
 import com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel.DetectorUiState
 import com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel.DetectorViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.components.InfoLine
 import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
+import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 @Composable
 fun DetectorRoute(
@@ -40,11 +43,14 @@ fun DetectorRoute(
     viewModel: DetectorViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.uiState.collectAsState()
+
     DetectorScreen(
         uiState = uiState.value,
         modifier = modifier,
-        onSelectTank = onSelectTank
-    ) { viewModel.analyzeData() }
+        onSelectTank = onSelectTank,
+        onAnalyze = { viewModel.analyzeData() },
+        onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) }
+    )
 }
 
 @Composable
@@ -52,7 +58,8 @@ fun DetectorScreen(
     uiState: DetectorUiState,
     modifier: Modifier = Modifier,
     onSelectTank: () -> Unit,
-    onAnalyze: () -> Unit
+    onAnalyze: () -> Unit,
+    onDismissDetection: () -> Unit
 ) {
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
@@ -61,6 +68,28 @@ fun DetectorScreen(
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
         )
     )
+
+    when (uiState.detectionEvent) {
+        is ProcessingEvent.Loading -> {
+            LoadingDialog(
+                title = "Analizando",
+                message = "Por favor espere mientras se analizan los datos..."
+            )
+        }
+
+        is ProcessingEvent.Success -> {
+            onDismissDetection()
+        }
+
+        is ProcessingEvent.Error -> {
+            ErrorDialog(
+                message = "Ocurrió un error al analizar los datos. Intente de nuevo.",
+                onDismiss = onDismissDetection
+            )
+        }
+
+        else -> {}
+    }
 
     Surface(
         modifier = Modifier
@@ -85,7 +114,6 @@ fun DetectorScreen(
                     ) {
                         Text(text = "Seleccionar tanque")
                     }
-
 
                     if (uiState.tankId != -1) {
                         HorizontalDivider(thickness = 4.dp, modifier = Modifier.padding(8.dp))
@@ -130,15 +158,33 @@ fun DetectorScreen(
     }
 }
 
-
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
 fun DetectorScreenPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
-            uiState = DetectorUiState(),
+            uiState = DetectorUiState(
+                tankId = 1,
+                tankName = "Tanque Diesel 01",
+                fuelType = FuelType.DIESEL,
+                level = 0.75f
+            ),
+            onSelectTank = {},
             onAnalyze = {},
-            onSelectTank = {}
+            onDismissDetection = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DetectorScreenEmptyPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {}
         )
     }
 }

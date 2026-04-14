@@ -9,3 +9,12 @@ fun ConfVehiclesResponse.toEntity() = ConfigVehiculo(
     noEconomico = noEconomico,
     totalSensor = totalSensor
 )
+
+fun SensorCalidadData.toDto(idUsuario: Int, fecha: String) = SensorCalidadUnitario(
+    idCajaCalidad = idCajaCalidad,
+    idUsuario = idUsuario,
+    tipoContenedor = idTipoContenedor,
+    fecha = fecha,
+    calidad = calidad,
+    temperatura = temperatura
+)

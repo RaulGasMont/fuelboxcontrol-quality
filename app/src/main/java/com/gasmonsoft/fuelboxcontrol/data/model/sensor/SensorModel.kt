@@ -21,17 +21,24 @@ data class SensorInfo(
     val data: SensorCalidadUnitario
 )
 
+data class SensorCalidadData(
+    val idCajaCalidad: Int,
+    val idTipoContenedor: Boolean,
+    val calidad: Double,
+    val temperatura: Double
+)
+
 data class SensorCalidadUnitario(
     @SerializedName("id_cajaCalidad")
     val idCajaCalidad: Int,
     @SerializedName("id_usuario")
     val idUsuario: Int,
     @SerializedName("id_tipoContenedor")
-    val idTipoContenedor: Boolean,
+    val tipoContenedor: Boolean,
     @SerializedName("fld_fecha")
     val fecha: String,
     @SerializedName("fld_calidad")
-    val calidad: Int,
+    val calidad: Double,
     @SerializedName("fld_temperatura")
-    val temperatura: Int
+    val temperatura: Double
 )
