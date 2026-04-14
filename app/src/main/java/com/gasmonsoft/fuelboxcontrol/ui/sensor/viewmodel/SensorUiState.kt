@@ -33,7 +33,8 @@ data class SensorUiState(
     val hotspotConfigurationMessage: String = "",
 
     val isAutoconsumo: Boolean = false,
-    val isSendingCommand: Boolean = false
+    val isSendingCommand: Boolean = false,
+    val isDisconnecting: Boolean = false
 )
 
 sealed interface SensorUiEvent {

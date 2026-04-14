@@ -101,10 +101,15 @@ class SensorViewModel @Inject constructor(
         _uiState.update { it.copy(shouldReconnect = false) }
     }
 
-    fun disconnect() {
+    fun disconnect(onFinished: () -> Unit = {}) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isDisconnecting = true) }
+            
             stopPeriodicWriteTask()
             subscriptionJob?.cancel()
+
+            // Limpiamos la configuración para evitar el bucle de redirección en Home
+            NetworkConfig.nombreconfiguracion = ""
 
             _uiState.update {
                 it.copy(
@@ -115,6 +120,12 @@ class SensorViewModel @Inject constructor(
             }
             dataStoreRepository.clearTank()
             sensorReceiveManager.disconnect()
+            
+            // Un pequeño delay para asegurar que el Manager cerró los hilos
+            delay(500)
+            
+            _uiState.update { it.copy(isDisconnecting = false) }
+            onFinished()
         }
     }
 
