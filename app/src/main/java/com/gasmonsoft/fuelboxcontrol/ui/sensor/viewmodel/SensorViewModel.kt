@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,8 +42,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SensorViewModel @Inject constructor(
+    private val dataStoreRepository: DataStoreRepository,
     private val sensorReceiveManager: SensorReceiveManager,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val ssidUuid = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb").toString()
@@ -96,17 +98,20 @@ class SensorViewModel @Inject constructor(
     }
 
     fun disconnect() {
-        stopPeriodicWriteTask()
-        subscriptionJob?.cancel()
+        viewModelScope.launch {
+            stopPeriodicWriteTask()
+            subscriptionJob?.cancel()
 
-        _uiState.update {
-            it.copy(
-                shouldReconnect = false,
-                connectionState = ConnectionState.Disconnected,
-                initializingMessage = null
-            )
+            _uiState.update {
+                it.copy(
+                    shouldReconnect = false,
+                    connectionState = ConnectionState.Disconnected,
+                    initializingMessage = null
+                )
+            }
+            dataStoreRepository.clearTank()
+            sensorReceiveManager.disconnect()
         }
-        sensorReceiveManager.disconnect()
     }
 
     fun reconnect() {

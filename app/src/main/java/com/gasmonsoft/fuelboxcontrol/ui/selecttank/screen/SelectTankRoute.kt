@@ -54,7 +54,6 @@ import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 @Composable
 fun SelectTankRoute(
     onBack: () -> Unit,
-    onTankSelected: (Tank) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SelectTankViewModel = hiltViewModel(),
 ) {
@@ -79,7 +78,10 @@ fun SelectTankRoute(
     SelectTankScreen(
         uiState = uiState,
         onBack = onBack,
-        onTankSelected = onTankSelected,
+        onTankSelected = {
+            viewModel.saveSelectedTank(it)
+            onBack()
+        },
         onChangeScreen = viewModel::changeScreen,
         modifier = modifier
     )

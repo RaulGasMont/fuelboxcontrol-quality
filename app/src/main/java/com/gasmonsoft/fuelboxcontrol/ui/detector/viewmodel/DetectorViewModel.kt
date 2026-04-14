@@ -2,13 +2,15 @@ package com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.TankType
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fuelboxcontrol.domain.detector.DetectorUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,23 +18,33 @@ import javax.inject.Inject
 @HiltViewModel
 class DetectorViewModel @Inject constructor(
     sensorReceiveManager: SensorReceiveManager,
-    private val detectorUseCase: DetectorUseCase
-) :
-    ViewModel() {
+    private val detectorUseCase: DetectorUseCase,
+    dataStoreRepository: DataStoreRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(DetectorUiState())
     val uiState: StateFlow<DetectorUiState> = _uiState.asStateFlow()
 
+    val selectedTankState = dataStoreRepository.selectedTank.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        null
+    )
+
     private val sensorData = sensorReceiveManager.sensorData
 
-    fun setSelectedTank(id: Int, type: String, name: String) {
-        if (type.isEmpty() || id == -1 || id == 0) return
-        val type = TankType.valueOf(type)
-        _uiState.update { currentUiState ->
-            currentUiState.copy(
-                tankId = id,
-                tankType = type,
-                tankName = name.ifEmpty { "Tanque $id" }
-            )
+    init {
+        viewModelScope.launch {
+            selectedTankState.collect {
+                if (it != null) {
+                    _uiState.update { currentUiState ->
+                        currentUiState.copy(
+                            tankId = it.tankId,
+                            tankType = it.tankType,
+                            tankName = it.nameTankId.ifEmpty { "Tanque ${it.tankId}" }
+                        )
+                    }
+                }
+            }
         }
     }
 

@@ -31,10 +31,20 @@ class FbcViewModel @Inject constructor(
             userRepository.getUser().collect { user ->
                 sessionUseCase(user).fold(
                     onSuccess = {
-                        _uiState.update { it.copy(sessionExpired = false, isCheckingSession = false) }
+                        _uiState.update {
+                            it.copy(
+                                sessionExpired = false,
+                                isCheckingSession = false
+                            )
+                        }
                     },
                     onFailure = {
-                        _uiState.update { it.copy(sessionExpired = true, isCheckingSession = false) }
+                        _uiState.update {
+                            it.copy(
+                                sessionExpired = true,
+                                isCheckingSession = false
+                            )
+                        }
                     }
                 )
             }

@@ -41,48 +41,56 @@ import kotlin.math.sin
 
 enum class FuelType(
     val label: String,
+    val typeId: Int,
     val topColor: Color,
     val bottomColor: Color,
     val waveColor: Color
 ) {
     DESCONOCIDO(
         label = "Desconocido",
+        typeId = 0,
         topColor = Color(0xFF9CA3AF),
         bottomColor = Color(0xFF6B7280),
         waveColor = Color(0xFFD1D5DB)
     ),
     AIRE(
         label = "Aire",
+        typeId = 1,
         topColor = Color(0xFFBEE3F8),
         bottomColor = Color(0xFF63B3ED),
         waveColor = Color(0xFFE0F2FE)
     ),
     DIESEL(
         label = "Diesel",
+        typeId = 2,
         topColor = Color(0xFFFBBF24),
         bottomColor = Color(0xFFD97706),
         waveColor = Color(0xFFFCD34D)
     ),
     ACEITE(
         label = "Aceite",
+        typeId = 3,
         topColor = Color(0xFF4B5563),
         bottomColor = Color(0xFF111827),
         waveColor = Color(0xFF9CA3AF)
     ),
     ALCOHOL(
         label = "Alcohol",
+        typeId = 4,
         topColor = Color(0xFFF9A8D4),
         bottomColor = Color(0xFFEC4899),
         waveColor = Color(0xFFFBCFE8)
     ),
     AGUA(
         label = "Agua",
+        typeId = 5,
         topColor = Color(0xFF60A5FA),
         bottomColor = Color(0xFF2563EB),
         waveColor = Color(0xFFBFDBFE)
     ),
     ADULTERADO(
         label = "Adulterado",
+        typeId = 6,
         topColor = Color(0xFFEF4444),
         bottomColor = Color(0xFF991B1B),
         waveColor = Color(0xFFFCA5A5)

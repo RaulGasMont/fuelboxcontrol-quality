@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,18 +35,10 @@ import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 
 @Composable
 fun DetectorRoute(
-    selectedTankId: Int,
-    selectedTankType: String,
-    selectedTankName: String,
     modifier: Modifier = Modifier,
-    viewModel: DetectorViewModel = hiltViewModel(),
-    onSelectTank: () -> Unit
+    onSelectTank: () -> Unit,
+    viewModel: DetectorViewModel = hiltViewModel()
 ) {
-
-    LaunchedEffect(selectedTankId) {
-        viewModel.setSelectedTank(selectedTankId, selectedTankType, selectedTankName)
-    }
-
     val uiState = viewModel.uiState.collectAsState()
     DetectorScreen(
         uiState = uiState.value,

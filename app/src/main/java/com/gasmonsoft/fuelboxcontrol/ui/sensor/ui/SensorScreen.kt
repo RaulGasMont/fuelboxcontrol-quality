@@ -172,8 +172,7 @@ fun SensorScreenContent(
         if (!permissionState.allPermissionsGranted) {
             PermissionRequiredContent(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                    .fillMaxSize(),
                 onRequestPermissions = { permissionState.launchMultiplePermissionRequest() }
             )
         } else {

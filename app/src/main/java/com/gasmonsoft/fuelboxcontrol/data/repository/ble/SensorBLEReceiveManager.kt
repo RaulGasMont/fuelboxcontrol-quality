@@ -12,10 +12,13 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CCCD_UUID
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CHAR_UUID_SENSOR_1
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.CONTROL_FIRMWARE_UUID
@@ -436,7 +439,18 @@ class SensorBLEReceiveManager @Inject constructor(
 
         val bluetoothManager =
             context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
+        
+        val hasConnectPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+        val connectedDevices = if (hasConnectPermission) {
+            bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
+        } else {
+            emptyList()
+        }
 
         val phantomDevice = connectedDevices.find { it.address == targetMac }
 
