@@ -19,7 +19,8 @@ import javax.inject.Inject
 data class HomeState(
     val logoutEvent: ProcessingEvent = ProcessingEvent.Idle,
     val sessionExpired: Boolean = false,
-    val boxes: List<QualityBox> = emptyList()
+    val boxes: List<QualityBox> = emptyList(),
+    val connectingBoxName: String? = null
 )
 
 @HiltViewModel
@@ -61,11 +62,12 @@ class HomeViewModel @Inject constructor(
         sensorReceiveManager.startReceiving()
     }
 
-    fun selectDevice(mac: String, idCaja: Int) {
+    fun selectDevice(box: QualityBox) {
         viewModelScope.launch {
-            NetworkConfig.nombreconfiguracion = mac
+            _state.update { it.copy(connectingBoxName = box.name) }
+            NetworkConfig.nombreconfiguracion = box.mac
             NetworkConfig.configuracion = "mac"
-            dataStoreRepository.saveIdCaja(idCaja)
+            dataStoreRepository.saveIdCaja(box.id)
             sensorReceiveManager.startReceiving()
         }
     }

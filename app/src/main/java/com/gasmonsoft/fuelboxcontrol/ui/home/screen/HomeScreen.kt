@@ -117,8 +117,8 @@ fun HomeScreen(
     Box(modifier = modifier.fillMaxSize()) {
         HomeScreenContent(
             devices = uiState.boxes,
-            onConnect = { mac, idCaja ->
-                viewModel.selectDevice(mac, idCaja)
+            onConnect = { box ->
+                viewModel.selectDevice(box)
             },
             onLogout = {
                 viewModel.logout()
@@ -138,7 +138,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     devices: List<QualityBox>,
-    onConnect: (mac: String, idCaja: Int) -> Unit,
+    onConnect: (box: QualityBox) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -206,7 +206,7 @@ fun HomeScreenContent(
                 DeviceCard(
                     device = device,
                     enabled = true,
-                    onClick = { onConnect(device.mac, device.id) }
+                    onClick = { onConnect(device) }
                 )
             }
         }
