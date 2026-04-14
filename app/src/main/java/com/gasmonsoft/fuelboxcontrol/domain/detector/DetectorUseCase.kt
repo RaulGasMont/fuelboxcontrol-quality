@@ -8,7 +8,8 @@ import javax.inject.Inject
 
 data class MatterUnity(
     val type: FuelType,
-    val value: Float?
+    val value: Float?,
+    val temperature: Float?
 )
 
 class DetectorUseCase @Inject constructor() {
@@ -21,6 +22,7 @@ class DetectorUseCase @Inject constructor() {
         withTimeoutOrNull(60_000L) {
             data.collect { value ->
                 val calidad = value.sensor1.calidad.toFloatOrNull()
+                val temperature = value.sensor1.temperatura.toFloatOrNull()
 
                 val type = when {
                     calidad == null -> FuelType.DESCONOCIDO
@@ -33,19 +35,19 @@ class DetectorUseCase @Inject constructor() {
                     else -> FuelType.DESCONOCIDO
                 }
 
-                fuelType.add(MatterUnity(type, calidad))
+                fuelType.add(MatterUnity(type, calidad, temperature))
             }
         }
 
         if (fuelType.isEmpty()) {
-            return MatterUnity(FuelType.DESCONOCIDO, null)
+            return MatterUnity(FuelType.DESCONOCIDO, null, null)
         }
 
         val mostCommonType = fuelType
             .groupBy { it.type }
             .maxByOrNull { it.value.size }
             ?.key
-            ?: return MatterUnity(FuelType.DESCONOCIDO, null)
+            ?: return MatterUnity(FuelType.DESCONOCIDO, null, null)
 
         val commonValues = fuelType.filter { it.type == mostCommonType }
 
@@ -55,6 +57,13 @@ class DetectorUseCase @Inject constructor() {
             ?.average()
             ?.toFloat()
 
-        return MatterUnity(mostCommonType, average)
+        val tempAverage = commonValues
+            .mapNotNull { it.temperature }
+            .takeIf { it.isNotEmpty() }
+            ?.average()
+            ?.toFloat()
+
+
+        return MatterUnity(mostCommonType, average, tempAverage)
     }
 }

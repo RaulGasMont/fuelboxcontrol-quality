@@ -25,7 +25,6 @@ import com.gasmonsoft.fuelboxcontrol.ui.permissions.PermissionsScreen
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.screen.SelectTankRoute
 import com.gasmonsoft.fuelboxcontrol.ui.sensor.ui.SensorRoute
 import com.gasmonsoft.fuelboxcontrol.ui.sensorconfig.SensorConfigBottomBar
-import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.ui.VehiculosRoute
 
 @Composable
 fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
@@ -39,7 +38,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
     val startDest: ScreenRoute = when {
         !hasAllPermissions -> ScreenRoute.Permissions
         state.value.sessionExpired -> ScreenRoute.Login
-        else -> ScreenRoute.Sensores
+        else -> ScreenRoute.Home
     }
 
     Scaffold(
@@ -93,11 +92,11 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
                 )
             }
 
-            composable<ScreenRoute.DatosVehiculos> {
-                VehiculosRoute(onCalibrate = { idCaja ->
-                    appState.navController.navigate(ScreenRoute.Deteccion(idCaja))
-                })
-            }
+//            composable<ScreenRoute.DatosVehiculos> {
+//                VehiculosRoute(onCalibrate = { idCaja ->
+//                    appState.navController.navigate(ScreenRoute.Deteccion(idCaja))
+//                })
+//            }
 
             composable<ScreenRoute.SelectTank> {
                 SelectTankRoute(

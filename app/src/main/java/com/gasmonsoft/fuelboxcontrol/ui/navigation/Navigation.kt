@@ -46,9 +46,9 @@ val destinations = listOf(
         title = "Calibración",
         icon = R.drawable.gas_meter_24px
     ),
-    ScreenDestination(
-        route = ScreenRoute.DatosVehiculos,
-        title = "Servidor",
-        icon = R.drawable.ic_datos_vehiculos
-    )
+//    ScreenDestination(
+//        route = ScreenRoute.DatosVehiculos,
+//        title = "Servidor",
+//        icon = R.drawable.ic_datos_vehiculos
+//    )
 )

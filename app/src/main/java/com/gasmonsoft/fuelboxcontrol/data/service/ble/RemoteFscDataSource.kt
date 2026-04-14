@@ -1,11 +1,10 @@
 package com.gasmonsoft.fuelboxcontrol.data.service.ble
 
 import com.gasmonsoft.fuelboxcontrol.data.client.FuelSoftwareService
-import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
-import com.gasmonsoft.fuelboxcontrol.data.model.calibracion.CalibrationDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitarioRequest
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadUnitarioPkg
+import com.gasmonsoft.fuelboxcontrol.data.service.utils.networkRequestHelper
 import javax.inject.Inject
 
 class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwareService) {
@@ -14,14 +13,12 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
             fscService.login(body)
         }
 
-    suspend fun addSensorDatosUnitariaList(token: String, body: List<SensorDataUnitario>) =
+    suspend fun addSensorDatosUnitariaList(token: String, body: SensorCalidadUnitario) =
         networkRequestHelper {
-            fscService.addSensorDatosUnitariaList("Bearer $token", body)
-        }
-
-    suspend fun addSensorAlertasData(token: String, body: SensorAlertasUnitarioRequest) =
-        networkRequestHelper {
-            fscService.addSensorAlertasData("Bearer $token", body)
+            fscService.addSensorDatosUnitariaList(
+                "Bearer $token",
+                SensorCalidadUnitarioPkg(listOf(body))
+            )
         }
 
     suspend fun getVehicleData(token: String, idVehiculo: Int) = networkRequestHelper {
@@ -31,23 +28,23 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
         )
     }
 
-    suspend fun getDatFile(token: String, body: CalibrationDto): Result<ByteArray> {
-        return try {
-            val response = networkRequestHelper { fscService.getDatFile("Bearer $token", body) }
-            if (!response.isSuccess) {
-                return Result.failure(
-                    Exception("HTTP ${response.exceptionOrNull()?.message}")
-                )
-            }
-
-            val body = response.getOrNull()
-                ?: return Result.failure(Exception("Body vacío"))
-
-            val bytes = body.bytes()
-
-            Result.success(bytes)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+//    suspend fun getDatFile(token: String, body: CalibrationDto): Result<ByteArray> {
+//        return try {
+//            val response = networkRequestHelper { fscService.getDatFile("Bearer $token", body) }
+//            if (!response.isSuccess) {
+//                return Result.failure(
+//                    Exception("HTTP ${response.exceptionOrNull()?.message}")
+//                )
+//            }
+//
+//            val body = response.getOrNull()
+//                ?: return Result.failure(Exception("Body vacío"))
+//
+//            val bytes = body.bytes()
+//
+//            Result.success(bytes)
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
 }

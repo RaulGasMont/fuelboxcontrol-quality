@@ -1,12 +1,9 @@
 package com.gasmonsoft.fuelboxcontrol.domain.sensor
 
 import com.gasmonsoft.fuelboxcontrol.data.repository.api.FuelSoftwareControlRepository
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorInfo
 import com.gasmonsoft.fuelboxcontrol.ui.vehiculo.viewmodel.SensorSendingEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
@@ -27,32 +24,32 @@ class SensorSenderUseCase @Inject constructor(
         idCaja: String,
         data: SensorPackage
     ) {
-        _sensorSenderStatus.update { SensorSendingEvent.Loading }
-        val idCajaComunicaciones = idCaja.toIntOrNull() ?: return
-        repository.sendSensorData(
-            SensorInfo(
-                token = token,
-                data = SensorDataUnitario(
-                    idCajaComunicaciones = idCajaComunicaciones,
-                    idUsuario = idUsuario,
-                    fecha = convertDate(
-                        date = data.date,
-                        initialFormat = "yyyy/MM/dd HH:mm:ss",
-                        convertFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                    ),
-                    tipoUsuario = false,
-                    jsonData = data.data
-                )
-            )
-        ).fold(
-            onSuccess = {
-                _sensorSenderStatus.update { SensorSendingEvent.Success(message = "Datos enviados correctamente.") }
-            },
-            onFailure = {
-                val result = it.message ?: "Error desconocido"
-                _sensorSenderStatus.update { SensorSendingEvent.Error(message = result) }
-            }
-        )
+//        _sensorSenderStatus.update { SensorSendingEvent.Loading }
+//        val idCajaComunicaciones = idCaja.toIntOrNull() ?: return
+//        repository.sendSensorData(
+//            SensorInfo(
+//                token = token,
+//                data = SensorDataUnitario(
+//                    idCajaCalidad = idCajaComunicaciones,
+//                    idUsuario = idUsuario,
+//                    fecha = convertDate(
+//                        date = data.date,
+//                        initialFormat = "yyyy/MM/dd HH:mm:ss",
+//                        convertFormat = "yyyy-MM-dd'T'HH:mm:ss"
+//                    ),
+//                    tipoUsuario = false,
+//                    jsonData = data.data
+//                )
+//            )
+//        ).fold(
+//            onSuccess = {
+//                _sensorSenderStatus.update { SensorSendingEvent.Success(message = "Datos enviados correctamente.") }
+//            },
+//            onFailure = {
+//                val result = it.message ?: "Error desconocido"
+//                _sensorSenderStatus.update { SensorSendingEvent.Error(message = result) }
+//            }
+//        )
     }
 
     private fun convertDate(

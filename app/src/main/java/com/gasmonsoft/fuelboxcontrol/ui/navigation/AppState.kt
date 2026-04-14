@@ -26,9 +26,7 @@ class AppState(
     fun shouldShowBottomBar(): Boolean {
         val currentDestination = currentDestination()
         return currentDestination?.hierarchy?.any { destination ->
-            destination.hasRoute<ScreenRoute.Sensores>() ||
-                    destination.hasRoute<ScreenRoute.DatosVehiculos>() ||
-                    destination.hasRoute<ScreenRoute.Deteccion>()
+            destination.hasRoute<ScreenRoute.Sensores>() || destination.hasRoute<ScreenRoute.Deteccion>()
         } == true
     }
 

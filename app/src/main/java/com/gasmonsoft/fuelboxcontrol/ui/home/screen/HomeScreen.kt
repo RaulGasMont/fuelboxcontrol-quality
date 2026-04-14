@@ -26,7 +26,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,24 +33,21 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.gasmonsoft.fuelboxcontrol.R
 import com.gasmonsoft.fuelboxcontrol.data.model.ble.ConnectionState
-import com.gasmonsoft.fuelboxcontrol.data.repository.ble.Device
+import com.gasmonsoft.fuelboxcontrol.data.model.boxlogin.QualityBox
 import com.gasmonsoft.fuelboxcontrol.ui.commons.ErrorDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.commons.SectionTitle
 import com.gasmonsoft.fuelboxcontrol.ui.home.viewmodel.HomeViewModel
-import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
@@ -62,9 +58,8 @@ fun HomeScreen(
     onNavToLogin: () -> Unit,
     onNavToSensorView: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsState()
+    val uiState by viewModel.state.collectAsState()
     val logoutEvent by viewModel.logoutEvent.collectAsState()
-    val devices by viewModel.availableDevices.collectAsState()
     val connectionStatus by viewModel.connectionStatus.collectAsState(
         initial = ConnectionState.Disconnected
     )
@@ -74,8 +69,8 @@ fun HomeScreen(
 
 
     // Redirigir a Login si no hay sesión activa
-    LaunchedEffect(state.sessionExpired) {
-        if (state.sessionExpired && logoutEvent !is ProcessingEvent.Loading) {
+    LaunchedEffect(uiState.sessionExpired) {
+        if (uiState.sessionExpired && logoutEvent !is ProcessingEvent.Loading) {
             onNavToLogin()
         }
     }
@@ -120,13 +115,9 @@ fun HomeScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         HomeScreenContent(
-            devices = devices,
-            connectionStatus = connectionStatus,
+            devices = uiState.boxes,
             onConnect = { mac ->
                 viewModel.selectDevice(mac)
-            },
-            onRescan = {
-                viewModel.scanDevices()
             },
             onLogout = {
                 viewModel.logout()
@@ -145,17 +136,11 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(
-    devices: Set<Device>,
-    connectionStatus: ConnectionState,
+    devices: List<QualityBox>,
     onConnect: (mac: String) -> Unit,
-    onRescan: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sortedDevices = remember(devices) {
-        devices.sortedBy { it.rssi }
-    }
-
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -188,34 +173,32 @@ fun HomeScreenContent(
                 }
 
                 SectionTitle(
-                    title = "Dispositivos encontrados",
-                    subtitle = "Seleccione uno de los dispositivos DIESEL para conectarse."
+                    title = "Cajas de Calidad Asignadas",
+                    subtitle = "Seleccione una de las Cajas de Calidad para conectarse."
                 )
 
                 AssistChip(
                     onClick = {},
                     label = {
-                        Text("${sortedDevices.size} dispositivo(s)")
+                        Text("${devices.size} dispositivo(s)")
                     }
                 )
             }
         }
 
-        item {
-            OutlinedButton(
-                onClick = onRescan,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = connectionStatus != ConnectionState.CurrentlyInitializing
-            ) {
-                Text("Buscar nuevamente")
-            }
-        }
+//        item {
+//            OutlinedButton(
+//                onClick = onRescan,
+//                modifier = Modifier.fillMaxWidth(),
+//                enabled = connectionStatus != ConnectionState.CurrentlyInitializing
+//            ) {
+//                Text("Buscar nuevamente")
+//            }
+//        }
 
-        if (sortedDevices.isEmpty()) {
+        if (devices.isEmpty()) {
             item {
-                EmptyDevicesCard(
-                    isBusy = connectionStatus == ConnectionState.CurrentlyInitializing
-                )
+                EmptyDevicesCard()
             }
         } else {
             item {
@@ -227,9 +210,8 @@ fun HomeScreenContent(
             }
 
             items(
-                items = sortedDevices,
-                key = { it.mac }
-            ) { device ->
+                items = devices,
+                key = { it.id }) { device ->
                 DeviceCard(
                     device = device,
                     enabled = true,
@@ -243,7 +225,7 @@ fun HomeScreenContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeviceCard(
-    device: Device,
+    device: QualityBox,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -282,7 +264,7 @@ private fun DeviceCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = device.mac,
+                    text = device.name,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -297,10 +279,7 @@ private fun DeviceCard(
 }
 
 @Composable
-private fun EmptyDevicesCard(
-    isBusy: Boolean,
-    modifier: Modifier = Modifier
-) {
+private fun EmptyDevicesCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -322,43 +301,15 @@ private fun EmptyDevicesCard(
             )
 
             Text(
-                text = if (isBusy) {
-                    "Buscando dispositivos..."
-                } else {
-                    "No se encontraron dispositivos"
-                },
+                text = "No se encontraron dispositivos",
                 style = MaterialTheme.typography.titleSmall
             )
 
             Text(
-                text = if (isBusy) {
-                    "Espere un momento mientras finaliza el escaneo."
-                } else {
-                    "Asegúrese de que el dispositivo esté encendido y vuelva a intentar."
-                },
+                text = "Ahora mismo no cuenta con cajas asignadas.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-}
-
-@Composable
-@Preview(showBackground = true, showSystemUi = true)
-fun HomeScreenPreview() {
-    FuelBoxControlTheme {
-        // Use the stateless content Composable in the Preview with mock data
-        HomeScreenContent(
-            modifier = Modifier
-                .padding(16.dp),
-            devices = setOf(
-                Device("00:11:22:33:44:55", "Preview Device 1", -60),
-                Device("AA:BB:CC:DD:EE:FF", "Preview Device 2", -70)
-            ),
-            connectionStatus = ConnectionState.Disconnected,
-            onConnect = {},
-            onRescan = {},
-            onLogout = {}
-        )
     }
 }

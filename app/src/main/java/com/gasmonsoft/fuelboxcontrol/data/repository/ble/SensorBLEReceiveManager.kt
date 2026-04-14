@@ -480,7 +480,18 @@ class SensorBLEReceiveManager @Inject constructor(
 
         isScanning = true
         if (bluetoothAdapter.isEnabled) {
-            bleScanner.startScan(null, scanSettings, scanCallback)
+            val hasScanPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+
+            if (hasScanPermission) {
+                bleScanner.startScan(null, scanSettings, scanCallback)
+            } else {
+                Log.e("SensorBLEReceiver", "No se puede iniciar el escaneo: Falta permiso BLUETOOTH_SCAN")
+                isScanning = false
+            }
         }
     }
 

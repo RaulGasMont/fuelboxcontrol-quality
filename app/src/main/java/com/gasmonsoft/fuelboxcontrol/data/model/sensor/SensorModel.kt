@@ -12,37 +12,26 @@ data class UploadSensorResponse(
     val errores: List<String>
 )
 
-data class SensorAlertasUnitarioRequest(
-    val alertas: List<SensorAlertasUnitario>
+data class SensorCalidadUnitarioPkg(
+    val datos: List<SensorCalidadUnitario>
 )
 
 data class SensorInfo(
     val token: String,
-    val data: SensorDataUnitario
+    val data: SensorCalidadUnitario
 )
 
-data class SensorDataUnitario(
-    @SerializedName("id_datosSensor")
-    val idDatosSensor: Int = 0,
-    @SerializedName("id_cajaComunicaciones")
-    val idCajaComunicaciones: Int,
+data class SensorCalidadUnitario(
+    @SerializedName("id_cajaCalidad")
+    val idCajaCalidad: Int,
     @SerializedName("id_usuario")
     val idUsuario: Int,
-    @SerializedName("fld_fechaRegistro")
-    val fecha: String,
-    @SerializedName("fld_tipoUsuario")
-    val tipoUsuario: Boolean,
-    @SerializedName("fld_json")
-    val jsonData: String
-)
-
-data class SensorAlertasUnitario(
-    @SerializedName("id_cajaComunicaciones")
-    val idCajaComunicaciones: Int,
-    @SerializedName("id_usuario")
-    val idUsuario: Int,
+    @SerializedName("id_tipoContenedor")
+    val idTipoContenedor: Boolean,
     @SerializedName("fld_fecha")
     val fecha: String,
-    @SerializedName("fld_alertas")
-    val alertas: String
+    @SerializedName("fld_calidad")
+    val calidad: Int,
+    @SerializedName("fld_temperatura")
+    val temperatura: Int
 )

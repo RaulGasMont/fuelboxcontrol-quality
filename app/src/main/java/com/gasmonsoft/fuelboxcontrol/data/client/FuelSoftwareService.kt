@@ -5,8 +5,7 @@ import com.gasmonsoft.fuelboxcontrol.data.model.login.CalidadLoginResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginDto
 import com.gasmonsoft.fuelboxcontrol.data.model.login.LoginResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.ContenedoresAMedirResponse
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorAlertasUnitarioRequest
-import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorDataUnitario
+import com.gasmonsoft.fuelboxcontrol.data.model.sensor.SensorCalidadUnitarioPkg
 import com.gasmonsoft.fuelboxcontrol.data.model.sensor.UploadSensorResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.vehicle.ConfVehiclesResponse
 import okhttp3.ResponseBody
@@ -32,16 +31,10 @@ interface FuelSoftwareService {
     @POST("api/authenticate")
     suspend fun login(@Body loginDto: LoginDto): Response<List<LoginResponse>>
 
-    @POST("api/SensorCajaApi/AddSensorDataList")
+    @POST("api/SensorCalidadCajaApi/AddSensorCalidadDataUnitarioList")
     suspend fun addSensorDatosUnitariaList(
         @Header("Authorization") token: String,
-        @Body datos: List<SensorDataUnitario>,
-    ): Response<UploadSensorResponse>
-
-    @POST("api/SensorCajaApi/AddSensorAlertaUnitariaList")
-    suspend fun addSensorAlertasData(
-        @Header("Authorization") token: String,
-        @Body body: SensorAlertasUnitarioRequest,
+        @Body datos: SensorCalidadUnitarioPkg,
     ): Response<UploadSensorResponse>
 
     @GET("Vehiculo/ConfVehiculoB")

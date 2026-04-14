@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.data.model.boxlogin.QualityBox
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
 import com.gasmonsoft.fuelboxcontrol.domain.session.SessionUseCase
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 data class HomeState(
     val logoutEvent: ProcessingEvent = ProcessingEvent.Idle,
-    val sessionExpired: Boolean = false
+    val sessionExpired: Boolean = false,
+    val boxes: List<QualityBox> = emptyList()
 )
 
 @HiltViewModel
@@ -31,14 +33,19 @@ class HomeViewModel @Inject constructor(
 
     var logoutEvent: MutableStateFlow<ProcessingEvent> = MutableStateFlow(ProcessingEvent.Idle)
     val connectionStatus = sensorReceiveManager.connectionState
-    val availableDevices = sensorReceiveManager.discoveredDevices
 
     init {
         viewModelScope.launch {
             userRepository.getUser().collect { user ->
                 sessionUseCase(user).fold(
                     onSuccess = {
-                        _state.update { it.copy(sessionExpired = false) }
+                        val boxes = user?.cajasCalidad ?: ""
+                        _state.update {
+                            it.copy(
+                                sessionExpired = false,
+                                boxes = rawBoxesToBoxes(boxes)
+                            )
+                        }
                     },
                     onFailure = {
                         _state.update { it.copy(sessionExpired = true) }
@@ -86,6 +93,21 @@ class HomeViewModel @Inject constructor(
             currentUiState.copy(
                 logoutEvent = ProcessingEvent.Idle
             )
+        }
+    }
+
+    private fun rawBoxesToBoxes(rawBoxes: String): List<QualityBox> {
+        return rawBoxes.split("|").mapNotNull { data ->
+            val boxInfo = data.split(" ")
+            val boxDataConnection = boxInfo.first().split(",")
+            val boxId = boxDataConnection.first().toIntOrNull()
+            if (boxInfo.size >= 2 && boxId != null) {
+                QualityBox(
+                    id = boxId,
+                    mac = boxDataConnection.last(),
+                    name = boxInfo.drop(1).joinToString(" ")
+                )
+            } else null
         }
     }
 }
