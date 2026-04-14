@@ -48,6 +48,7 @@ import com.gasmonsoft.fuelboxcontrol.ui.commons.LoadingDialog
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankUiState
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectTankViewModel
 import com.gasmonsoft.fuelboxcontrol.ui.selecttank.viewmodel.SelectVehicleScreen
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 
 @Composable
@@ -200,11 +201,10 @@ private fun TankList(
             TankCard(
                 tank = tank,
                 onClick = { onTankSelected(tank) },
-                modifier = Modifier.animateItem()   // animación al reordenar / eliminar
+                modifier = Modifier.animateItem()
             )
         }
 
-        // Espacio extra al final para que el último card no quede pegado al borde
         item { Spacer(modifier = Modifier.height(8.dp)) }
     }
 }
@@ -235,29 +235,24 @@ private fun EmptyState(message: String) {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
-fun SelectTankScreenPreview() {
-    val onlyVehicles: List<Vehicle> = listOf(
-        Vehicle(id = 1, name = "Tanque Tracto 01"),
-        Vehicle(id = 2, name = "Tanque Camión 02"),
-        Vehicle(id = 3, name = "Tanque Unidad 03"),
-        Vehicle(id = 4, name = "Tanque Reparto 04")
-    )
-
-    val onlyOthers: List<Other> = listOf(
-        Other(id = 5, name = "Tanque Estacionario A"),
-        Other(id = 6, name = "Tanque Auxiliar B"),
-        Other(id = 7, name = "Tanque Reserva C"),
-        Other(id = 8, name = "Tanque Industrial D")
-    )
-    SelectTankScreen(
-        uiState = SelectTankUiState(
-            screen = SelectVehicleScreen.Otros(),
-            vehicles = onlyVehicles,
-            otros = onlyOthers,
-        ), onBack = {},
-        onChangeScreen = {},
-        onTankSelected = {}
-    )
+private fun SelectTankScreenPreview() {
+    FuelBoxControlTheme {
+        SelectTankScreen(
+            uiState = SelectTankUiState(
+                vehicles = listOf(
+                    Vehicle(id = 1, name = "Camión de Carga 01"),
+                    Vehicle(id = 2, name = "Camión de Carga 02")
+                ),
+                otros = listOf(
+                    Other(id = 3, name = "Tanque Estacionario 01"),
+                    Other(id = 4, name = "Tanque Estacionario 02")
+                )
+            ),
+            onBack = {},
+            onTankSelected = {},
+            onChangeScreen = {}
+        )
+    }
 }

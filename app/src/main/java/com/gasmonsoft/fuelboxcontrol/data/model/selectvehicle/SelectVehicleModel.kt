@@ -3,9 +3,10 @@ package com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle
 import com.google.gson.annotations.SerializedName
 
 
-interface TankType {
-    object VEHICLE : TankType
-    object OTHER : TankType
+
+enum class TankType(val value: String) {
+    VEHICLE("VEHICLE"),
+    OTHER("OTHER")
 }
 
 interface Tank {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -39,7 +40,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
     val startDest: ScreenRoute = when {
         state.value.sessionExpired -> ScreenRoute.Login
         !hasAllPermissions -> ScreenRoute.Permissions
-        else -> ScreenRoute.Sensores
+        else -> ScreenRoute.Home
     }
 
     Scaffold(
@@ -64,7 +65,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
 
             composable<ScreenRoute.Login> {
                 LoginRoute(onHome = {
-                    appState.navController.navigate(ScreenRoute.Sensores) {
+                    appState.navController.navigate(ScreenRoute.Home) {
                         popUpTo(ScreenRoute.Login) { inclusive = true }
                     }
                 })
@@ -86,9 +87,27 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
 
             composable<ScreenRoute.Deteccion> { backStackEntry ->
                 val route = backStackEntry.toRoute<ScreenRoute.Deteccion>()
-                DetectorRoute(onSelectTank = {
-                    appState.navController.navigate(ScreenRoute.SelectTank(route.idCaja))
-                })
+
+                val selectedTankId = backStackEntry.savedStateHandle
+                    .getLiveData<Int>("selected_tank_id")
+                    .observeAsState()
+
+                val selectedTankType = backStackEntry.savedStateHandle
+                    .getLiveData<String>("selected_tank_type")
+                    .observeAsState()
+
+                val selectedTankName = backStackEntry.savedStateHandle
+                    .getLiveData<String>("selected_tank_name")
+                    .observeAsState()
+
+                DetectorRoute(
+                    onSelectTank = {
+                        appState.navController.navigate(ScreenRoute.SelectTank(route.idCaja))
+                    },
+                    selectedTankId = selectedTankId.value ?: 0,
+                    selectedTankType = selectedTankType.value ?: "",
+                    selectedTankName = selectedTankName.value ?: ""
+                )
             }
 
             composable<ScreenRoute.DatosVehiculos> {
@@ -102,7 +121,19 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
                     onBack = {
                         appState.navController.popBackStack()
                     },
-                    onTankSelected = {}
+                    onTankSelected = { tank ->
+                        val previousBackStackEntry = appState.navController.previousBackStackEntry
+                        previousBackStackEntry?.savedStateHandle?.set("selected_tank_id", tank.id)
+                        previousBackStackEntry?.savedStateHandle?.set(
+                            "selected_tank_type",
+                            tank.type.value
+                        )
+                        previousBackStackEntry?.savedStateHandle?.set(
+                            "selected_tank_name",
+                            tank.name
+                        )
+                        appState.navController.popBackStack()
+                    }
                 )
             }
         }

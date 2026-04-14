@@ -2,6 +2,7 @@ package com.gasmonsoft.fuelboxcontrol.ui.detector.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.TankType
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fuelboxcontrol.domain.detector.DetectorUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +23,19 @@ class DetectorViewModel @Inject constructor(
     val uiState: StateFlow<DetectorUiState> = _uiState.asStateFlow()
 
     private val sensorData = sensorReceiveManager.sensorData
+
+    fun setSelectedTank(id: Int, type: String, name: String) {
+        if (type.isEmpty() || id == -1 || id == 0) return
+        val type = TankType.valueOf(type)
+        _uiState.update { currentUiState ->
+            currentUiState.copy(
+                tankId = id,
+                tankType = type,
+                tankName = name.ifEmpty { "Tanque $id" }
+            )
+        }
+    }
+
     fun analyzeData() {
         viewModelScope.launch {
             val result = detectorUseCase(sensorData)
