@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material3.AssistChip
@@ -378,16 +378,17 @@ private fun HomeHeaderCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
             ) {
                 AssistChip(
                     onClick = {},
                     label = {
                         Text(
                             text = "$totalDevices dispositivo(s)",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     },
                     leadingIcon = {
@@ -396,29 +397,8 @@ private fun HomeHeaderCard(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                    },
-                    modifier = Modifier.weight(1f)
+                    }
                 )
-
-                if (hasConfiguration) {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                text = "Configuración activa",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
             }
         }
     }
