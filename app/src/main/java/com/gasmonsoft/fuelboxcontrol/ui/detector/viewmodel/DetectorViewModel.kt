@@ -71,7 +71,7 @@ class DetectorViewModel @Inject constructor(
                             currentUiState.copy(
                                 tankId = it.tankId,
                                 tankType = it.tankType,
-                                tankName = it.nameTankId.ifEmpty { "Tanque ${it.tankId}" }
+                                tankName = it.tankName.ifEmpty { "Tanque ${it.tankId}" }
                             )
                         }
                     }

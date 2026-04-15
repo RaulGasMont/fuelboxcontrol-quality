@@ -15,6 +15,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class DatabaseModule {
+    @Provides
+    fun provideContainerDao(database: FuelBoxControlDatabase) = database.containerDao()
 
     @Provides
     fun provideUserDao(database: FuelBoxControlDatabase) = database.userDao()

@@ -45,17 +45,4 @@ class UserRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching { localDataSource.deleteUser() }
         }
-
-    suspend fun getContainers(): Result<List<ContenedoresAMedirResponse>> =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                val user = localDataSource.getUser().first()
-                    ?: throw Exception("Usuario no encontrado.")
-                val encryptedIdEmpresa = LBEncryptionUtils.encrypt(user.idEmpresa.toString())
-                remoteDataSource.getContainers(
-                    idEmpresa = encryptedIdEmpresa,
-                    token = user.token
-                ).getOrThrow()
-            }
-        }
 }

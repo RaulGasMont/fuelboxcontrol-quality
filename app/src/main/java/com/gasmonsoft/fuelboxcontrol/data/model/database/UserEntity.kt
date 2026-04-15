@@ -13,3 +13,11 @@ data class UserEntity(
     val cajasCalidad: String,
     val name: String,
 )
+
+@Entity(tableName = "container")
+data class ContainerEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val tankId: Int,
+    val tankName: String,
+    val tankType: Int
+)

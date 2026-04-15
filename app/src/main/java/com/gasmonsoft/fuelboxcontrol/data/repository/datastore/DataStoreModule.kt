@@ -40,7 +40,7 @@ class DataStoreRepository @Inject constructor(
     suspend fun saveTank(tank: TankSelection) {
         dataStore.edit { preferences ->
             preferences[TANK_ID] = tank.tankId
-            preferences[NAME_TANK_ID] = tank.nameTankId
+            preferences[NAME_TANK_ID] = tank.tankName
             preferences[TANK_TYPE] = tank.tankType
         }
     }
@@ -65,6 +65,6 @@ class DataStoreRepository @Inject constructor(
 
 data class TankSelection(
     val tankId: Int,
-    val nameTankId: String,
+    val tankName: String,
     val tankType: Boolean
 )
