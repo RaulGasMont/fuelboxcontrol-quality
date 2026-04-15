@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.gasmonsoft.fuelboxcontrol.ui.mainnav.screen.FuelBoxControlFlowNav
+import com.gasmonsoft.fuelboxcontrol.ui.theme.FuelBoxControlTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -17,7 +18,9 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         setContent {
-            FuelBoxControlFlowNav()
+            FuelBoxControlTheme {
+                FuelBoxControlFlowNav()
+            }
         }
     }
 }

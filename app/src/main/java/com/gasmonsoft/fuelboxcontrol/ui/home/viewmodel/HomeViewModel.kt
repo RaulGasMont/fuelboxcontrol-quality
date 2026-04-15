@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.boxlogin.QualityBox
 import com.gasmonsoft.fuelboxcontrol.data.repository.ble.SensorReceiveManager
+import com.gasmonsoft.fuelboxcontrol.data.repository.container.ContainerRepository
 import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
 import com.gasmonsoft.fuelboxcontrol.domain.session.SessionUseCase
 import com.gasmonsoft.fuelboxcontrol.utils.NetworkConfig
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -27,6 +29,7 @@ data class HomeState(
 class HomeViewModel @Inject constructor(
     private val sensorReceiveManager: SensorReceiveManager,
     private val userRepository: UserRepository,
+    private val containerRepository: ContainerRepository,
     private val sessionUseCase: SessionUseCase,
     private val dataStoreRepository: DataStoreRepository
 ) : ViewModel() {
@@ -75,9 +78,11 @@ class HomeViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             logoutEvent.value = ProcessingEvent.Loading
-            userRepository.deleteUser().onSuccess {
+            val deleteContainers = async { containerRepository.deleteContainer() }
+            val deleteUsers = async { userRepository.deleteUser() }
+            if (deleteContainers.await().isSuccess && deleteUsers.await().isSuccess) {
                 logoutEvent.value = ProcessingEvent.Success
-            }.onFailure {
+            } else {
                 logoutEvent.value = ProcessingEvent.Error
             }
         }

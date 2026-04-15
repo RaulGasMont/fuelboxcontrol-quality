@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FuelBoxControl</string>
+    <string name="app_name">FBC-Calidad</string>
     <string name="conexion_servidor">Conexion con Servidor</string>
     <string name="credenciales">Credenciales</string>
     <string name="usuario">Usuario</string>
