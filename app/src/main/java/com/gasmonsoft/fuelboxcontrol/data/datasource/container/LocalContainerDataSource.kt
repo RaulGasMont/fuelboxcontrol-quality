@@ -6,7 +6,7 @@ import javax.inject.Inject
 
 class LocalContainerDataSource @Inject constructor(private val containerDao: ContainerDao) {
 
-    suspend fun getContainers() = containerDao.getContainers()
+    fun getContainers() = containerDao.getContainers()
 
     suspend fun saveAllContainers(containers: List<ContainerEntity>) =
         containerDao.insertAllContainers(containers)

@@ -3,15 +3,15 @@ package com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle
 import com.gasmonsoft.fuelboxcontrol.data.model.database.ContainerEntity
 import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.TankSelection
 
-fun ContenedoresAMedirResponse.toVehicle(): Vehicle = Vehicle(
-    id = id,
-    name = name,
+fun ContainerEntity.toVehicle(): Vehicle = Vehicle(
+    id = tankId,
+    name = tankName,
     type = TankType.VEHICLE
 )
 
-fun ContenedoresAMedirResponse.toOther(): Other = Other(
-    id = id,
-    name = name,
+fun ContainerEntity.toOther(): Other = Other(
+    id = tankId,
+    name = tankName,
     type = TankType.OTHER
 )
 

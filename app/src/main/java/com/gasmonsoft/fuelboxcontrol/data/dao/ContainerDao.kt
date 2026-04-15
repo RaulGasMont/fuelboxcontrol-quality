@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ContainerDao {
     @Query("SELECT * FROM container")
-    suspend fun getContainers(): Flow<List<ContainerEntity>>
+    fun getContainers(): Flow<List<ContainerEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllContainers(containers: List<ContainerEntity>)

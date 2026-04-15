@@ -17,6 +17,10 @@ class ContainerRepository @Inject constructor(
 ) {
     suspend fun getContainers() = withContext(Dispatchers.IO) {
         runCatching {
+            val containers = localContainerDataSource.getContainers().first()
+            if (containers.isEmpty()) {
+                saveAllContainers().getOrThrow()
+            }
             localContainerDataSource.getContainers()
         }
     }

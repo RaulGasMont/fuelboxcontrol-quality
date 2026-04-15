@@ -1,10 +1,11 @@
 package com.gasmonsoft.fuelboxcontrol.domain.containers
 
-import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.ContenedoresAMedirResponse
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Other
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Vehicle
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.toOther
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.toVehicle
+import com.gasmonsoft.fuelboxcontrol.data.repository.container.ContainerRepository
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 data class ContenedoresResult(
@@ -12,17 +13,20 @@ data class ContenedoresResult(
     val othersList: List<Other>
 )
 
-class ContainersUseCase @Inject constructor() {
-    operator fun invoke(list: List<ContenedoresAMedirResponse>): ContenedoresResult {
-        val vehicleList = mutableListOf<Vehicle>()
-        val othersList = mutableListOf<Other>()
-        list.forEach {
-            if (it.type == 0) {
-                vehicleList.add(it.toVehicle())
-            } else {
-                othersList.add(it.toOther())
+class ContainersUseCase @Inject constructor(private val containerRepository: ContainerRepository) {
+    suspend operator fun invoke(): Result<ContenedoresResult> {
+        return containerRepository.getContainers().mapCatching { flow ->
+            val containers = flow.first()
+            val vehicleList = mutableListOf<Vehicle>()
+            val othersList = mutableListOf<Other>()
+            containers.forEach {
+                if (it.tankType == 0) {
+                    vehicleList.add(it.toVehicle())
+                } else {
+                    othersList.add(it.toOther())
+                }
             }
+            ContenedoresResult(vehicleList, othersList)
         }
-        return ContenedoresResult(vehicleList, othersList)
     }
 }

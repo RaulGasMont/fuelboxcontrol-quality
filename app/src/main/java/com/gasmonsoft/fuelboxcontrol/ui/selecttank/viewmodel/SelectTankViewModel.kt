@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.Tank
 import com.gasmonsoft.fuelboxcontrol.data.model.selectvehicle.toTankSelection
 import com.gasmonsoft.fuelboxcontrol.data.repository.datastore.DataStoreRepository
-import com.gasmonsoft.fuelboxcontrol.data.repository.user.UserRepository
 import com.gasmonsoft.fuelboxcontrol.domain.containers.ContainersUseCase
 import com.gasmonsoft.fuelboxcontrol.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +17,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SelectTankViewModel @Inject constructor(
-    private val userRepository: UserRepository,
     private val containersUseCase: ContainersUseCase,
     private val dataStoreRepository: DataStoreRepository
 ) :
@@ -34,24 +32,24 @@ class SelectTankViewModel @Inject constructor(
                 )
             }
 
-            userRepository.getContainers()
-                .onSuccess {
-                    val result = containersUseCase(it)
+            containersUseCase().fold(
+                onSuccess = {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
                             seeTankEvent = ProcessingEvent.Success,
-                            vehicles = result.vehicleList,
-                            otros = result.othersList
+                            vehicles = it.vehicleList,
+                            otros = it.othersList
                         )
                     }
-                }
-                .onFailure {
+                },
+                onFailure = {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
                             seeTankEvent = ProcessingEvent.Error
                         )
                     }
                 }
+            )
         }
     }
 
