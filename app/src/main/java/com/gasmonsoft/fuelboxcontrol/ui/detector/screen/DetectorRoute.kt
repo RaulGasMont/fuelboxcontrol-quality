@@ -269,19 +269,6 @@ private fun DetectorHeaderCard(
                     )
                 }
             }
-
-            AssistChip(
-                onClick = {},
-                label = {
-                    Text("Análisis inteligente")
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Analytics,
-                        contentDescription = null
-                    )
-                }
-            )
         }
     }
 }
