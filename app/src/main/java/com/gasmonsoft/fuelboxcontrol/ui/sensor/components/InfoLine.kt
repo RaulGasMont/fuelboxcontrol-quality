@@ -1,6 +1,7 @@
 package com.gasmonsoft.fuelboxcontrol.ui.sensor.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,13 +40,13 @@ fun InfoLine(
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(13.dp))
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -59,15 +60,17 @@ fun InfoLine(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyLarge,

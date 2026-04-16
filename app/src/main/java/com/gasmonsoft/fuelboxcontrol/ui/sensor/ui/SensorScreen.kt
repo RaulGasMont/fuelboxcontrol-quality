@@ -7,13 +7,18 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,10 +26,16 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Battery6Bar
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +44,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -146,214 +159,271 @@ fun SensorScreenContent(
     val isConnected = uiState.connectionState == ConnectionState.Connected
     val isInitializing = uiState.connectionState == ConnectionState.CurrentlyInitializing
 
-    Box(
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.30f)
+        )
+    )
+
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-    ) {
-        if (!permissionState.allPermissionsGranted) {
-            PermissionRequiredContent(
-                modifier = Modifier
-                    .fillMaxSize(),
-                onRequestPermissions = { permissionState.launchMultiplePermissionRequest() }
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    ) {
-                        IconButton(
-                            onClick = onBack
+            .background(backgroundBrush)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(backgroundBrush)
+        ) {
+            if (!permissionState.allPermissionsGranted) {
+                PermissionRequiredContent(
+                    modifier = Modifier.fillMaxSize(),
+                    onRequestPermissions = { permissionState.launchMultiplePermissionRequest() }
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    item {
+                        SensorTopBar(
+                            onBack = onBack,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        )
+                    }
+
+                    item {
+                        SensorSectionCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
                         ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Regresar"
+                            SectionHeader(
+                                title = "Conexión del dispositivo",
+                                subtitle = "Revise el estado actual de la caja y gestione la conexión."
+                            )
+
+                            Spacer(modifier = Modifier.height(18.dp))
+
+                            ConnectionStatusRow(
+                                state = uiState.connectionState,
+                                initializingMessage = uiState.initializingMessage,
+                                errorMessage = uiState.errorMessage,
+                                onReconnect = onReconnect,
+                                onInitialize = onInitializeConnection,
+                                onDisconnect = onDisconnect
                             )
                         }
+                    }
 
-                        Text(
-                            text = "Monitoreo de caja",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
+                    item {
+                        SensorSectionCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        ) {
+                            SectionHeader(
+                                title = "Resumen del dispositivo",
+                                subtitle = "Información general y mensajes recientes del sistema."
                             )
-                        )
+
+                            Spacer(modifier = Modifier.height(18.dp))
+
+                            InfoLine(
+                                title = "Estado de batería / comando",
+                                value = uiState.bateria.ifBlank { "Sin información disponible" },
+                                icon = Icons.Rounded.Battery6Bar
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            InfoLine(
+                                title = "Mensaje del sistema",
+                                value = uiState.sensorMessage.ifBlank { "Sin mensajes disponibles" },
+                                icon = Icons.Rounded.Info
+                            )
+                        }
                     }
-                }
 
-                item {
-                    SensorSectionCard {
-                        SectionHeader(
-                            title = "Conexión del dispositivo",
-                            subtitle = "Revise el estado actual de la caja y gestione la conexión."
-                        )
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        ConnectionStatusRow(
-                            state = uiState.connectionState,
-                            initializingMessage = uiState.initializingMessage,
-                            errorMessage = uiState.errorMessage,
-                            onReconnect = onReconnect,
-                            onInitialize = onInitializeConnection,
-                            onDisconnect = onDisconnect
-                        )
-                    }
-                }
-
-                item {
-                    SensorSectionCard {
-                        SectionHeader(
-                            title = "Resumen del dispositivo",
-                            subtitle = "Información general y mensajes recientes del dispositivo."
-                        )
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        InfoLine(
-                            title = "Estado de batería / comando",
-                            value = uiState.bateria.ifBlank { "Sin información disponible" },
-                            icon = Icons.Rounded.Battery6Bar
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        InfoLine(
-                            title = "Mensaje del sistema",
-                            value = uiState.sensorMessage.ifBlank { "Sin mensajes disponibles" },
-                            icon = Icons.Rounded.Info
-                        )
-                    }
-                }
-
-                item {
-                    CommandSection(
-                        title = "Calibrar acelerómetro",
-                        subtitle = "Seleccione el eje de referencia para calibrar el acelerómetro.",
-                        options = {
+                    item {
+                        CommandSection(
+                            title = "Calibrar acelerómetro",
+                            subtitle = "Seleccione el eje de referencia para calibrar el acelerómetro."
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(
-                                    onClick = { onWriteEinc("x") },
+                                CommandActionButton(
+                                    text = "Eje X",
                                     enabled = isConnected && !isInitializing,
                                     modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Eje X",
-                                        color = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                }
+                                    onClick = { onWriteEinc("x") }
+                                )
 
-                                TextButton(
-                                    onClick = { onWriteEinc("y") },
+                                CommandActionButton(
+                                    text = "Eje Y",
                                     enabled = isConnected && !isInitializing,
                                     modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Eje Y",
-                                        color = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                }
+                                    onClick = { onWriteEinc("y") }
+                                )
 
-                                TextButton(
-                                    onClick = { onWriteEinc("z") },
+                                CommandActionButton(
+                                    text = "Eje Z",
                                     enabled = isConnected && !isInitializing,
                                     modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Eje Z",
-                                        color = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                }
+                                    onClick = { onWriteEinc("z") }
+                                )
                             }
                         }
-                    )
-                }
+                    }
 
-                item {
-                    CommandSection(
-                        title = "Actualizar fecha y hora",
-                        subtitle = "Sincronice la fecha y la hora del dispositivo.",
-                        options = {
+                    item {
+                        CommandSection(
+                            title = "Actualizar fecha y hora",
+                            subtitle = "Sincronice la fecha y la hora del dispositivo."
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                TextButton(
-                                    onClick = { onWriteRTC("0") },
+                                CommandActionButton(
+                                    text = "Actualizar fecha",
                                     enabled = isConnected && !isInitializing,
                                     modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Actualizar fecha",
-                                        color = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                }
+                                    onClick = { onWriteRTC("0") }
+                                )
 
-                                TextButton(
-                                    onClick = { onWriteRTC("1") },
+                                CommandActionButton(
+                                    text = "Actualizar hora",
                                     enabled = isConnected && !isInitializing,
                                     modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.textButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Actualizar hora",
-                                        color = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                }
+                                    onClick = { onWriteRTC("1") }
+                                )
                             }
                         }
-                    )
+                    }
+
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        ) {
+                            SectionHeader(
+                                title = "Lecturas de sensores",
+                                subtitle = "Consulte las lecturas recibidas de cada sensor."
+                            )
+                        }
+                    }
+
+                    item {
+                        val sensor1 = sensorInfoState.sensor1.rawData
+                        val hasSensorData = sensor1 != "-555" && sensor1.isNotBlank()
+
+                        SensorDataCaption(
+                            isAllSensorData = hasSensorData,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        )
+                    }
+
+                    item {
+                        SensorDataCard(
+                            numSensor = "1",
+                            sensorData = sensorInfoState.sensor1,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        )
+                    }
                 }
+            }
+        }
+    }
+}
 
-                item {
-                    SectionHeader(
-                        title = "Lecturas de sensores",
-                        subtitle = "Consulte las lecturas recibidas de cada sensor."
-                    )
-                }
+@Composable
+private fun CommandActionButton(
+    text: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.height(50.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(
+            text = text,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
 
-                item {
-                    val sensor1 = sensorInfoState.sensor1.rawData
 
-                    val allSensorDataAvailability =
-                        (sensor1 != "-555" && sensor1.isNotBlank())
+@Composable
+private fun SensorTopBar(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilledTonalIconButton(
+                onClick = onBack,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Regresar"
+                )
+            }
 
-                    SensorDataCaption(
-                        isAllSensorData = allSensorDataAvailability,
-                    )
-                }
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Monitoreo de caja",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
 
-                item { SensorDataCard(numSensor = "1", sensorData = sensorInfoState.sensor1) }
+                Text(
+                    text = "Lecturas, conexión y comandos del dispositivo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

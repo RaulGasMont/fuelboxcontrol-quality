@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,24 +64,25 @@ fun SensorDataCard(
 
     val elevation = when {
         isError || hasRawData -> 6.dp
-        else -> 0.dp
+        else -> 1.dp
     }
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = when (status) {
                 SensorVisualStatus.Error -> MaterialTheme.colorScheme.errorContainer
-                SensorVisualStatus.Ok -> MaterialTheme.colorScheme.surface
-                SensorVisualStatus.Empty -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                SensorVisualStatus.Ok -> MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                SensorVisualStatus.Empty -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.40f)
             }
         ),
         border = BorderStroke(
             width = 1.dp,
             color = when (status) {
-                SensorVisualStatus.Error -> MaterialTheme.colorScheme.error.copy(alpha = 0.18f)
-                else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
+                SensorVisualStatus.Error -> MaterialTheme.colorScheme.error.copy(alpha = 0.16f)
+                SensorVisualStatus.Ok -> MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
+                SensorVisualStatus.Empty -> MaterialTheme.colorScheme.outline.copy(alpha = 0.06f)
             }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation)
@@ -97,13 +100,12 @@ fun SensorDataCard(
             ) {
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = "Sensor $numSensor",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                         color = when (status) {
                             SensorVisualStatus.Error -> MaterialTheme.colorScheme.onErrorContainer
                             else -> MaterialTheme.colorScheme.onSurface
@@ -121,14 +123,14 @@ fun SensorDataCard(
 
             HorizontalDivider(
                 thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
             )
 
             when {
                 isError -> {
                     SensorErrorData(
                         title = "Lectura inválida",
-                        description = "Revise la conexión o calibración del sensor.",
+                        description = "Revise la conexión o la calibración del sensor.",
                         data = sensorData.rawData,
                         icon = Icons.Rounded.WarningAmber
                     )
@@ -194,9 +196,9 @@ private fun SensorStatusChip(
         color = containerColor
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -207,9 +209,8 @@ private fun SensorStatusChip(
 
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = contentColor
             )
         }
@@ -237,8 +238,8 @@ fun SensorMetricRow(
         ) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(11.dp))
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -253,17 +254,15 @@ fun SensorMetricRow(
             Text(
                 text = title,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium
-                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.End
             )
@@ -275,7 +274,7 @@ fun SensorMetricRow(
 fun UpdatedBadge(
     date: String,
     modifier: Modifier = Modifier,
-    isError: Boolean = false,
+    isError: Boolean = false
 ) {
     val containerColor = if (isError) {
         MaterialTheme.colorScheme.errorContainer
@@ -308,9 +307,8 @@ fun UpdatedBadge(
 
             Text(
                 text = date.ifBlank { "Sin fecha" },
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Medium
-                ),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
                 color = contentColor
             )
         }
@@ -346,9 +344,8 @@ fun SensorErrorData(
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 textAlign = TextAlign.Center
             )
@@ -362,9 +359,8 @@ fun SensorErrorData(
 
             Text(
                 text = data.ifBlank { "Sin dato recibido" },
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 textAlign = TextAlign.Center
             )
@@ -399,9 +395,8 @@ fun SensorEmptyData(
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -420,12 +415,10 @@ fun SensorDataCaption(
     isAllSensorData: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val message = when {
-        isAllSensorData ->
-            "Se reciben lectura del sensor."
-
-        else ->
-            "Todavía no se reciben lecturas completas. Revise conexión y alimentación."
+    val message = if (isAllSensorData) {
+        "Se recibe lectura del sensor."
+    } else {
+        "Todavía no se reciben lecturas completas. Revise conexión y alimentación."
     }
 
     Surface(
@@ -456,37 +449,45 @@ fun SensorDataCaption(
 }
 
 @Composable
-fun AlertMessage(message: String, modifier: Modifier = Modifier) {
+fun AlertMessage(
+    message: String,
+    modifier: Modifier = Modifier
+) {
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.errorContainer
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box {
-                Icon(
-                    imageVector = Icons.Filled.Warning,
-                    contentDescription = null,
-                    tint = WarningAmber,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null,
+                tint = WarningAmber,
+                modifier = Modifier.size(22.dp)
+            )
+
             Text(
                 text = message,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
         }
     }
 }
+
+data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
 
 @Preview(showBackground = true)
 @Composable

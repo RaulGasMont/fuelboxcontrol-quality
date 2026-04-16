@@ -1,20 +1,28 @@
 package com.gasmonsoft.fuelboxcontrol.ui.sensor.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,31 +46,34 @@ fun ConnectionStatusRow(
     onInitialize: () -> Unit,
     onDisconnect: () -> Unit
 ) {
-    val (label, containerColor, contentColor) = when (state) {
-        ConnectionState.Connected -> Triple(
+    val (label, containerColor, contentColor, indicatorColor) = when (state) {
+        ConnectionState.Connected -> Quadruple(
             "Conectado",
             MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            MaterialTheme.colorScheme.tertiary
         )
 
-        ConnectionState.CurrentlyInitializing -> Triple(
+        ConnectionState.CurrentlyInitializing -> Quadruple(
             "Inicializando",
             MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            MaterialTheme.colorScheme.secondary
         )
 
-        ConnectionState.Disconnected -> Triple(
+        ConnectionState.Disconnected -> Quadruple(
             "Desconectado",
             MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer
+            MaterialTheme.colorScheme.onErrorContainer,
+            MaterialTheme.colorScheme.error
         )
 
-        ConnectionState.Uninitialized -> Triple(
+        ConnectionState.Uninitialized -> Quadruple(
             "Sin inicializar",
             MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            MaterialTheme.colorScheme.secondary
         )
-
     }
 
     val actionLabel = when (state) {
@@ -71,82 +83,142 @@ fun ConnectionStatusRow(
         ConnectionState.CurrentlyInitializing -> "Conectando..."
     }
 
+    val actionIcon = when (state) {
+        ConnectionState.Connected -> Icons.Rounded.LinkOff
+        ConnectionState.Disconnected -> Icons.Rounded.Refresh
+        ConnectionState.Uninitialized -> Icons.Rounded.PowerSettingsNew
+        ConnectionState.CurrentlyInitializing -> Icons.Rounded.Sync
+    }
+
     val actionEnabled = state != ConnectionState.CurrentlyInitializing
 
     Column(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Surface(
-            shape = RoundedCornerShape(999.dp),
-            color = containerColor
+            shape = RoundedCornerShape(22.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Bluetooth,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = contentColor
-                )
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(containerColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state == ConnectionState.CurrentlyInitializing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.2.dp,
+                            color = contentColor
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Bluetooth,
+                            contentDescription = null,
+                            tint = contentColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Estado de conexión",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(indicatorColor)
+                        )
+
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
 
         if (!initializingMessage.isNullOrBlank()) {
-            Text(
-                text = initializingMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+
+                    Text(
+                        text = initializingMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
         }
 
         if (!errorMessage.isNullOrBlank()) {
-            Text(
-                text = errorMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
-            )
+            AlertMessage(message = errorMessage)
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = {
-                    when (state) {
-                        ConnectionState.Connected -> onDisconnect()
-                        ConnectionState.Disconnected -> onReconnect()
-                        ConnectionState.Uninitialized -> onInitialize()
-                        ConnectionState.CurrentlyInitializing -> Unit
-                    }
-                },
-                enabled = actionEnabled,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                val icon = when (state) {
-                    ConnectionState.Connected -> Icons.Rounded.LinkOff
-                    ConnectionState.Disconnected -> Icons.Rounded.Refresh
-                    ConnectionState.Uninitialized -> Icons.Rounded.PowerSettingsNew
-                    ConnectionState.CurrentlyInitializing -> Icons.Rounded.Sync
+        Button(
+            onClick = {
+                when (state) {
+                    ConnectionState.Connected -> onDisconnect()
+                    ConnectionState.Disconnected -> onReconnect()
+                    ConnectionState.Uninitialized -> onInitialize()
+                    ConnectionState.CurrentlyInitializing -> Unit
                 }
+            },
+            enabled = actionEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Icon(
+                imageVector = actionIcon,
+                contentDescription = null
+            )
 
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(actionLabel)
-            }
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = actionLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
