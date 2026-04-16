@@ -9,6 +9,6 @@ data class DetectorUiState(
     val tankName: String = "",
     val idCaja: Int = -1,
     val fuelType: FuelType = FuelType.DESCONOCIDO,
-    val certainty: Float = 0.0f,
+    val valueDetection: Float = 0.0f,
     val detectionEvent: ProcessingEvent = ProcessingEvent.Idle
 )

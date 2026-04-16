@@ -90,7 +90,10 @@ fun HomeScreen(
         onLogout = viewModel::logout,
         onDismissLogoutError = viewModel::dismissLogoutError,
         onNavToLogin = onNavToLogin,
-        onNavToSensorView = onNavToSensorView,
+        onNavToSensorView = {
+            viewModel.setAsNoConnecting()
+            onNavToSensorView()
+        },
         modifier = modifier
     )
 }
@@ -178,7 +181,7 @@ private fun HomeScreen(
             onLogout = onLogout
         )
 
-        if (uiState.connectingBoxName != null && connectionStatus == ConnectionState.CurrentlyInitializing) {
+        if (uiState.connectingBoxName != null && connectionStatus == ConnectionState.CurrentlyInitializing && uiState.isConnecting) {
             LoadingDialog(
                 title = "Iniciando conexión",
                 message = "Por favor espere mientras se configura la conexión..."

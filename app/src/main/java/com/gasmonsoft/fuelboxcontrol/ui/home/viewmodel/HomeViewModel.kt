@@ -22,7 +22,8 @@ data class HomeState(
     val logoutEvent: ProcessingEvent = ProcessingEvent.Idle,
     val sessionExpired: Boolean = false,
     val boxes: List<QualityBox> = emptyList(),
-    val connectingBoxName: String? = null
+    val connectingBoxName: String? = null,
+    val isConnecting: Boolean = false
 )
 
 @HiltViewModel
@@ -65,9 +66,15 @@ class HomeViewModel @Inject constructor(
         sensorReceiveManager.startReceiving()
     }
 
+    fun setAsNoConnecting() {
+        _state.update { currentUiState ->
+            currentUiState.copy(isConnecting = false)
+        }
+    }
+
     fun selectDevice(box: QualityBox) {
         viewModelScope.launch {
-            _state.update { it.copy(connectingBoxName = box.name) }
+            _state.update { it.copy(connectingBoxName = box.name, isConnecting = true) }
             NetworkConfig.nombreconfiguracion = box.mac
             NetworkConfig.configuracion = "mac"
             dataStoreRepository.saveIdCaja(box.id)

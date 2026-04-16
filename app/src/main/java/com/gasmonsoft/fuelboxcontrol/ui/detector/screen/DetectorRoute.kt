@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
@@ -23,11 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.LocalGasStation
 import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -119,14 +115,12 @@ fun DetectorScreen(
     }
 
     val canAnalyze = uiState.tankId != -1 && uiState.detectionEvent !is ProcessingEvent.Loading
-    val levelPercent = (uiState.certainty.coerceIn(0f, 1f) * 100f).roundToInt()
+    val levelPercent = (uiState.valueDetection.coerceIn(0f, 1f) * 100f).roundToInt()
 
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .background(backgroundBrush)
-            .statusBarsPadding()
-            .navigationBarsPadding()
             .imePadding(),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -203,6 +197,7 @@ fun DetectorScreen(
 
                 AnalysisSummaryCard(
                     fuelType = uiState.fuelType,
+                    rawValue = uiState.valueDetection,
                     levelPercent = levelPercent,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -382,6 +377,7 @@ private fun TankSelectionCard(
 @Composable
 private fun AnalysisSummaryCard(
     fuelType: FuelType,
+    rawValue: Float,
     levelPercent: Int,
     modifier: Modifier = Modifier
 ) {
@@ -416,8 +412,8 @@ private fun AnalysisSummaryCard(
                 )
 
                 MetricCard(
-                    title = "Certeza",
-                    value = "$levelPercent%",
+                    title = "Valor",
+                    value = "$rawValue",
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -430,7 +426,7 @@ private fun AnalysisSummaryCard(
             ) {
                 AnimatedFuelTank(
                     fuelType = fuelType,
-                    level = levelPercent.toFloat(),
+                    level = rawValue,
                     modifier = Modifier.size(width = 220.dp, height = 340.dp),
                     showInfo = true
                 )
@@ -481,7 +477,7 @@ fun DetectorScreenPreview() {
                 tankId = 1,
                 tankName = "Tanque Diesel 01",
                 fuelType = FuelType.DIESEL,
-                certainty = 0.75f
+                valueDetection = 0.75f
             ),
             onSelectTank = {},
             onAnalyze = {},

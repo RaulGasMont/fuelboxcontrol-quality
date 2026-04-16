@@ -97,7 +97,7 @@ class DetectorViewModel @Inject constructor(
             _uiState.update { currentUiState ->
                 currentUiState.copy(
                     fuelType = result.type,
-                    certainty = result.value ?: 0.0f
+                    valueDetection = result.value ?: 0.0f
                 )
             }
 

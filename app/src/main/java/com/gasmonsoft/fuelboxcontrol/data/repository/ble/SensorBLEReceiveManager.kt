@@ -96,7 +96,7 @@ class SensorBLEReceiveManager @Inject constructor(
     private val INITIALIZATION_TIMEOUT_MS = 15000L
 
     private var currentConnectionAttempt = 1
-    private var currentMtu = 23
+    private var currentMtu = 512
     private var rssiValue = 0
     private var batteryLevel = 0
     private var isScanning = false
@@ -314,7 +314,7 @@ class SensorBLEReceiveManager @Inject constructor(
                 return
             }
 
-            currentMtu = mtu
+            //currentMtu = mtu
             proFileSender.updateMtu(mtu)
             bleConnectionManager.markDiscoveringServices(mtu)
 
@@ -356,7 +356,7 @@ class SensorBLEReceiveManager @Inject constructor(
             bleConnectionManager.markSubscribing()
 
             scope.launch {
-                proFileSender.setMtuAndGatt(mtu = currentMtu)
+                proFileSender.setMtuAndGatt(mtu = 23)
 
                 val subscribed = subscribeToDiscoveredCharacteristics(
                     gatt = gatt,

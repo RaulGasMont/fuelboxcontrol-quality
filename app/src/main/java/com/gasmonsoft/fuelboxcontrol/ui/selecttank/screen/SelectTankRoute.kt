@@ -68,7 +68,10 @@ fun SelectTankRoute(
         is ProcessingEvent.Error -> {
             ErrorDialog(
                 message = "No se pudo obtener la lista de tanques",
-                onDismiss = viewModel::dismissedError
+                onDismiss = {
+                    viewModel.dismissedError()
+                    onBack()
+                }
             )
         }
 

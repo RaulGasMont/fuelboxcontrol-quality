@@ -269,11 +269,11 @@ fun AnimatedFuelTank(
                         style = MaterialTheme.typography.labelLarge,
                         color = Color.White
                     )
-                    Text(
-                        text = "${(animatedLevel * 100f).roundToInt()}%",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.90f)
-                    )
+//                    Text(
+//                        text = "${(animatedLevel * 100f).roundToInt()}%",
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        color = Color.White.copy(alpha = 0.90f)
+//                    )
                 }
             }
         }
