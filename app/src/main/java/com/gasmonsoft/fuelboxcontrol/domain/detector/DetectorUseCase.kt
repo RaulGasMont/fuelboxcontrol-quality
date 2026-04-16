@@ -29,8 +29,8 @@ class DetectorUseCase @Inject constructor() {
                     calidad > 20.0f -> FuelType.AGUA
                     calidad < 0.0f -> FuelType.ADULTERADO
                     calidad in 0.0f..1.9f -> FuelType.AIRE
-                    calidad in 2.0f..2.2f -> FuelType.ACEITE
-                    calidad in 2.4f..2.8f -> FuelType.DIESEL
+                    //calidad in 2.0f..2.2f -> FuelType.ACEITE
+                    calidad in 2.0f..2.8f -> FuelType.DIESEL
                     calidad in 6.0f..18.0f -> FuelType.ALCOHOL
                     else -> FuelType.DESCONOCIDO
                 }
