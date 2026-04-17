@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.gasmonsoft.fuelboxcontrol"
+    namespace = "com.gasmonsoft.fbccalidad"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.gasmonsoft.fuelboxcontrol"
+        applicationId = "com.gasmonsoft.fbccalidad"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
