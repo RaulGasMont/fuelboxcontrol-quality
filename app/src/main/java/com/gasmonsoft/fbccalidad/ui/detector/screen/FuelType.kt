@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 
 enum class FuelType(
@@ -191,57 +192,129 @@ fun AnimatedFuelTank(
             val wavelength = tankRect.width * 0.9f
 
             clipPath(tankPath) {
-                val wave1 = buildWavePath(
-                    left = tankRect.left,
-                    right = tankRect.right,
-                    bottom = tankRect.bottom,
-                    baseY = liquidBaseY,
-                    amplitude = amplitude,
-                    phase = waveShift1,
-                    wavelength = wavelength
-                )
-
-                val wave2 = buildWavePath(
-                    left = tankRect.left,
-                    right = tankRect.right,
-                    bottom = tankRect.bottom,
-                    baseY = liquidBaseY + amplitude * 0.35f,
-                    amplitude = amplitude * 0.75f,
-                    phase = waveShift2,
-                    wavelength = wavelength * 0.8f
-                )
-
-                drawPath(
-                    path = wave1,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            fuelType.waveColor,
-                            fuelType.topColor,
-                            fuelType.bottomColor
+                if (fuelType == FuelType.AIRE) {
+                    // Fondo degradado sutil (cielo)
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFBAE6FD).copy(alpha = 0.22f),
+                                Color(0xFFE0F2FE).copy(alpha = 0.08f)
+                            ),
+                            startY = tankRect.top,
+                            endY = tankRect.bottom
                         ),
-                        startY = liquidBaseY - amplitude * 2f,
-                        endY = tankRect.bottom
+                        topLeft = Offset(tankRect.left, tankRect.top),
+                        size = androidx.compose.ui.geometry.Size(tankRect.width, tankRect.height)
                     )
-                )
 
-                drawPath(
-                    path = wave2,
-                    color = fuelType.waveColor.copy(alpha = 0.35f)
-                )
+                    // Partículas flotando hacia arriba
+                    val airProgress = waveShift1 / (2f * PI).toFloat()
+                    val particleData = listOf(
+                        floatArrayOf(0.20f, 0.00f, 5f),
+                        floatArrayOf(0.50f, 0.28f, 3.5f),
+                        floatArrayOf(0.78f, 0.55f, 4.5f),
+                        floatArrayOf(0.35f, 0.72f, 3f),
+                        floatArrayOf(0.65f, 0.15f, 4f),
+                        floatArrayOf(0.12f, 0.44f, 3f),
+                        floatArrayOf(0.88f, 0.87f, 5f),
+                        floatArrayOf(0.55f, 0.62f, 2.5f),
+                        floatArrayOf(0.42f, 0.38f, 3.5f),
+                        floatArrayOf(0.70f, 0.92f, 2.5f),
+                    )
 
-                drawLine(
-                    color = Color.White.copy(alpha = 0.12f),
-                    start = Offset(
-                        x = tankRect.left + tankRect.width * 0.20f,
-                        y = tankRect.top + 16f
-                    ),
-                    end = Offset(
-                        x = tankRect.left + tankRect.width * 0.20f,
-                        y = tankRect.bottom - 16f
-                    ),
-                    strokeWidth = tankRect.width * 0.08f,
-                    cap = StrokeCap.Round
-                )
+                    particleData.forEach { (xFrac, phaseOffset, radiusDp) ->
+                        val p = (airProgress + phaseOffset) % 1.0f
+                        val y = tankRect.bottom - p * tankRect.height
+                        val sway = sin((p * 4f * PI + phaseOffset * 10f).toFloat()) * tankRect.width * 0.07f
+                        val x = (tankRect.left + xFrac * tankRect.width + sway)
+                            .coerceIn(tankRect.left, tankRect.right)
+
+                        val alpha = when {
+                            p < 0.08f -> p / 0.08f * 0.55f
+                            p > 0.92f -> (1f - p) / 0.08f * 0.55f
+                            else -> 0.55f
+                        }
+                        val r = radiusDp.dp.toPx()
+                        drawCircle(
+                            color = Color(0xFFBAE6FD).copy(alpha = alpha),
+                            radius = r,
+                            center = Offset(x, y)
+                        )
+                        // Reflejo interior
+                        drawCircle(
+                            color = Color.White.copy(alpha = alpha * 0.55f),
+                            radius = r * 0.38f,
+                            center = Offset(x - r * 0.22f, y - r * 0.22f)
+                        )
+                    }
+
+                    // Líneas de viento horizontales animadas
+                    val windProgress = waveShift2 / (2f * PI).toFloat()
+                    listOf(0.25f, 0.50f, 0.73f).forEachIndexed { i, yFrac ->
+                        val offsetX = cos((windProgress * 2f * PI + i * 2.1f).toFloat()) * tankRect.width * 0.12f
+                        val lineY = tankRect.top + yFrac * tankRect.height
+                        val lineAlpha = 0.18f + 0.10f * sin((windProgress * 2f * PI + i * 1.3f).toFloat())
+                        drawLine(
+                            color = Color(0xFF7DD3FC).copy(alpha = lineAlpha),
+                            start = Offset(tankRect.left + tankRect.width * 0.15f + offsetX, lineY),
+                            end = Offset(tankRect.left + tankRect.width * 0.75f + offsetX, lineY),
+                            strokeWidth = 2.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                    }
+                } else {
+                    val wave1 = buildWavePath(
+                        left = tankRect.left,
+                        right = tankRect.right,
+                        bottom = tankRect.bottom,
+                        baseY = liquidBaseY,
+                        amplitude = amplitude,
+                        phase = waveShift1,
+                        wavelength = wavelength
+                    )
+
+                    val wave2 = buildWavePath(
+                        left = tankRect.left,
+                        right = tankRect.right,
+                        bottom = tankRect.bottom,
+                        baseY = liquidBaseY + amplitude * 0.35f,
+                        amplitude = amplitude * 0.75f,
+                        phase = waveShift2,
+                        wavelength = wavelength * 0.8f
+                    )
+
+                    drawPath(
+                        path = wave1,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                fuelType.waveColor,
+                                fuelType.topColor,
+                                fuelType.bottomColor
+                            ),
+                            startY = liquidBaseY - amplitude * 2f,
+                            endY = tankRect.bottom
+                        )
+                    )
+
+                    drawPath(
+                        path = wave2,
+                        color = fuelType.waveColor.copy(alpha = 0.35f)
+                    )
+
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.12f),
+                        start = Offset(
+                            x = tankRect.left + tankRect.width * 0.20f,
+                            y = tankRect.top + 16f
+                        ),
+                        end = Offset(
+                            x = tankRect.left + tankRect.width * 0.20f,
+                            y = tankRect.bottom - 16f
+                        ),
+                        strokeWidth = tankRect.width * 0.08f,
+                        cap = StrokeCap.Round
+                    )
+                }
             }
 
             drawPath(
@@ -318,6 +391,12 @@ private fun AnimatedFuelTankPreview() {
         AnimatedFuelTank(
             fuelType = FuelType.DIESEL,
             level = 0.32f,
+            modifier = Modifier.size(120.dp, 250.dp)
+        )
+
+        AnimatedFuelTank(
+            fuelType = FuelType.AIRE,
+            level = 1.0f,
             modifier = Modifier.size(120.dp, 250.dp)
         )
 
