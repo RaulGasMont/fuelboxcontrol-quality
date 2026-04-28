@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -225,7 +227,8 @@ fun AnimatedFuelTank(
                     particleData.forEach { (xFrac, phaseOffset, radiusDp) ->
                         val p = (airProgress + phaseOffset) % 1.0f
                         val y = tankRect.bottom - p * tankRect.height
-                        val sway = sin((p * 4f * PI + phaseOffset * 10f).toFloat()) * tankRect.width * 0.07f
+                        val sway =
+                            sin((p * 4f * PI + phaseOffset * 10f).toFloat()) * tankRect.width * 0.07f
                         val x = (tankRect.left + xFrac * tankRect.width + sway)
                             .coerceIn(tankRect.left, tankRect.right)
 
@@ -251,9 +254,11 @@ fun AnimatedFuelTank(
                     // Líneas de viento horizontales animadas
                     val windProgress = waveShift2 / (2f * PI).toFloat()
                     listOf(0.25f, 0.50f, 0.73f).forEachIndexed { i, yFrac ->
-                        val offsetX = cos((windProgress * 2f * PI + i * 2.1f).toFloat()) * tankRect.width * 0.12f
+                        val offsetX =
+                            cos((windProgress * 2f * PI + i * 2.1f).toFloat()) * tankRect.width * 0.12f
                         val lineY = tankRect.top + yFrac * tankRect.height
-                        val lineAlpha = 0.18f + 0.10f * sin((windProgress * 2f * PI + i * 1.3f).toFloat())
+                        val lineAlpha =
+                            0.18f + 0.10f * sin((windProgress * 2f * PI + i * 1.3f).toFloat())
                         drawLine(
                             color = Color(0xFF7DD3FC).copy(alpha = lineAlpha),
                             start = Offset(tankRect.left + tankRect.width * 0.15f + offsetX, lineY),
@@ -385,7 +390,8 @@ private fun AnimatedFuelTankPreview() {
     Row(
         modifier = Modifier
             .background(Color(0xFFF8FAFC))
-            .padding(16.dp),
+            .padding(16.dp)
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         AnimatedFuelTank(

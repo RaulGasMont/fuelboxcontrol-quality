@@ -401,23 +401,6 @@ private fun AnalysisSummaryCard(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                MetricCard(
-                    title = "Tipo detectado",
-                    value = fuelType.label,
-                    modifier = Modifier.weight(1f)
-                )
-
-                MetricCard(
-                    title = "Valor",
-                    value = "$rawValue",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
