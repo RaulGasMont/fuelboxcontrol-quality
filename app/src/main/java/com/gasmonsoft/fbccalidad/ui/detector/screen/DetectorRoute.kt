@@ -1,5 +1,7 @@
 package com.gasmonsoft.fbccalidad.ui.detector.screen
 
+import android.hardware.usb.UsbDevice
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,10 +41,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,8 +58,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fbccalidad.R
 import com.gasmonsoft.fbccalidad.ui.commons.ErrorDialog
 import com.gasmonsoft.fbccalidad.ui.commons.LoadingDialog
+import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorChannelType
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorUiState
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorViewModel
+import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.TransferState
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
 import kotlin.math.roundToInt
@@ -69,8 +78,10 @@ fun DetectorRoute(
         uiState = uiState.value,
         modifier = modifier,
         onSelectTank = onSelectTank,
-        onAnalyze = { viewModel.analyzeData() },
-        onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) }
+        onAnalyze = { viewModel.analyzeData(it) },
+        onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) },
+        onPermissionRequest = viewModel::onPermissionRequest,
+        onRefreshDetection = viewModel::refreshDetection
     )
 }
 
@@ -79,9 +90,20 @@ fun DetectorScreen(
     uiState: DetectorUiState,
     modifier: Modifier = Modifier,
     onSelectTank: () -> Unit,
-    onAnalyze: () -> Unit,
-    onDismissDetection: () -> Unit
+    onAnalyze: (channel: DetectorChannelType) -> Unit,
+    onDismissDetection: () -> Unit,
+    onPermissionRequest: (device: UsbDevice) -> Unit,
+    onRefreshDetection: () -> Unit
 ) {
+    var showChannelDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(showChannelDialog) {
+        if (showChannelDialog) {
+            onRefreshDetection()
+        }
+    }
+
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
@@ -89,6 +111,34 @@ fun DetectorScreen(
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f)
         )
     )
+
+    if (showChannelDialog) {
+        DetectorChannelDialog(
+            onDismiss = { showChannelDialog = false },
+            onChannelSelected = { channel ->
+                if (channel == DetectorChannelType.USB) {
+                    val isOtgReady = uiState.otgTransferState is TransferState.DeviceReady
+                    if (isOtgReady) onAnalyze(channel)
+                    else if (uiState.otgTransferState is TransferState.DeviceDetected) {
+                        // Se dispara el diálogo de permiso
+                        uiState.otgTransferState.device.let { device ->
+                            onPermissionRequest(device)
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "La caja de comunicaciones no se encuentra disponible (USB).",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    onAnalyze(channel)
+                }
+
+                showChannelDialog = false
+            }
+        )
+    }
 
     LaunchedEffect(uiState.detectionEvent) {
         if (uiState.detectionEvent is ProcessingEvent.Success) {
@@ -137,7 +187,7 @@ fun DetectorScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Button(
-                        onClick = onAnalyze,
+                        onClick = { showChannelDialog = true },
                         enabled = canAnalyze,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -464,7 +514,9 @@ fun DetectorScreenPreview() {
             ),
             onSelectTank = {},
             onAnalyze = {},
-            onDismissDetection = {}
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {}
         )
     }
 }
@@ -477,7 +529,9 @@ fun DetectorScreenEmptyPreview() {
             uiState = DetectorUiState(),
             onSelectTank = {},
             onAnalyze = {},
-            onDismissDetection = {}
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {}
         )
     }
 }

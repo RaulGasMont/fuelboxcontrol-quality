@@ -1,5 +1,6 @@
 package com.gasmonsoft.fbccalidad.data.repository.ble
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -12,7 +13,6 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
-import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.BatteryManager
@@ -439,9 +439,12 @@ class SensorBLEReceiveManager @Inject constructor(
 
         val bluetoothManager =
             context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        
+
         val hasConnectPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
         }
@@ -481,7 +484,10 @@ class SensorBLEReceiveManager @Inject constructor(
         isScanning = true
         if (bluetoothAdapter.isEnabled) {
             val hasScanPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ) == PackageManager.PERMISSION_GRANTED
             } else {
                 true
             }
@@ -489,7 +495,10 @@ class SensorBLEReceiveManager @Inject constructor(
             if (hasScanPermission) {
                 bleScanner.startScan(null, scanSettings, scanCallback)
             } else {
-                Log.e("SensorBLEReceiver", "No se puede iniciar el escaneo: Falta permiso BLUETOOTH_SCAN")
+                Log.e(
+                    "SensorBLEReceiver",
+                    "No se puede iniciar el escaneo: Falta permiso BLUETOOTH_SCAN"
+                )
                 isScanning = false
             }
         }
@@ -587,6 +596,8 @@ class SensorBLEReceiveManager @Inject constructor(
                         else ""
                     "[RTC] $valor,$fechaHoraFormateada"
                 }
+
+                8 -> "[GETF]"
 
                 else -> null
             }

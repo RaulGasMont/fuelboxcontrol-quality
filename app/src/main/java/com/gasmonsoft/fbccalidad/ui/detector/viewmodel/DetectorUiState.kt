@@ -10,5 +10,11 @@ data class DetectorUiState(
     val idCaja: Int = -1,
     val fuelType: FuelType = FuelType.DESCONOCIDO,
     val valueDetection: Float = 0.0f,
-    val detectionEvent: ProcessingEvent = ProcessingEvent.Idle
+    val detectionEvent: ProcessingEvent = ProcessingEvent.Idle,
+    val channel: DetectorChannelType = DetectorChannelType.BLE,
+    val otgTransferState: TransferState = TransferState.Idle
 )
+
+enum class DetectorChannelType {
+    BLE, USB
+}

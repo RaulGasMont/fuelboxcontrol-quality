@@ -74,7 +74,7 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
                         popUpTo(ScreenRoute.Home) { inclusive = true }
                     }
                 }) {
-                    appState.navigateToTopLevel(ScreenRoute.Sensores)
+                    appState.navigateToTopLevel(ScreenRoute.Deteccion)
                 }
             }
 

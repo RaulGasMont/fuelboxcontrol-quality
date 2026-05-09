@@ -1,6 +1,5 @@
-package com.gasmonsoft.fbccalidad.data.service.ble
+package com.gasmonsoft.fbccalidad.data.repository.ble
 
-import com.gasmonsoft.fbccalidad.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fbccalidad.domain.sensor.SensorCollectorUseCase
 import com.gasmonsoft.fbccalidad.domain.sensor.SensorPackage
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class BleDataSource @Inject constructor(
+class BleDataRepository @Inject constructor(
     private val bleManager: SensorReceiveManager,
     private val sensorCollectorUseCase: SensorCollectorUseCase
 ) {

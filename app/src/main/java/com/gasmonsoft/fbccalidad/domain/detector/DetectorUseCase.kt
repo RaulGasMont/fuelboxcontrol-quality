@@ -19,7 +19,7 @@ class DetectorUseCase @Inject constructor() {
     suspend operator fun invoke(data: Flow<SensorState>): MatterUnity {
         fuelType.clear()
 
-        withTimeoutOrNull(30_000L) {
+        withTimeoutOrNull(15_000L) {
             data.collect { value ->
                 val calidad = value.sensor1.calidad.toFloatOrNull()
                 val temperature = value.sensor1.temperatura.toFloatOrNull()

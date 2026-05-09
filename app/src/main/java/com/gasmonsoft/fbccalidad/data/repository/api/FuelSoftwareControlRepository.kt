@@ -9,7 +9,7 @@ import com.gasmonsoft.fbccalidad.data.model.sensor.toDto
 import com.gasmonsoft.fbccalidad.data.model.vehicle.ConfVehicle
 import com.gasmonsoft.fbccalidad.data.model.vehicle.ConfVehiclesResponse
 import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
-import com.gasmonsoft.fbccalidad.data.service.ble.BleDataSource
+import com.gasmonsoft.fbccalidad.data.repository.ble.BleDataRepository
 import com.gasmonsoft.fbccalidad.data.service.ble.RemoteFscDataSource
 import com.gasmonsoft.fbccalidad.utils.getCurrentDate
 import kotlinx.coroutines.flow.first
@@ -18,7 +18,7 @@ import javax.inject.Inject
 class FuelSoftwareControlRepository @Inject constructor(
     private val remoteFscDataSource: RemoteFscDataSource,
     private val userRepository: UserRepository,
-    bleDataSource: BleDataSource
+    bleDataSource: BleDataRepository
 ) {
     val sensorPackages = bleDataSource.sensorState
 

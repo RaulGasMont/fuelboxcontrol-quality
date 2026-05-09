@@ -37,15 +37,15 @@ data class ScreenDestination(
 
 val destinations = listOf(
     ScreenDestination(
-        route = ScreenRoute.Sensores,
-        title = "Sensores",
-        icon = R.drawable.ic_sensor
-    ),
-    ScreenDestination(
         route = ScreenRoute.Deteccion,
         title = "Calibración",
         icon = R.drawable.gas_meter_24px
     ),
+    ScreenDestination(
+        route = ScreenRoute.Sensores,
+        title = "Sensores",
+        icon = R.drawable.ic_sensor
+    )
 //    ScreenDestination(
 //        route = ScreenRoute.DatosVehiculos,
 //        title = "Servidor",

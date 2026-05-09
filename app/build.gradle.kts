@@ -59,6 +59,9 @@ android {
 }
 
 dependencies {
+    /* --- USB */
+    implementation("com.github.mik3y:usb-serial-for-android:3.7.0")
+
     // Core & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

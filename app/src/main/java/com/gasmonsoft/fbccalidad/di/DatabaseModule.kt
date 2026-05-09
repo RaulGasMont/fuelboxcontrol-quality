@@ -1,6 +1,7 @@
 package com.gasmonsoft.fbccalidad.di
 
 import android.content.Context
+import android.hardware.usb.UsbManager
 import androidx.annotation.Keep
 import androidx.room.Room
 import com.gasmonsoft.fbccalidad.BuildConfig
@@ -30,5 +31,11 @@ class DatabaseModule {
             FuelBoxControlDatabase::class.java,
             BuildConfig.DB_NAME
         ).fallbackToDestructiveMigration(true).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUsbManager(@ApplicationContext context: Context): UsbManager {
+        return context.getSystemService(Context.USB_SERVICE) as UsbManager
     }
 }
