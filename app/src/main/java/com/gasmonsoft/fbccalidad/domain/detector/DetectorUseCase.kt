@@ -1,6 +1,7 @@
 package com.gasmonsoft.fbccalidad.domain.detector
 
 import com.gasmonsoft.fbccalidad.data.model.ble.SensorState
+import com.gasmonsoft.fbccalidad.domain.model.QualityRange
 import com.gasmonsoft.fbccalidad.ui.detector.screen.FuelType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withTimeoutOrNull
@@ -16,7 +17,10 @@ class DetectorUseCase @Inject constructor() {
 
     private val fuelType = mutableListOf<MatterUnity>()
 
-    suspend operator fun invoke(data: Flow<SensorState>): MatterUnity {
+    suspend operator fun invoke(
+        data: Flow<SensorState>,
+        matterUnities: List<QualityRange>
+    ): MatterUnity {
         fuelType.clear()
 
         withTimeoutOrNull(15_000L) {
@@ -24,18 +28,23 @@ class DetectorUseCase @Inject constructor() {
                 val calidad = value.sensor1.calidad.toFloatOrNull()
                 val temperature = value.sensor1.temperatura.toFloatOrNull()
 
-                val type = when {
-                    calidad == null -> FuelType.DESCONOCIDO
-                    calidad > 20.0f -> FuelType.AGUA
-                    calidad < 0.0f -> FuelType.ADULTERADO
-                    calidad in 0.0f..1.9f -> FuelType.AIRE
-                    //calidad in 2.0f..2.2f -> FuelType.ACEITE
-                    calidad in 2.0f..2.8f -> FuelType.DIESEL
-                    calidad in 6.0f..18.0f -> FuelType.ALCOHOL
-                    else -> FuelType.DESCONOCIDO
+                val type = matterUnities.find {
+                    val min = it.min
+                    calidad in it.min..it.max
                 }
 
-                fuelType.add(MatterUnity(type, calidad, temperature))
+//                val type = when {
+//                    calidad == null -> FuelType.DESCONOCIDO
+//                    calidad > 20.0f -> FuelType.AGUA
+//                    calidad < 0.0f -> FuelType.ADULTERADO
+//                    calidad in 0.0f..1.9f -> FuelType.AIRE
+//                    //calidad in 2.0f..2.2f -> FuelType.ACEITE
+//                    calidad in 2.0f..2.8f -> FuelType.DIESEL
+//                    calidad in 6.0f..18.0f -> FuelType.ALCOHOL
+//                    else -> FuelType.DESCONOCIDO
+//                }
+//
+//                fuelType.add(MatterUnity(type, calidad, temperature))
             }
         }
 

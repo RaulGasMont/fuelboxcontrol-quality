@@ -1,6 +1,7 @@
 package com.gasmonsoft.fbccalidad.data.client
 
-import com.gasmonsoft.fbccalidad.data.model.calibracion.CalibrationDto
+import com.gasmonsoft.fbccalidad.data.model.alert.FuelAlertDto
+import com.gasmonsoft.fbccalidad.data.model.matter.MatterResponseDto
 import com.gasmonsoft.fbccalidad.data.model.login.CalidadLoginResponse
 import com.gasmonsoft.fbccalidad.data.model.login.LoginDto
 import com.gasmonsoft.fbccalidad.data.model.login.LoginResponse
@@ -15,7 +16,6 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
-import retrofit2.http.Streaming
 
 interface FuelSoftwareService {
 
@@ -43,10 +43,13 @@ interface FuelSoftwareService {
         @Query("id_vehiculo") idVehiculo: Int
     ): Response<List<ConfVehiclesResponse>>
 
-    @Streaming
-    @POST("api/SensorCajaApi/ParametrosCalibracion")
-    suspend fun getDatFile(
+    @POST("api/alertasExpo/crear")
+    suspend fun sendFuelAlert(
         @Header("Authorization") token: String,
-        @Body datos: CalibrationDto,
+        @Body alertDto: FuelAlertDto
     ): Response<ResponseBody>
+
+
+    @GET("api/alertasExpo/GetListSustancias")
+    suspend fun getMatters(): Response<List<MatterResponseDto>>
 }

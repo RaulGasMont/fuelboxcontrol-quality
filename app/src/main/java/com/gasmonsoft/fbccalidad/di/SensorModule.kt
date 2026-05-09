@@ -13,6 +13,7 @@ import com.gasmonsoft.fbccalidad.data.service.ble.GattOpQueue
 import com.gasmonsoft.fbccalidad.data.service.firmware.ProFileSender
 import com.gasmonsoft.fbccalidad.data.service.wifi.WifiStateObserver
 import com.gasmonsoft.fbccalidad.data.service.wifi.WifiStateObserverImpl
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -28,6 +29,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SensorModule {
+
+    @Singleton
+    @Provides
+    fun provideGson(): Gson = Gson()
 
     @Singleton
     @Provides

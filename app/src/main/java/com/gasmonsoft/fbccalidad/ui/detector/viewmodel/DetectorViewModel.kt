@@ -59,11 +59,27 @@ class DetectorViewModel @Inject constructor(
     private val usbData = usbRepository.sensorData
 
     init {
+        getFuelTypes()
         observeTankSelection()
         observeBoxSelection()
         observeUsbConnection()
         observeUsbPermission()
         usbConnectionMonitor.startMonitoring()
+    }
+
+    private fun getFuelTypes() {
+        viewModelScope.launch {
+            val result = fscApiRepository.getMatters()
+//        val newMap = _uiState.value.matterUnities.toMutableMap()
+//        val fuelRanges = FuelType.entries.forEach { type ->
+//            newMap[type]
+//        }
+//        _uiState.update { currentUiState ->
+//            currentUiState.copy(
+//                matterUnities = newMap
+//            )
+//        }
+        }
     }
 
     private fun observeUsbConnection() {
@@ -144,13 +160,13 @@ class DetectorViewModel @Inject constructor(
         viewModelScope.launch {
             val result = when (channel) {
                 DetectorChannelType.BLE -> {
-                    detectorUseCase(sensorData)
+                    detectorUseCase(sensorData, matterList)
                 }
 
                 DetectorChannelType.USB -> {
                     val isReady = prepareUsbReading()
                     if (isReady) {
-                        detectorUseCase(usbData)
+                        detectorUseCase(usbData, matterList)
                     } else {
                         MatterUnity(FuelType.DESCONOCIDO, null, null)
                     }
@@ -165,6 +181,15 @@ class DetectorViewModel @Inject constructor(
                     temperatura = result.temperature?.toDouble() ?: 0.0
                 )
             )
+
+//            if (result.type != FuelType.DIESEL) {
+////                fscApiRepository.sendFuelAlert(
+//////                    body = FuelAlert(
+//////                        fechaRegistro = TODO(),
+//////                        tipo = result,
+//////                    )
+////                )
+//            }
 
             _uiState.update { currentUiState ->
                 currentUiState.copy(

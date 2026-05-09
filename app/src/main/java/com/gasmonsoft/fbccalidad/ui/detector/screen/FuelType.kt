@@ -35,73 +35,82 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gasmonsoft.fbccalidad.domain.model.QualityRange
+import com.gasmonsoft.fbccalidad.domain.model.toColor
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-enum class FuelType(
+data class FuelType(
     val label: String,
     val typeId: Int,
     val topColor: Color,
     val bottomColor: Color,
     val waveColor: Color
 ) {
-    DESCONOCIDO(
-        label = "Desconocido",
-        typeId = 0,
-        topColor = Color(0xFF9CA3AF),
-        bottomColor = Color(0xFF6B7280),
-        waveColor = Color(0xFFD1D5DB)
-    ),
-    AIRE(
-        label = "Aire",
-        typeId = 1,
-        topColor = Color(0xFFBEE3F8),
-        bottomColor = Color(0xFF63B3ED),
-        waveColor = Color(0xFFE0F2FE)
-    ),
-    DIESEL(
-        label = "Diesel",
-        typeId = 2,
-        topColor = Color(0xFFFBBF24),
-        bottomColor = Color(0xFFD97706),
-        waveColor = Color(0xFFFCD34D)
-    ),
-    ACEITE(
-        label = "Aceite",
-        typeId = 3,
-        topColor = Color(0xFF4B5563),
-        bottomColor = Color(0xFF111827),
-        waveColor = Color(0xFF9CA3AF)
-    ),
-    ALCOHOL(
-        label = "Alcohol",
-        typeId = 4,
-        topColor = Color(0xFFF9A8D4),
-        bottomColor = Color(0xFFEC4899),
-        waveColor = Color(0xFFFBCFE8)
-    ),
-    AGUA(
-        label = "Agua",
-        typeId = 5,
-        topColor = Color(0xFF60A5FA),
-        bottomColor = Color(0xFF2563EB),
-        waveColor = Color(0xFFBFDBFE)
-    ),
-    ADULTERADO(
-        label = "Adulterado",
-        typeId = 6,
-        topColor = Color(0xFFEF4444),
-        bottomColor = Color(0xFF991B1B),
-        waveColor = Color(0xFFFCA5A5)
-    )
+    companion object {
+        val DESCONOCIDO = FuelType(
+            label = "Desconocido",
+            typeId = 0,
+            topColor = Color(0xFF9CA3AF),
+            bottomColor = Color(0xFF6B7280),
+            waveColor = Color(0xFFD1D5DB)
+        )
+        val AIRE = FuelType(
+            label = "Aire",
+            typeId = 1,
+            topColor = Color(0xFFBEE3F8),
+            bottomColor = Color(0xFF63B3ED),
+            waveColor = Color(0xFFE0F2FE)
+        )
+        val DIESEL = FuelType(
+            label = "Diesel",
+            typeId = 2,
+            topColor = Color(0xFFFBBF24),
+            bottomColor = Color(0xFFD97706),
+            waveColor = Color(0xFFFCD34D)
+        )
+        val ACEITE = FuelType(
+            label = "Aceite",
+            typeId = 3,
+            topColor = Color(0xFF4B5563),
+            bottomColor = Color(0xFF111827),
+            waveColor = Color(0xFF9CA3AF)
+        )
+        val ALCOHOL = FuelType(
+            label = "Alcohol",
+            typeId = 4,
+            topColor = Color(0xFFF9A8D4),
+            bottomColor = Color(0xFFEC4899),
+            waveColor = Color(0xFFFBCFE8)
+        )
+        val AGUA = FuelType(
+            label = "Agua",
+            typeId = 5,
+            topColor = Color(0xFF60A5FA),
+            bottomColor = Color(0xFF2563EB),
+            waveColor = Color(0xFFBFDBFE)
+        )
+        val ADULTERADO = FuelType(
+            label = "Adulterado",
+            typeId = 6,
+            topColor = Color(0xFFEF4444),
+            bottomColor = Color(0xFF991B1B),
+            waveColor = Color(0xFFFCA5A5)
+        )
+
+        val entries = listOf(
+            DESCONOCIDO, AIRE, DIESEL, ACEITE, ALCOHOL, AGUA, ADULTERADO
+        )
+    }
 }
 
 @Composable
 fun AnimatedFuelTank(
-    fuelType: FuelType,
+    fuelType: QualityRange,
     level: Float,
     modifier: Modifier = Modifier.size(width = 150.dp, height = 310.dp),
     showInfo: Boolean = true
@@ -194,7 +203,7 @@ fun AnimatedFuelTank(
             val wavelength = tankRect.width * 0.9f
 
             clipPath(tankPath) {
-                if (fuelType == FuelType.AIRE) {
+                if (fuelType.label.equals("Aire", ignoreCase = true)) {
                     // Fondo degradado sutil (cielo)
                     drawRect(
                         brush = Brush.verticalGradient(
@@ -288,13 +297,14 @@ fun AnimatedFuelTank(
                         wavelength = wavelength * 0.8f
                     )
 
+                    val baseColor = fuelType.color.toColor()
+                    
                     drawPath(
                         path = wave1,
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                fuelType.waveColor,
-                                fuelType.topColor,
-                                fuelType.bottomColor
+                                baseColor.copy(alpha = 0.8f),
+                                baseColor
                             ),
                             startY = liquidBaseY - amplitude * 2f,
                             endY = tankRect.bottom
@@ -303,7 +313,7 @@ fun AnimatedFuelTank(
 
                     drawPath(
                         path = wave2,
-                        color = fuelType.waveColor.copy(alpha = 0.35f)
+                        color = baseColor.copy(alpha = 0.35f)
                     )
 
                     drawLine(
@@ -387,35 +397,51 @@ private fun buildWavePath(
 @Preview(showBackground = true, backgroundColor = 0xFFF8FAFC)
 @Composable
 private fun AnimatedFuelTankPreview() {
+    val mockRanges = listOf(
+        QualityRange("Diesel", 2.0, 2.8, "0xFFFBBF24", "Normal"),
+        QualityRange("Agua", 20.0, null, "0xFF60A5FA", "Peligro"),
+        QualityRange("Aire", 0.0, 1.9, "0xFFBEE3F8", "Vacio"),
+        QualityRange("Alcohol", 6.0, 18.0, "0xFFF9A8D4", "Alerta"),
+        QualityRange("Adulterado", null, 0.0, "0xFFEF4444", "Critico")
+    )
+
     Row(
         modifier = Modifier
             .background(Color(0xFFF8FAFC))
-            .padding(16.dp)
+            .padding(24.dp)
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        AnimatedFuelTank(
-            fuelType = FuelType.DIESEL,
-            level = 0.32f,
-            modifier = Modifier.size(120.dp, 250.dp)
-        )
+        mockRanges.forEach { range ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = range.status,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-        AnimatedFuelTank(
-            fuelType = FuelType.AIRE,
-            level = 1.0f,
-            modifier = Modifier.size(120.dp, 250.dp)
-        )
+                AnimatedFuelTank(
+                    fuelType = range,
+                    level = if (range.label == "Aire") 1.0f else 0.6f,
+                    modifier = Modifier.size(width = 120.dp, height = 260.dp)
+                )
 
-        AnimatedFuelTank(
-            fuelType = FuelType.ALCOHOL,
-            level = 0.68f,
-            modifier = Modifier.size(120.dp, 250.dp)
-        )
-
-        AnimatedFuelTank(
-            fuelType = FuelType.ACEITE,
-            level = 0.91f,
-            modifier = Modifier.size(120.dp, 250.dp)
-        )
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 2.dp
+                ) {
+                    Text(
+                        text = range.label,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }

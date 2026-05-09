@@ -1,6 +1,7 @@
 package com.gasmonsoft.fbccalidad.data.service.ble
 
 import com.gasmonsoft.fbccalidad.data.client.FuelSoftwareService
+import com.gasmonsoft.fbccalidad.data.model.alert.FuelAlertDto
 import com.gasmonsoft.fbccalidad.data.model.login.LoginDto
 import com.gasmonsoft.fbccalidad.data.model.sensor.SensorCalidadUnitario
 import com.gasmonsoft.fbccalidad.data.model.sensor.SensorCalidadUnitarioPkg
@@ -28,23 +29,14 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
         )
     }
 
-//    suspend fun getDatFile(token: String, body: CalibrationDto): Result<ByteArray> {
-//        return try {
-//            val response = networkRequestHelper { fscService.getDatFile("Bearer $token", body) }
-//            if (!response.isSuccess) {
-//                return Result.failure(
-//                    Exception("HTTP ${response.exceptionOrNull()?.message}")
-//                )
-//            }
-//
-//            val body = response.getOrNull()
-//                ?: return Result.failure(Exception("Body vacío"))
-//
-//            val bytes = body.bytes()
-//
-//            Result.success(bytes)
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
+    suspend fun sendFuelAlert(token: String, body: FuelAlertDto) = networkRequestHelper {
+        fscService.sendFuelAlert(
+            token = "Bearer $token",
+            alertDto = body
+        )
+    }
+
+    suspend fun getMatters() = networkRequestHelper {
+        fscService.getMatters()
+    }
 }

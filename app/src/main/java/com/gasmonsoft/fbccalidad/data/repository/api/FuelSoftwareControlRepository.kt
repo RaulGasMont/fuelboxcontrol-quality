@@ -1,5 +1,8 @@
 package com.gasmonsoft.fbccalidad.data.repository.api
 
+import com.gasmonsoft.fbccalidad.data.model.alert.FuelAlert
+import com.gasmonsoft.fbccalidad.data.model.alert.toDto
+import com.gasmonsoft.fbccalidad.data.model.matter.toDomain
 import com.gasmonsoft.fbccalidad.data.model.login.Login
 import com.gasmonsoft.fbccalidad.data.model.login.LoginResponse
 import com.gasmonsoft.fbccalidad.data.model.login.toDto
@@ -8,16 +11,20 @@ import com.gasmonsoft.fbccalidad.data.model.sensor.UploadSensorResponse
 import com.gasmonsoft.fbccalidad.data.model.sensor.toDto
 import com.gasmonsoft.fbccalidad.data.model.vehicle.ConfVehicle
 import com.gasmonsoft.fbccalidad.data.model.vehicle.ConfVehiclesResponse
-import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
 import com.gasmonsoft.fbccalidad.data.repository.ble.BleDataRepository
+import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
 import com.gasmonsoft.fbccalidad.data.service.ble.RemoteFscDataSource
+import com.gasmonsoft.fbccalidad.domain.model.Matter
 import com.gasmonsoft.fbccalidad.utils.getCurrentDate
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
+import okhttp3.ResponseBody
 import javax.inject.Inject
 
 class FuelSoftwareControlRepository @Inject constructor(
     private val remoteFscDataSource: RemoteFscDataSource,
     private val userRepository: UserRepository,
+    private val gson: Gson,
     bleDataSource: BleDataRepository
 ) {
     val sensorPackages = bleDataSource.sensorState
@@ -36,7 +43,8 @@ class FuelSoftwareControlRepository @Inject constructor(
     }
 
     suspend fun sendSensorCalidadData(body: SensorCalidadData): Result<UploadSensorResponse> {
-        val user = userRepository.getUser().first() ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
+        val user = userRepository.getUser().first()
+            ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
         val token = user.token
         val idUsuario = user.id
         return remoteFscDataSource.addSensorDatosUnitariaList(
@@ -46,6 +54,25 @@ class FuelSoftwareControlRepository @Inject constructor(
                 fecha = getCurrentDate()
             )
         )
+    }
+
+    suspend fun sendFuelAlert(body: FuelAlert): Result<ResponseBody> {
+        val user = userRepository.getUser().first()
+            ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
+        return remoteFscDataSource.sendFuelAlert(
+            token = user.token,
+            body = body.copy(idUsuario = user.id).toDto()
+        )
+    }
+
+    suspend fun getMatters(): Result<List<Matter>> {
+        val response = remoteFscDataSource.getMatters()
+        return if (response.isSuccess) {
+            val list = response.getOrNull() ?: emptyList()
+            Result.success(list.map { it.toDomain(gson) })
+        } else {
+            Result.failure(response.exceptionOrNull() ?: Exception("Error desconocido"))
+        }
     }
 
 //    suspend fun getDatFile(body: Calibracion): Result<ByteArray> {
