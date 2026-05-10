@@ -20,49 +20,49 @@ data class QualityRange(
             min = null,
             max = null,
             color = "0xFF9CA3AF",
-            status = "Desconocido"
+            status = "Adulterado"
         )
         val AIRE = QualityRange(
             label = "Aire",
             min = 0.0,
             max = 1.9,
             color = "0xFFBEE3F8",
-            status = "Vacio"
+            status = "Adulterado"
         )
         val DIESEL = QualityRange(
             label = "Diesel",
             min = 2.0,
             max = 2.8,
             color = "0xFFFBBF24",
-            status = "Normal"
+            status = "Diesel"
         )
         val ACEITE = QualityRange(
             label = "Aceite",
             min = null,
             max = null,
             color = "0xFF4B5563",
-            status = "Aceite"
+            status = "Adulterado"
         )
         val ALCOHOL = QualityRange(
             label = "Alcohol",
             min = 6.0,
             max = 18.0,
             color = "0xFFF9A8D4",
-            status = "Alerta"
+            status = "Adulterado"
         )
         val AGUA = QualityRange(
             label = "Agua",
             min = 20.0,
             max = null,
             color = "0xFF60A5FA",
-            status = "Peligro"
+            status = "Adulterado"
         )
         val ADULTERADO = QualityRange(
             label = "Adulterado",
             min = null,
             max = 0.0,
             color = "0xFFEF4444",
-            status = "Critico"
+            status = "Adulterado"
         )
 
         val entries = listOf(

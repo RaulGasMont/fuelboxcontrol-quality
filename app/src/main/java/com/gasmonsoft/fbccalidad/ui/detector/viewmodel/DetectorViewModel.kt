@@ -82,7 +82,12 @@ class DetectorViewModel @Inject constructor(
                     )
                 }
             }.onFailure {
-                _uiState.update { it.copy(loadScreen = ProcessingEvent.Error) }
+                _uiState.update {
+                    it.copy(
+                        loadScreen = ProcessingEvent.Error,
+                        fuelTypes = QualityRange.entries
+                    )
+                }
             }
         }
     }
@@ -275,6 +280,14 @@ class DetectorViewModel @Inject constructor(
 
                 }
             }
+        }
+    }
+
+    fun acceptMatterLoadError() {
+        _uiState.update { currentUiState ->
+            currentUiState.copy(
+                loadScreen = ProcessingEvent.Success
+            )
         }
     }
 

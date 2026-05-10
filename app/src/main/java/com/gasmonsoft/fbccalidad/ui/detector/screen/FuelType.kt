@@ -89,10 +89,9 @@ fun AnimatedFuelTank(
             val neckHeight = size.height * 0.075f
             val tankTop = neckHeight + strokeWidth
             val tankBottom = size.height - strokeWidth
-            val tankLeft = strokeWidth
             val tankRight = size.width - strokeWidth
             val tankRect = Rect(
-                left = tankLeft,
+                left = strokeWidth,
                 top = tankTop,
                 right = tankRight,
                 bottom = tankBottom
@@ -140,12 +139,12 @@ fun AnimatedFuelTank(
 
             clipPath(tankPath) {
                 if (fuelType.label.equals("Aire", ignoreCase = true)) {
-                    // Fondo degradado sutil (cielo)
+                    // Fondo degradado más notable (cielo)
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFFBAE6FD).copy(alpha = 0.22f),
-                                Color(0xFFE0F2FE).copy(alpha = 0.08f)
+                                Color(0xFFBAE6FD).copy(alpha = 0.45f),
+                                Color(0xFFE0F2FE).copy(alpha = 0.20f)
                             ),
                             startY = tankRect.top,
                             endY = tankRect.bottom
@@ -154,19 +153,19 @@ fun AnimatedFuelTank(
                         size = androidx.compose.ui.geometry.Size(tankRect.width, tankRect.height)
                     )
 
-                    // Partículas flotando hacia arriba
+                    // Partículas flotando hacia arriba con más presencia
                     val airProgress = waveShift1 / (2f * PI).toFloat()
                     val particleData = listOf(
-                        floatArrayOf(0.20f, 0.00f, 5f),
-                        floatArrayOf(0.50f, 0.28f, 3.5f),
-                        floatArrayOf(0.78f, 0.55f, 4.5f),
-                        floatArrayOf(0.35f, 0.72f, 3f),
-                        floatArrayOf(0.65f, 0.15f, 4f),
-                        floatArrayOf(0.12f, 0.44f, 3f),
-                        floatArrayOf(0.88f, 0.87f, 5f),
-                        floatArrayOf(0.55f, 0.62f, 2.5f),
-                        floatArrayOf(0.42f, 0.38f, 3.5f),
-                        floatArrayOf(0.70f, 0.92f, 2.5f),
+                        floatArrayOf(0.20f, 0.00f, 6f),
+                        floatArrayOf(0.50f, 0.28f, 4.5f),
+                        floatArrayOf(0.78f, 0.55f, 5.5f),
+                        floatArrayOf(0.35f, 0.72f, 4f),
+                        floatArrayOf(0.65f, 0.15f, 5f),
+                        floatArrayOf(0.12f, 0.44f, 4f),
+                        floatArrayOf(0.88f, 0.87f, 6f),
+                        floatArrayOf(0.55f, 0.62f, 3.5f),
+                        floatArrayOf(0.42f, 0.38f, 4.5f),
+                        floatArrayOf(0.70f, 0.92f, 3.5f),
                     )
 
                     particleData.forEach { (xFrac, phaseOffset, radiusDp) ->
@@ -178,37 +177,45 @@ fun AnimatedFuelTank(
                             .coerceIn(tankRect.left, tankRect.right)
 
                         val alpha = when {
-                            p < 0.08f -> p / 0.08f * 0.55f
-                            p > 0.92f -> (1f - p) / 0.08f * 0.55f
-                            else -> 0.55f
+                            p < 0.12f -> p / 0.12f * 0.85f
+                            p > 0.88f -> (1f - p) / 0.12f * 0.85f
+                            else -> 0.85f
                         }
                         val r = radiusDp.dp.toPx()
+                        
+                        // Resplandor exterior (Glow)
+                        drawCircle(
+                            color = Color(0xFF7DD3FC).copy(alpha = alpha * 0.4f),
+                            radius = r * 1.5f,
+                            center = Offset(x, y)
+                        )
+                        
                         drawCircle(
                             color = Color(0xFFBAE6FD).copy(alpha = alpha),
                             radius = r,
                             center = Offset(x, y)
                         )
-                        // Reflejo interior
+                        // Reflejo interior más brillante
                         drawCircle(
-                            color = Color.White.copy(alpha = alpha * 0.55f),
-                            radius = r * 0.38f,
+                            color = Color.White.copy(alpha = alpha * 0.85f),
+                            radius = r * 0.42f,
                             center = Offset(x - r * 0.22f, y - r * 0.22f)
                         )
                     }
 
-                    // Líneas de viento horizontales animadas
+                    // Líneas de viento horizontales animadas (más gruesas y visibles)
                     val windProgress = waveShift2 / (2f * PI).toFloat()
                     listOf(0.25f, 0.50f, 0.73f).forEachIndexed { i, yFrac ->
                         val offsetX =
-                            cos((windProgress * 2f * PI + i * 2.1f).toFloat()) * tankRect.width * 0.12f
+                            cos((windProgress * 2f * PI + i * 2.1f).toFloat()) * tankRect.width * 0.15f
                         val lineY = tankRect.top + yFrac * tankRect.height
                         val lineAlpha =
-                            0.18f + 0.10f * sin((windProgress * 2f * PI + i * 1.3f).toFloat())
+                            0.35f + 0.15f * sin((windProgress * 2f * PI + i * 1.3f).toFloat())
                         drawLine(
-                            color = Color(0xFF7DD3FC).copy(alpha = lineAlpha),
-                            start = Offset(tankRect.left + tankRect.width * 0.15f + offsetX, lineY),
-                            end = Offset(tankRect.left + tankRect.width * 0.75f + offsetX, lineY),
-                            strokeWidth = 2.dp.toPx(),
+                            color = Color(0xFF38BDF8).copy(alpha = lineAlpha),
+                            start = Offset(tankRect.left + tankRect.width * 0.10f + offsetX, lineY),
+                            end = Offset(tankRect.left + tankRect.width * 0.80f + offsetX, lineY),
+                            strokeWidth = 3.dp.toPx(),
                             cap = StrokeCap.Round
                         )
                     }
@@ -234,35 +241,60 @@ fun AnimatedFuelTank(
                     )
 
                     val baseColor = fuelType.color.toColor()
-                    
+                    // Colores derivados para profundidad
+                    val topColor = baseColor.copy(alpha = 0.75f)
+                    val midColor = baseColor.copy(alpha = 0.92f)
+
+                    // Cuerpo principal del líquido con gradiente de 3 niveles
                     drawPath(
                         path = wave1,
                         brush = Brush.verticalGradient(
-                            colors = listOf(
-                                baseColor.copy(alpha = 0.8f),
-                                baseColor
-                            ),
-                            startY = liquidBaseY - amplitude * 2f,
+                            colors = listOf(topColor, midColor, baseColor),
+                            startY = liquidBaseY - amplitude,
                             endY = tankRect.bottom
                         )
                     )
 
+                    // Segunda capa de onda para efecto de profundidad/transparencia
                     drawPath(
                         path = wave2,
-                        color = baseColor.copy(alpha = 0.35f)
+                        color = baseColor.copy(alpha = 0.25f)
                     )
 
+                    // Brillo en la superficie (Specular Highlight)
+                    val surfacePath = buildWavePath(
+                        left = tankRect.left,
+                        right = tankRect.right,
+                        bottom = liquidBaseY + 10f, // Solo una franja delgada
+                        baseY = liquidBaseY,
+                        amplitude = amplitude,
+                        phase = waveShift1,
+                        wavelength = wavelength
+                    )
+                    drawPath(
+                        path = surfacePath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.35f),
+                                Color.Transparent
+                            ),
+                            startY = liquidBaseY - amplitude,
+                            endY = liquidBaseY + amplitude
+                        )
+                    )
+
+                    // Reflejo lateral (Efecto cristal/vidrio del tanque)
                     drawLine(
-                        color = Color.White.copy(alpha = 0.12f),
+                        color = Color.White.copy(alpha = 0.15f),
                         start = Offset(
-                            x = tankRect.left + tankRect.width * 0.20f,
-                            y = tankRect.top + 16f
+                            x = tankRect.left + tankRect.width * 0.18f,
+                            y = tankRect.top + 20f
                         ),
                         end = Offset(
-                            x = tankRect.left + tankRect.width * 0.20f,
-                            y = tankRect.bottom - 16f
+                            x = tankRect.left + tankRect.width * 0.18f,
+                            y = tankRect.bottom - 20f
                         ),
-                        strokeWidth = tankRect.width * 0.08f,
+                        strokeWidth = tankRect.width * 0.06f,
                         cap = StrokeCap.Round
                     )
                 }

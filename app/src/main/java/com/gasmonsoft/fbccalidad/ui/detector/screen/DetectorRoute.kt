@@ -82,7 +82,8 @@ fun DetectorRoute(
         onAnalyze = { viewModel.analyzeData(it) },
         onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) },
         onPermissionRequest = viewModel::onPermissionRequest,
-        onRefreshDetection = viewModel::refreshDetection
+        onRefreshDetection = viewModel::refreshDetection,
+        onAcceptMatterLoadError = viewModel::acceptMatterLoadError
     )
 }
 
@@ -94,7 +95,8 @@ fun DetectorScreen(
     onAnalyze: (channel: DetectorChannelType) -> Unit,
     onDismissDetection: () -> Unit,
     onPermissionRequest: (device: UsbDevice) -> Unit,
-    onRefreshDetection: () -> Unit
+    onRefreshDetection: () -> Unit,
+    onAcceptMatterLoadError: () -> Unit,
 ) {
     var showChannelDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -147,6 +149,8 @@ fun DetectorScreen(
         }
     }
 
+
+
     when (uiState.detectionEvent) {
         is ProcessingEvent.Loading -> {
             LoadingDialog(
@@ -165,7 +169,8 @@ fun DetectorScreen(
         else -> Unit
     }
 
-    val canAnalyze = uiState.tankId != -1 && uiState.detectionEvent !is ProcessingEvent.Loading
+    val canAnalyze =
+        uiState.tankId != -1 && uiState.detectionEvent !is ProcessingEvent.Loading
     val levelPercent = (uiState.valueDetection.coerceIn(0f, 1f) * 100f).roundToInt()
 
     Scaffold(
@@ -237,23 +242,38 @@ fun DetectorScreen(
                         .widthIn(max = 520.dp)
                 )
 
-                TankSelectionCard(
-                    tankId = uiState.tankId,
-                    tankName = uiState.tankName,
-                    onSelectTank = onSelectTank,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 520.dp)
-                )
+                when (uiState.loadScreen) {
+                    is ProcessingEvent.Loading -> {
+                        LoadingDialog(message = "Por favor espere mientras se cargan las sustancias...")
+                    }
 
-                AnalysisSummaryCard(
-                    fuelType = uiState.fuelType,
-                    rawValue = uiState.valueDetection,
-                    levelPercent = levelPercent,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 520.dp)
-                )
+                    is ProcessingEvent.Success -> {
+                        TankSelectionCard(
+                            tankId = uiState.tankId,
+                            tankName = uiState.tankName,
+                            onSelectTank = onSelectTank,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 520.dp)
+                        )
+
+                        AnalysisSummaryCard(
+                            fuelType = uiState.fuelType,
+                            rawValue = uiState.valueDetection,
+                            levelPercent = levelPercent,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 520.dp)
+                        )
+                    }
+
+                    is ProcessingEvent.Error -> {
+                        ErrorDialog(
+                            message = "No se pudieron cargar las sustancias. Se cargaran las muestras por defecto.",
+                            onDismiss = onAcceptMatterLoadError
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -502,37 +522,137 @@ private fun MetricCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Cargando Sustancias")
 @Composable
-fun DetectorScreenPreview() {
+fun DetectorLoadingPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(loadScreen = ProcessingEvent.Loading),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Sin Tanque Seleccionado")
+@Composable
+fun DetectorNoTankPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(loadScreen = ProcessingEvent.Success),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Listo para Analizar")
+@Composable
+fun DetectorReadyPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(
+                tankId = 1,
+                tankName = "Tanque 01",
+                loadScreen = ProcessingEvent.Success
+            ),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Resultado Diesel")
+@Composable
+fun DetectorSuccessDieselPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
             uiState = DetectorUiState(
                 tankId = 1,
                 tankName = "Tanque Diesel 01",
                 fuelType = QualityRange.DIESEL,
-                valueDetection = 2.2f
+                valueDetection = 2.4f,
+                loadScreen = ProcessingEvent.Success
             ),
             onSelectTank = {},
             onAnalyze = {},
             onDismissDetection = {},
             onPermissionRequest = {},
-            onRefreshDetection = {}
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
         )
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Resultado Adulterado")
 @Composable
-fun DetectorScreenEmptyPreview() {
+fun DetectorSuccessAdulteratedPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
-            uiState = DetectorUiState(),
+            uiState = DetectorUiState(
+                tankId = 1,
+                tankName = "Tanque 02",
+                fuelType = QualityRange.ADULTERADO,
+                valueDetection = -0.5f,
+                loadScreen = ProcessingEvent.Success
+            ),
             onSelectTank = {},
             onAnalyze = {},
             onDismissDetection = {},
             onPermissionRequest = {},
-            onRefreshDetection = {}
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Error de Análisis")
+@Composable
+fun DetectorErrorPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(
+                tankId = 1,
+                tankName = "Tanque 01",
+                detectionEvent = ProcessingEvent.Error,
+                loadScreen = ProcessingEvent.Success
+            ),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Error Carga Sustancias")
+@Composable
+fun DetectorMatterLoadErrorPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(
+                loadScreen = ProcessingEvent.Error
+            ),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
         )
     }
 }

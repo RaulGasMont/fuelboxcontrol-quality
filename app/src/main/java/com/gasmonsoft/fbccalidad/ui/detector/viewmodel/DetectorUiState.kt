@@ -13,7 +13,7 @@ data class DetectorUiState(
     val detectionEvent: ProcessingEvent = ProcessingEvent.Idle,
     val channel: DetectorChannelType = DetectorChannelType.BLE,
     val otgTransferState: TransferState = TransferState.Idle,
-    val loadScreen: ProcessingEvent = ProcessingEvent.Loading,
+    val loadScreen: ProcessingEvent = ProcessingEvent.Idle,
     val fuelTypes: List<QualityRange> = emptyList()
 )
 
