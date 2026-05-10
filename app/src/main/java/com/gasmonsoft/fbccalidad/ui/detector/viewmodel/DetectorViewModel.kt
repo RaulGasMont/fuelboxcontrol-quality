@@ -19,7 +19,6 @@ import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionManager
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionResult
 import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,8 +52,6 @@ class DetectorViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(5000),
         null
     )
-
-    private var usbReadingJob: Job? = null
 
     private val sensorData = sensorReceiveManager.sensorData
     private val usbData = usbRepository.sensorData
@@ -213,10 +210,7 @@ class DetectorViewModel @Inject constructor(
 
             updateDetectionEvent(ProcessingEvent.Success)
 
-            if (usbReadingJob != null) {
-                usbReadingJob?.cancel()
-                usbReadingJob = null
-            }
+            if (channel == DetectorChannelType.USB) usbRepository.disconnect()
         }
     }
 
