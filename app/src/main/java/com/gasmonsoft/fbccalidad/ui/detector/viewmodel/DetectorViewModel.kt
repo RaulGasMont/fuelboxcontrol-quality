@@ -4,6 +4,7 @@ import android.hardware.usb.UsbDevice
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fbccalidad.data.model.alert.FuelAlert
 import com.gasmonsoft.fbccalidad.data.model.sensor.SensorCalidadData
 import com.gasmonsoft.fbccalidad.data.repository.api.FuelSoftwareControlRepository
 import com.gasmonsoft.fbccalidad.data.repository.ble.SensorReceiveManager
@@ -11,11 +12,11 @@ import com.gasmonsoft.fbccalidad.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fbccalidad.data.repository.usb.UsbRepository
 import com.gasmonsoft.fbccalidad.domain.detector.DetectorUseCase
 import com.gasmonsoft.fbccalidad.domain.detector.MatterUnity
+import com.gasmonsoft.fbccalidad.domain.model.QualityRange
 import com.gasmonsoft.fbccalidad.domain.usb.UsbConnectionMonitor
 import com.gasmonsoft.fbccalidad.domain.usb.UsbDeviceState
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionManager
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionResult
-import com.gasmonsoft.fbccalidad.ui.detector.screen.FuelType
 import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -69,16 +70,20 @@ class DetectorViewModel @Inject constructor(
 
     private fun getFuelTypes() {
         viewModelScope.launch {
-            val result = fscApiRepository.getMatters()
-//        val newMap = _uiState.value.matterUnities.toMutableMap()
-//        val fuelRanges = FuelType.entries.forEach { type ->
-//            newMap[type]
-//        }
-//        _uiState.update { currentUiState ->
-//            currentUiState.copy(
-//                matterUnities = newMap
-//            )
-//        }
+            _uiState.update { it.copy(loadScreen = ProcessingEvent.Loading) }
+            fscApiRepository.getMatters().onSuccess { matters ->
+                val allRanges = matters.flatMap { it.ranges }
+                _uiState.update {
+                    it.copy(
+                        fuelTypes = allRanges,
+                        loadScreen = ProcessingEvent.Success,
+                        fuelType = allRanges.find { range -> range.label == "Desconocido" }
+                            ?: QualityRange.DESCONOCIDO
+                    )
+                }
+            }.onFailure {
+                _uiState.update { it.copy(loadScreen = ProcessingEvent.Error) }
+            }
         }
     }
 
@@ -158,6 +163,7 @@ class DetectorViewModel @Inject constructor(
     fun analyzeData(channel: DetectorChannelType) {
         updateDetectionEvent(ProcessingEvent.Loading)
         viewModelScope.launch {
+            val matterList = _uiState.value.fuelTypes
             val result = when (channel) {
                 DetectorChannelType.BLE -> {
                     detectorUseCase(sensorData, matterList)
@@ -168,7 +174,7 @@ class DetectorViewModel @Inject constructor(
                     if (isReady) {
                         detectorUseCase(usbData, matterList)
                     } else {
-                        MatterUnity(FuelType.DESCONOCIDO, null, null)
+                        MatterUnity(QualityRange.DESCONOCIDO, null, null)
                     }
                 }
             }
@@ -182,14 +188,16 @@ class DetectorViewModel @Inject constructor(
                 )
             )
 
-//            if (result.type != FuelType.DIESEL) {
-////                fscApiRepository.sendFuelAlert(
-//////                    body = FuelAlert(
-//////                        fechaRegistro = TODO(),
-//////                        tipo = result,
-//////                    )
-////                )
-//            }
+            if (result.type.label != "Diesel") {
+                val id = _uiState.value.fuelTypes.indexOfFirst { it.label == result.type.label }
+                fscApiRepository.sendFuelAlert(
+                    body = FuelAlert(
+                        idUsuario = 0, // Se inyecta en el repo
+                        fechaRegistro = com.gasmonsoft.fbccalidad.utils.getCurrentDate(),
+                        tipo = id
+                    )
+                )
+            }
 
             _uiState.update { currentUiState ->
                 currentUiState.copy(
@@ -281,7 +289,6 @@ class DetectorViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        // No detenemos el monitoreo aquí ya que es un Singleton manejado por la App/Activity
         usbRepository.disconnect()
     }
 }

@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-        usbConnectionMonitor.startMonitoring()
+        //usbConnectionMonitor.startMonitoring()
 
         setContent {
             FuelBoxControlTheme {

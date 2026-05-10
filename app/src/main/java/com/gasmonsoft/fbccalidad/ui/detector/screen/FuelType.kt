@@ -44,75 +44,11 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-data class FuelType(
-    val label: String,
-    val typeId: Int,
-    val topColor: Color,
-    val bottomColor: Color,
-    val waveColor: Color
-) {
-    companion object {
-        val DESCONOCIDO = FuelType(
-            label = "Desconocido",
-            typeId = 0,
-            topColor = Color(0xFF9CA3AF),
-            bottomColor = Color(0xFF6B7280),
-            waveColor = Color(0xFFD1D5DB)
-        )
-        val AIRE = FuelType(
-            label = "Aire",
-            typeId = 1,
-            topColor = Color(0xFFBEE3F8),
-            bottomColor = Color(0xFF63B3ED),
-            waveColor = Color(0xFFE0F2FE)
-        )
-        val DIESEL = FuelType(
-            label = "Diesel",
-            typeId = 2,
-            topColor = Color(0xFFFBBF24),
-            bottomColor = Color(0xFFD97706),
-            waveColor = Color(0xFFFCD34D)
-        )
-        val ACEITE = FuelType(
-            label = "Aceite",
-            typeId = 3,
-            topColor = Color(0xFF4B5563),
-            bottomColor = Color(0xFF111827),
-            waveColor = Color(0xFF9CA3AF)
-        )
-        val ALCOHOL = FuelType(
-            label = "Alcohol",
-            typeId = 4,
-            topColor = Color(0xFFF9A8D4),
-            bottomColor = Color(0xFFEC4899),
-            waveColor = Color(0xFFFBCFE8)
-        )
-        val AGUA = FuelType(
-            label = "Agua",
-            typeId = 5,
-            topColor = Color(0xFF60A5FA),
-            bottomColor = Color(0xFF2563EB),
-            waveColor = Color(0xFFBFDBFE)
-        )
-        val ADULTERADO = FuelType(
-            label = "Adulterado",
-            typeId = 6,
-            topColor = Color(0xFFEF4444),
-            bottomColor = Color(0xFF991B1B),
-            waveColor = Color(0xFFFCA5A5)
-        )
-
-        val entries = listOf(
-            DESCONOCIDO, AIRE, DIESEL, ACEITE, ALCOHOL, AGUA, ADULTERADO
-        )
-    }
-}
-
 @Composable
 fun AnimatedFuelTank(
     fuelType: QualityRange,
     level: Float,
-    modifier: Modifier = Modifier.size(width = 150.dp, height = 310.dp),
+    modifier: Modifier = Modifier,
     showInfo: Boolean = true
 ) {
     val safeLevel = level.coerceIn(0f, 1f)
@@ -144,7 +80,7 @@ fun AnimatedFuelTank(
     )
 
     Box(
-        modifier = modifier,
+        modifier = modifier.size(width = 150.dp, height = 310.dp),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -356,11 +292,6 @@ fun AnimatedFuelTank(
                         style = MaterialTheme.typography.labelLarge,
                         color = Color.White
                     )
-//                    Text(
-//                        text = "${(animatedLevel * 100f).roundToInt()}%",
-//                        style = MaterialTheme.typography.bodyMedium,
-//                        color = Color.White.copy(alpha = 0.90f)
-//                    )
                 }
             }
         }
@@ -397,14 +328,6 @@ private fun buildWavePath(
 @Preview(showBackground = true, backgroundColor = 0xFFF8FAFC)
 @Composable
 private fun AnimatedFuelTankPreview() {
-    val mockRanges = listOf(
-        QualityRange("Diesel", 2.0, 2.8, "0xFFFBBF24", "Normal"),
-        QualityRange("Agua", 20.0, null, "0xFF60A5FA", "Peligro"),
-        QualityRange("Aire", 0.0, 1.9, "0xFFBEE3F8", "Vacio"),
-        QualityRange("Alcohol", 6.0, 18.0, "0xFFF9A8D4", "Alerta"),
-        QualityRange("Adulterado", null, 0.0, "0xFFEF4444", "Critico")
-    )
-
     Row(
         modifier = Modifier
             .background(Color(0xFFF8FAFC))
@@ -412,7 +335,7 @@ private fun AnimatedFuelTankPreview() {
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        mockRanges.forEach { range ->
+        QualityRange.entries.forEach { range ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)

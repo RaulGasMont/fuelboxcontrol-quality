@@ -56,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gasmonsoft.fbccalidad.R
+import com.gasmonsoft.fbccalidad.domain.model.QualityRange
 import com.gasmonsoft.fbccalidad.ui.commons.ErrorDialog
 import com.gasmonsoft.fbccalidad.ui.commons.LoadingDialog
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorChannelType
@@ -426,7 +427,7 @@ private fun TankSelectionCard(
 
 @Composable
 private fun AnalysisSummaryCard(
-    fuelType: FuelType,
+    fuelType: QualityRange,
     rawValue: Float,
     levelPercent: Int,
     modifier: Modifier = Modifier
@@ -509,7 +510,7 @@ fun DetectorScreenPreview() {
             uiState = DetectorUiState(
                 tankId = 1,
                 tankName = "Tanque Diesel 01",
-                fuelType = FuelType.DIESEL,
+                fuelType = QualityRange.DIESEL,
                 valueDetection = 2.2f
             ),
             onSelectTank = {},

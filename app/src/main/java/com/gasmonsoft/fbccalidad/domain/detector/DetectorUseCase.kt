@@ -2,63 +2,60 @@ package com.gasmonsoft.fbccalidad.domain.detector
 
 import com.gasmonsoft.fbccalidad.data.model.ble.SensorState
 import com.gasmonsoft.fbccalidad.domain.model.QualityRange
-import com.gasmonsoft.fbccalidad.ui.detector.screen.FuelType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 data class MatterUnity(
-    val type: FuelType,
+    val type: QualityRange,
     val value: Float?,
     val temperature: Float?
 )
 
 class DetectorUseCase @Inject constructor() {
 
-    private val fuelType = mutableListOf<MatterUnity>()
+    private val fuelTypeResults = mutableListOf<MatterUnity>()
 
     suspend operator fun invoke(
         data: Flow<SensorState>,
         matterUnities: List<QualityRange>
     ): MatterUnity {
-        fuelType.clear()
+        fuelTypeResults.clear()
 
         withTimeoutOrNull(15_000L) {
             data.collect { value ->
-                val calidad = value.sensor1.calidad.toFloatOrNull()
+                val calidad = value.sensor1.calidad.toDoubleOrNull()
                 val temperature = value.sensor1.temperatura.toFloatOrNull()
 
-                val type = matterUnities.find {
-                    val min = it.min
-                    calidad in it.min..it.max
-                }
+                if (calidad != null) {
+                    val matchedRange = matterUnities.find { range ->
+                        val min = range.min ?: Double.MIN_VALUE
+                        val max = range.max ?: Double.MAX_VALUE
+                        calidad in min..max
+                    } ?: QualityRange.DESCONOCIDO
 
-//                val type = when {
-//                    calidad == null -> FuelType.DESCONOCIDO
-//                    calidad > 20.0f -> FuelType.AGUA
-//                    calidad < 0.0f -> FuelType.ADULTERADO
-//                    calidad in 0.0f..1.9f -> FuelType.AIRE
-//                    //calidad in 2.0f..2.2f -> FuelType.ACEITE
-//                    calidad in 2.0f..2.8f -> FuelType.DIESEL
-//                    calidad in 6.0f..18.0f -> FuelType.ALCOHOL
-//                    else -> FuelType.DESCONOCIDO
-//                }
-//
-//                fuelType.add(MatterUnity(type, calidad, temperature))
+                    fuelTypeResults.add(
+                        MatterUnity(
+                            type = matchedRange,
+                            value = calidad.toFloat(),
+                            temperature = temperature
+                        )
+                    )
+                }
             }
         }
 
-        if (fuelType.isEmpty()) {
-            return MatterUnity(FuelType.DESCONOCIDO, null, null)
+        if (fuelTypeResults.isEmpty()) {
+            return MatterUnity(QualityRange.DESCONOCIDO, null, null)
         }
 
-        val mostCommonType = fuelType
+        val mostCommonType = fuelTypeResults
             .groupBy { it.type }
             .maxByOrNull { it.value.size }
             ?.key
-            ?: return MatterUnity(FuelType.DESCONOCIDO, null, null)
+            ?: return MatterUnity(QualityRange.DESCONOCIDO, null, null)
 
-        val commonValues = fuelType.filter { it.type == mostCommonType }
+        val commonValues = fuelTypeResults.filter { it.type == mostCommonType }
 
         val average = commonValues
             .mapNotNull { it.value }
@@ -71,7 +68,6 @@ class DetectorUseCase @Inject constructor() {
             .takeIf { it.isNotEmpty() }
             ?.average()
             ?.toFloat()
-
 
         return MatterUnity(mostCommonType, average, tempAverage)
     }
