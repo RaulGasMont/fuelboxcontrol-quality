@@ -46,10 +46,11 @@ import kotlin.math.sin
 
 @Composable
 fun AnimatedFuelTank(
-    fuelType: QualityRange,
+    fuelType: QualityRange?,
     level: Float,
     modifier: Modifier = Modifier,
-    showInfo: Boolean = true
+    showInfo: Boolean = true,
+    isLoading: Boolean
 ) {
     val safeLevel = level.coerceIn(0f, 1f)
 
@@ -138,6 +139,7 @@ fun AnimatedFuelTank(
             val wavelength = tankRect.width * 0.9f
 
             clipPath(tankPath) {
+                if (fuelType?.label == null) return@clipPath
                 if (fuelType.label.equals("Aire", ignoreCase = true)) {
                     // Fondo degradado más notable (cielo)
                     drawRect(
@@ -182,14 +184,14 @@ fun AnimatedFuelTank(
                             else -> 0.85f
                         }
                         val r = radiusDp.dp.toPx()
-                        
+
                         // Resplandor exterior (Glow)
                         drawCircle(
                             color = Color(0xFF7DD3FC).copy(alpha = alpha * 0.4f),
                             radius = r * 1.5f,
                             center = Offset(x, y)
                         )
-                        
+
                         drawCircle(
                             color = Color(0xFFBAE6FD).copy(alpha = alpha),
                             radius = r,
@@ -307,7 +309,7 @@ fun AnimatedFuelTank(
             )
         }
 
-        if (showInfo) {
+        if (fuelType?.label != null) {
             Surface(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -324,6 +326,23 @@ fun AnimatedFuelTank(
                         style = MaterialTheme.typography.labelLarge,
                         color = Color.White
                     )
+                }
+            }
+        }
+
+        if (isLoading) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 12.dp),
+                shape = CircleShape,
+                color = Color(0xFF0F172A).copy(alpha = 0.72f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LoadingDotsText()
                 }
             }
         }
@@ -381,7 +400,8 @@ private fun AnimatedFuelTankPreview() {
                 AnimatedFuelTank(
                     fuelType = range,
                     level = if (range.label == "Aire") 1.0f else 0.6f,
-                    modifier = Modifier.size(width = 120.dp, height = 260.dp)
+                    modifier = Modifier.size(width = 120.dp, height = 260.dp),
+                    isLoading = false
                 )
 
                 Surface(

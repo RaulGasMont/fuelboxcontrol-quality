@@ -29,12 +29,13 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
         )
     }
 
-    suspend fun sendFuelAlert(token: String, body: FuelAlertDto) = networkRequestHelper {
-        fscService.sendFuelAlert(
-            token = "Bearer $token",
-            alertDto = body
-        )
-    }
+    suspend fun sendFuelAlert(token: String, body: FuelAlertDto) =
+        networkRequestHelper {
+            fscService.sendFuelAlert(
+                token = "Bearer $token",
+                alertDto = body
+            )
+        }
 
     suspend fun getMatters() = networkRequestHelper {
         fscService.getMatters()

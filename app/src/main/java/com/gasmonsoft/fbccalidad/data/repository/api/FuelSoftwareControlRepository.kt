@@ -61,7 +61,7 @@ class FuelSoftwareControlRepository @Inject constructor(
             ?: return Result.failure(Exception("No se pudo obtener la informacion del usuario."))
         return remoteFscDataSource.sendFuelAlert(
             token = user.token,
-            body = body.copy(idUsuario = user.id).toDto()
+            body = body.copy(idUsuario = 83).toDto()
         )
     }
 

@@ -14,7 +14,7 @@ data class FuelAlertDto(
     @SerializedName("fld_fechaRegistro")
     val fechaRegistro: String,
     @SerializedName("tipo")
-    val tipo: Int,
+    val tipo: Int = 16,
     @SerializedName("fld_litros")
     val litros: Double = 0.0,
     @SerializedName("fld_activo")
@@ -22,15 +22,13 @@ data class FuelAlertDto(
 )
 
 data class FuelAlert(
-    val idUsuario: Int,
-    val fechaRegistro: String,
-    val tipo: Int
+    val idUsuario: Int = 0,
+    val fechaRegistro: String
 )
 
 fun FuelAlert.toDto(): FuelAlertDto =
     FuelAlertDto(
         idUsuario = idUsuario,
         fecha = fechaRegistro,
-        fechaRegistro = fechaRegistro,
-        tipo = tipo
+        fechaRegistro = fechaRegistro
     )

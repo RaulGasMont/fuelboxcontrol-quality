@@ -18,6 +18,7 @@ import com.gasmonsoft.fbccalidad.domain.usb.UsbDeviceState
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionManager
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionResult
 import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.getCurrentDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,8 +75,7 @@ class DetectorViewModel @Inject constructor(
                     it.copy(
                         fuelTypes = allRanges,
                         loadScreen = ProcessingEvent.Success,
-                        fuelType = allRanges.find { range -> range.label == "Desconocido" }
-                            ?: QualityRange.DESCONOCIDO
+                        fuelType = null
                     )
                 }
             }.onFailure {
@@ -159,7 +159,11 @@ class DetectorViewModel @Inject constructor(
     }
 
     fun refreshDetection() {
-        usbConnectionMonitor.startMonitoring()
+        _uiState.update { currentUiState ->
+            currentUiState.copy(
+                fuelType = null
+            )
+        }
     }
 
     fun analyzeData(channel: DetectorChannelType) {
@@ -174,6 +178,7 @@ class DetectorViewModel @Inject constructor(
                 DetectorChannelType.USB -> {
                     val isReady = prepareUsbReading()
                     if (isReady) {
+                        usbConnectionMonitor.startMonitoring()
                         detectorUseCase(usbData, matterList)
                     } else {
                         MatterUnity(QualityRange.DESCONOCIDO, null, null)
@@ -191,12 +196,9 @@ class DetectorViewModel @Inject constructor(
             )
 
             if (result.type.label != "Diesel") {
-                val id = _uiState.value.fuelTypes.indexOfFirst { it.label == result.type.label }
                 fscApiRepository.sendFuelAlert(
                     body = FuelAlert(
-                        idUsuario = 0, // Se inyecta en el repo
-                        fechaRegistro = com.gasmonsoft.fbccalidad.utils.getCurrentDate(),
-                        tipo = id
+                        fechaRegistro = getCurrentDate()
                     )
                 )
             }

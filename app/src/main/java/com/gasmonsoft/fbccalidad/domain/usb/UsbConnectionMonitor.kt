@@ -24,8 +24,8 @@ class UsbConnectionMonitor @Inject constructor(
     private val _deviceState = MutableStateFlow<UsbDeviceState>(UsbDeviceState.Disconnected)
     val deviceState: StateFlow<UsbDeviceState> = _deviceState.asStateFlow()
 
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
+    private val usbBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context, intent: Intent) {
             val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
                 ?: return
 
@@ -59,9 +59,9 @@ class UsbConnectionMonitor @Inject constructor(
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+            context.registerReceiver(usbBroadcastReceiver, filter, Context.RECEIVER_EXPORTED)
         } else {
-            context.registerReceiver(receiver, filter)
+            context.registerReceiver(usbBroadcastReceiver, filter)
         }
 
         isMonitoring = true
@@ -79,7 +79,7 @@ class UsbConnectionMonitor @Inject constructor(
     fun stopMonitoring() {
         if (!isMonitoring) return
         isMonitoring = false
-        runCatching { context.unregisterReceiver(receiver) }
+        runCatching { context.unregisterReceiver(usbBroadcastReceiver) }
     }
 
     private fun checkAlreadyConnected() {

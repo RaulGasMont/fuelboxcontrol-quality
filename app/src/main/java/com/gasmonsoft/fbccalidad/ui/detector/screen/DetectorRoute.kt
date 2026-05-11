@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +46,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.gasmonsoft.fbccalidad.R
 import com.gasmonsoft.fbccalidad.domain.model.QualityRange
 import com.gasmonsoft.fbccalidad.ui.commons.ErrorDialog
@@ -65,6 +68,7 @@ import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorViewModel
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.TransferState
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -83,7 +87,7 @@ fun DetectorRoute(
         onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) },
         onPermissionRequest = viewModel::onPermissionRequest,
         onRefreshDetection = viewModel::refreshDetection,
-        onAcceptMatterLoadError = viewModel::acceptMatterLoadError
+        onAcceptMatterLoadError = viewModel::acceptMatterLoadError,
     )
 }
 
@@ -96,10 +100,12 @@ fun DetectorScreen(
     onDismissDetection: () -> Unit,
     onPermissionRequest: (device: UsbDevice) -> Unit,
     onRefreshDetection: () -> Unit,
-    onAcceptMatterLoadError: () -> Unit,
+    onAcceptMatterLoadError: () -> Unit
 ) {
     var showChannelDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val fuelAnalyseRequester = remember { BringIntoViewRequester() }
 
     LaunchedEffect(showChannelDialog) {
         if (showChannelDialog) {
@@ -145,11 +151,12 @@ fun DetectorScreen(
 
     LaunchedEffect(uiState.detectionEvent) {
         if (uiState.detectionEvent is ProcessingEvent.Success) {
+            coroutineScope.launch {
+                fuelAnalyseRequester.bringIntoView()
+            }
             onDismissDetection()
         }
     }
-
-
 
     when (uiState.detectionEvent) {
         is ProcessingEvent.Loading -> {
@@ -193,7 +200,9 @@ fun DetectorScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Button(
-                        onClick = { showChannelDialog = true },
+                        onClick = {
+                            showChannelDialog = true
+                        },
                         enabled = canAnalyze,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -258,9 +267,11 @@ fun DetectorScreen(
                         )
 
                         AnalysisSummaryCard(
+                            isLoading = uiState.detectionEvent == ProcessingEvent.Loading,
                             fuelType = uiState.fuelType,
                             rawValue = uiState.valueDetection,
                             levelPercent = levelPercent,
+                            bringIntoViewRequester = fuelAnalyseRequester,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .widthIn(max = 520.dp)
@@ -447,9 +458,11 @@ private fun TankSelectionCard(
 
 @Composable
 private fun AnalysisSummaryCard(
-    fuelType: QualityRange,
+    isLoading: Boolean,
+    fuelType: QualityRange?,
     rawValue: Float,
     levelPercent: Int,
+    bringIntoViewRequester: BringIntoViewRequester,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -472,17 +485,38 @@ private fun AnalysisSummaryCard(
                 fontWeight = FontWeight.SemiBold
             )
 
+            if (!isLoading) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    shape = CircleShape,
+                    color = Color(0xFF0F172A).copy(alpha = 0.72f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (!isLoading) "Sustancia: ${fuelType?.label ?: "Sin análisis"}" else "Analizando...",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(380.dp),
+                    .height(380.dp)
+                    .bringIntoViewRequester(bringIntoViewRequester),
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedFuelTank(
                     fuelType = fuelType,
                     level = 100f,
                     modifier = Modifier.size(width = 220.dp, height = 340.dp),
-                    showInfo = true
+                    isLoading = isLoading
                 )
             }
         }
@@ -519,6 +553,28 @@ private fun MetricCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Resultado Adulterado")
+@Composable
+fun DetectorSuccessAdulteratedPreview() {
+    FuelBoxControlTheme {
+        DetectorScreen(
+            uiState = DetectorUiState(
+                tankId = 1,
+                tankName = "Tanque 02",
+                fuelType = QualityRange.ADULTERADO,
+                valueDetection = -0.5f,
+                loadScreen = ProcessingEvent.Success
+            ),
+            onSelectTank = {},
+            onAnalyze = {},
+            onDismissDetection = {},
+            onPermissionRequest = {},
+            onRefreshDetection = {},
+            onAcceptMatterLoadError = {}
+        )
     }
 }
 
@@ -584,28 +640,6 @@ fun DetectorSuccessDieselPreview() {
                 tankName = "Tanque Diesel 01",
                 fuelType = QualityRange.DIESEL,
                 valueDetection = 2.4f,
-                loadScreen = ProcessingEvent.Success
-            ),
-            onSelectTank = {},
-            onAnalyze = {},
-            onDismissDetection = {},
-            onPermissionRequest = {},
-            onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Resultado Adulterado")
-@Composable
-fun DetectorSuccessAdulteratedPreview() {
-    FuelBoxControlTheme {
-        DetectorScreen(
-            uiState = DetectorUiState(
-                tankId = 1,
-                tankName = "Tanque 02",
-                fuelType = QualityRange.ADULTERADO,
-                valueDetection = -0.5f,
                 loadScreen = ProcessingEvent.Success
             ),
             onSelectTank = {},

@@ -46,7 +46,7 @@ class UsbPermissionManager @Inject constructor(
 
         // Registra receptor de respuesta
         permissionReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
+            override fun onReceive(ctx: Context, intent: Intent) {
                 Log.d("UsbPermission", "OnReceive permission broadcast: ${intent.action}")
                 if (intent.action != ACTION_USB_PERMISSION) return
 

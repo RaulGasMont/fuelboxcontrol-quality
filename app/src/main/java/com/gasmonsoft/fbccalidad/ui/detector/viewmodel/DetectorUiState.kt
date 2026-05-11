@@ -8,7 +8,7 @@ data class DetectorUiState(
     val tankId: Int = -1,
     val tankName: String = "",
     val idCaja: Int = -1,
-    val fuelType: QualityRange = QualityRange.DESCONOCIDO,
+    val fuelType: QualityRange? = null,
     val valueDetection: Float = 0.0f,
     val detectionEvent: ProcessingEvent = ProcessingEvent.Idle,
     val channel: DetectorChannelType = DetectorChannelType.BLE,
