@@ -2,6 +2,7 @@ package com.gasmonsoft.fbccalidad.ui.detector.screen
 
 import android.hardware.usb.UsbDevice
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -91,6 +92,7 @@ fun DetectorRoute(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DetectorScreen(
     uiState: DetectorUiState,
@@ -456,6 +458,7 @@ private fun TankSelectionCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AnalysisSummaryCard(
     isLoading: Boolean,
