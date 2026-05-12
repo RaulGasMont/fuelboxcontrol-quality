@@ -83,13 +83,13 @@ class SensorViewModel @Inject constructor(
     val sensorInfoState = sensorReceiveManager.sensorData
 
     fun initializeConnection() {
+        ensureSubscription()
         if (uiState.value.connectionState == ConnectionState.Connected ||
             uiState.value.connectionState == ConnectionState.CurrentlyInitializing) {
             return
         }
         loadSavedMacAddress()
         clearReadings()
-        ensureSubscription()
         sensorReceiveManager.startReceiving()
     }
 

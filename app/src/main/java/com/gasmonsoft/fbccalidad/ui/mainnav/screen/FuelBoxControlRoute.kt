@@ -37,7 +37,10 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
     val startDest: ScreenRoute = when {
         !hasAllPermissions -> ScreenRoute.Permissions
         state.value.sessionExpired -> ScreenRoute.Login
-        else -> ScreenRoute.Home
+        else -> {
+            if (state.value.hasBoxId) ScreenRoute.Sensores
+            else ScreenRoute.Home
+        }
     }
 
     Scaffold(

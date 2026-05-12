@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.rounded.Battery6Bar
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,9 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gasmonsoft.fbccalidad.data.model.ble.ConnectionState
 import com.gasmonsoft.fbccalidad.data.model.ble.SensorData
 import com.gasmonsoft.fbccalidad.data.model.ble.SensorState
-import com.gasmonsoft.fbccalidad.ui.sensor.components.CommandSection
 import com.gasmonsoft.fbccalidad.ui.sensor.components.ConnectionStatusRow
-import com.gasmonsoft.fbccalidad.ui.sensor.components.InfoLine
 import com.gasmonsoft.fbccalidad.ui.sensor.components.PermissionRequiredContent
 import com.gasmonsoft.fbccalidad.ui.sensor.components.SectionHeader
 import com.gasmonsoft.fbccalidad.ui.sensor.components.SensorDataCaption
@@ -111,7 +107,7 @@ fun SensorRoute(
     }
 
     LaunchedEffect(permissionState.allPermissionsGranted) {
-        if (permissionState.allPermissionsGranted) {
+        if (permissionState.allPermissionsGranted && uiState.connectionState == ConnectionState.Uninitialized) {
             viewModelSensor.initializeConnection()
         }
     }
@@ -217,95 +213,6 @@ fun SensorScreenContent(
                                 onInitialize = onInitializeConnection,
                                 onDisconnect = onDisconnect
                             )
-                        }
-                    }
-
-                    item {
-                        SensorSectionCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 560.dp)
-                        ) {
-                            SectionHeader(
-                                title = "Resumen del dispositivo",
-                                subtitle = "Información general y mensajes recientes del sistema."
-                            )
-
-                            Spacer(modifier = Modifier.height(18.dp))
-
-                            InfoLine(
-                                title = "Estado de batería / comando",
-                                value = uiState.bateria.ifBlank { "Sin información disponible" },
-                                icon = Icons.Rounded.Battery6Bar
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            InfoLine(
-                                title = "Mensaje del sistema",
-                                value = uiState.sensorMessage.ifBlank { "Sin mensajes disponibles" },
-                                icon = Icons.Rounded.Info
-                            )
-                        }
-                    }
-
-                    item {
-                        CommandSection(
-                            title = "Calibrar acelerómetro",
-                            subtitle = "Seleccione el eje de referencia para calibrar el acelerómetro."
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CommandActionButton(
-                                    text = "Eje X",
-                                    enabled = isConnected && !isInitializing,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onWriteEinc("x") }
-                                )
-
-                                CommandActionButton(
-                                    text = "Eje Y",
-                                    enabled = isConnected && !isInitializing,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onWriteEinc("y") }
-                                )
-
-                                CommandActionButton(
-                                    text = "Eje Z",
-                                    enabled = isConnected && !isInitializing,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onWriteEinc("z") }
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        CommandSection(
-                            title = "Actualizar fecha y hora",
-                            subtitle = "Sincronice la fecha y la hora del dispositivo."
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CommandActionButton(
-                                    text = "Actualizar fecha",
-                                    enabled = isConnected && !isInitializing,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onWriteRTC("0") }
-                                )
-
-                                CommandActionButton(
-                                    text = "Actualizar hora",
-                                    enabled = isConnected && !isInitializing,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { onWriteRTC("1") }
-                                )
-                            }
                         }
                     }
 

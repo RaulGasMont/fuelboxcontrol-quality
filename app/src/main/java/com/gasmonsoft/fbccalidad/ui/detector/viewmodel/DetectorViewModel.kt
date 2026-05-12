@@ -195,13 +195,12 @@ class DetectorViewModel @Inject constructor(
                 )
             )
 
-            if (result.type.label != "Diesel") {
-                fscApiRepository.sendFuelAlert(
-                    body = FuelAlert(
-                        fechaRegistro = getCurrentDate()
-                    )
+            fscApiRepository.sendFuelAlert(
+                body = FuelAlert(
+                    alertas = if (result.type.label != "Diésel" || result.type.label != "Diesel") "Adulterado" else "Diésel",
+                    fechaRegistro = getCurrentDate()
                 )
-            }
+            )
 
             _uiState.update { currentUiState ->
                 currentUiState.copy(

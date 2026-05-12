@@ -72,7 +72,7 @@ fun SensorDataCard(
             containerColor = when (status) {
                 SensorVisualStatus.Error -> MaterialTheme.colorScheme.errorContainer
                 SensorVisualStatus.Ok -> MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
-                SensorVisualStatus.Empty -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.40f)
+                SensorVisualStatus.Empty -> MaterialTheme.colorScheme.surface
             }
         ),
         border = BorderStroke(
@@ -491,22 +491,52 @@ data class Quadruple<A, B, C, D>(
 @Composable
 fun SensorDataCardPreview() {
     FuelBoxControlTheme {
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            SensorDataCard(
-                numSensor = "1",
-                sensorData = SensorData(
-                    rawData = "100.0,200.0,300.0",
-                    error = false,
-                    date = "24/05/2024 10:00",
-                    temperatura = "25.5",
-                    calidad = "98.0"
-                )
-            )
-        }
+        SensorDataCard(
+            numSensor = "1",
+            sensorData = SensorData(
+                rawData = "123.4",
+                error = false,
+                date = "12:34:56",
+                temperatura = "25.5",
+                calidad = "98.2"
+            ),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SensorDataCardErrorPreview() {
+    FuelBoxControlTheme {
+        SensorDataCard(
+            numSensor = "2",
+            sensorData = SensorData(
+                rawData = "-555",
+                error = true,
+                date = "12:35:10",
+                temperatura = "0.0",
+                calidad = "0.0"
+            ),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SensorDataCardEmptyPreview() {
+    FuelBoxControlTheme {
+        SensorDataCard(
+            numSensor = "3",
+            sensorData = SensorData(
+                rawData = "",
+                error = false,
+                date = "12:36:00",
+                temperatura = "",
+                calidad = ""
+            ),
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

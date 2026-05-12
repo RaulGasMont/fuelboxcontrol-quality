@@ -103,11 +103,13 @@ class HomeViewModel @Inject constructor(
         return rawBoxes.split("|").mapNotNull { data ->
             val boxInfo = data.split(" ")
             val boxDataConnection = boxInfo.first().split(",")
+            if (boxDataConnection.isEmpty()) return@mapNotNull null
+            val mac = boxDataConnection.first().split(",").firstOrNull()
             val boxId = boxDataConnection.first().toIntOrNull()
             if (boxInfo.size >= 2 && boxId != null) {
                 QualityBox(
                     id = boxId,
-                    mac = "10:06:1C:71:80:16",
+                    mac = mac ?: "10:06:1C:71:80:16",
                     name = boxInfo.drop(1).joinToString(" ")
                 )
             } else null

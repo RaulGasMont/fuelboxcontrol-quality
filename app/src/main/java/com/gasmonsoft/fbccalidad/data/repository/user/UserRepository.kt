@@ -20,8 +20,7 @@ class UserRepository @Inject constructor(
         withContext(Dispatchers.IO) {
             runCatching {
                 // El DTO espera (fld_password, fld_usuario, fld_id)
-                val responseList =
-                    remoteDataSource.login(LoginDto(password, user, "0")).getOrThrow()
+                val responseList = remoteDataSource.login(LoginDto(password, user, "0")).getOrThrow()
 
                 // Operaciones de base de datos
                 localDataSource.deleteUser()
