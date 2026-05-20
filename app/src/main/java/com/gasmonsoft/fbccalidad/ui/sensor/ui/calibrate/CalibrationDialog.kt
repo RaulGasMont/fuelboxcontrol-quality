@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.gasmonsoft.fbccalidad.data.model.ble.ConnectionState
 import com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.calibrate.CalibrationUiState
 import com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.calibrate.CalibrationViewModel
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
@@ -56,7 +57,10 @@ fun CalibrationDialog(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    BasicAlertDialog(onDismissRequest = onDismissRequest) {
+    BasicAlertDialog(onDismissRequest = {
+        viewModel.resetState()
+        onDismissRequest()
+    }) {
         Card(
             modifier = modifier
                 .wrapContentHeight()
@@ -72,7 +76,10 @@ fun CalibrationDialog(
             ) { state ->
                 CalibrationContent(
                     state = state,
-                    onDismissRequest = onDismissRequest,
+                    onDismissRequest = {
+                        viewModel.resetState()
+                        onDismissRequest()
+                    },
                     onCalibrate = { viewModel.calibrate() },
                     onGetAirValue = { viewModel.getAirValue() },
                     onGetQualityValue = { viewModel.getQualityValue() },
@@ -92,6 +99,7 @@ fun CalibrationContent(
     onGetQualityValue: () -> Unit,
     onProCalibrate: () -> Unit
 ) {
+    val isConnected = state.connectionState == ConnectionState.Connected
     val isLoading = state.initialCalibration is LoadState.Loading ||
             state.gettingAirValue is LoadState.Loading ||
             state.gettingQualityFuelValue is LoadState.Loading ||
@@ -104,6 +112,14 @@ fun CalibrationContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (!isConnected && state.refineCalibration !is LoadState.Success) {
+            Text(
+                text = "Sensor desconectado. Por favor, conecte el sensor para continuar.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
+        }
         when {
             state.refineCalibration is LoadState.Success -> {
                 SuccessStep(onDismissRequest)

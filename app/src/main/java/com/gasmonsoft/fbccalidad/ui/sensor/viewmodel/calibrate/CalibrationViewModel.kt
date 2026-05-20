@@ -2,12 +2,14 @@ package com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.calibrate
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gasmonsoft.fbccalidad.data.model.ble.ConnectionState
 import com.gasmonsoft.fbccalidad.data.repository.ble.SensorReceiveManager
 import com.gasmonsoft.fbccalidad.utils.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,6 +25,7 @@ data class CalibrationUiState(
     val gettingAirValue: LoadState = LoadState.Idle,
     val qualityData: Double? = null,
     val aireData: Double? = null,
+    val connectionState: ConnectionState = ConnectionState.Uninitialized,
 )
 
 @HiltViewModel
@@ -34,7 +37,24 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     private val sensorData = sensorReceiveManager.sensorData
     private val tonSensorData = mutableListOf<String>()
     private val tonAirData = mutableListOf<String>()
+
+    init {
+        viewModelScope.launch {
+            sensorReceiveManager.connectionState.collectLatest { state ->
+                _uiState.update { it.copy(connectionState = state) }
+            }
+        }
+    }
+
+    private fun isConnected(): Boolean {
+        return _uiState.value.connectionState == ConnectionState.Connected
+    }
+
     fun calibrate() {
+        if (!isConnected()) {
+            _uiState.update { it.copy(initialCalibration = LoadState.Error) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(initialCalibration = LoadState.Loading) }
             tonSensorData.clear()
@@ -65,6 +85,10 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun getQualityValue() {
+        if (!isConnected()) {
+            _uiState.update { it.copy(gettingQualityFuelValue = LoadState.Error) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(gettingQualityFuelValue = LoadState.Loading) }
             tonSensorData.clear()
@@ -94,6 +118,10 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun getAirValue() {
+        if (!isConnected()) {
+            _uiState.update { it.copy(gettingAirValue = LoadState.Error) }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(gettingAirValue = LoadState.Loading) }
             tonAirData.clear()
@@ -119,6 +147,10 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun proCalibrate() {
+        if (!isConnected()) {
+            _uiState.update { it.copy(refineCalibration = LoadState.Error) }
+            return
+        }
         val quality = _uiState.value.qualityData
         val air = _uiState.value.aireData
 
@@ -156,5 +188,11 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
                 it.copy(refineCalibration = LoadState.Error)
             }
         }
+    }
+
+    fun resetState() {
+        _uiState.value = CalibrationUiState()
+        tonSensorData.clear()
+        tonAirData.clear()
     }
 }
