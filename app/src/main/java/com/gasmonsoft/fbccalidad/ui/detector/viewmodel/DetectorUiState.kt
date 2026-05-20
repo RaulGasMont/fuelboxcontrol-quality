@@ -14,7 +14,8 @@ data class DetectorUiState(
     val channel: DetectorChannelType = DetectorChannelType.BLE,
     val otgTransferState: TransferState = TransferState.Idle,
     val loadScreen: LoadState = LoadState.Idle,
-    val fuelTypes: List<QualityRange> = emptyList()
+    val fuelTypes: List<QualityRange> = emptyList(),
+    val isFuelTableUpdated: Boolean = false
 )
 
 data class MatterRange(

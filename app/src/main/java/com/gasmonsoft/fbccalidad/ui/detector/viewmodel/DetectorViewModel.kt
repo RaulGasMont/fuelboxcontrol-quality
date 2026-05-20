@@ -66,7 +66,7 @@ class DetectorViewModel @Inject constructor(
         usbConnectionMonitor.startMonitoring()
     }
 
-    private fun getFuelTypes() {
+    fun getFuelTypes(isManualRefresh: Boolean = false) {
         viewModelScope.launch {
             _uiState.update { it.copy(loadScreen = LoadState.Loading) }
             fscApiRepository.getMatters().onSuccess { matters ->
@@ -75,7 +75,8 @@ class DetectorViewModel @Inject constructor(
                     it.copy(
                         fuelTypes = allRanges,
                         loadScreen = LoadState.Success,
-                        fuelType = null
+                        fuelType = if (isManualRefresh) it.fuelType else null,
+                        isFuelTableUpdated = isManualRefresh
                     )
                 }
             }.onFailure {
@@ -87,6 +88,10 @@ class DetectorViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun dismissFuelTableUpdate() {
+        _uiState.update { it.copy(isFuelTableUpdated = false) }
     }
 
     private fun observeUsbConnection() {

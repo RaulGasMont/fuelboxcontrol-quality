@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.LocalGasStation
 import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -89,6 +91,8 @@ fun DetectorRoute(
         onPermissionRequest = viewModel::onPermissionRequest,
         onRefreshDetection = viewModel::refreshDetection,
         onAcceptMatterLoadError = viewModel::acceptMatterLoadError,
+        onGetFuelTypes = { viewModel.getFuelTypes(isManualRefresh = true) },
+        onDismissUpdateNotification = viewModel::dismissFuelTableUpdate
     )
 }
 
@@ -101,13 +105,26 @@ fun DetectorScreen(
     onAnalyze: (channel: DetectorChannelType) -> Unit,
     onDismissDetection: () -> Unit,
     onPermissionRequest: (device: UsbDevice) -> Unit,
+    onGetFuelTypes: () -> Unit,
     onRefreshDetection: () -> Unit,
-    onAcceptMatterLoadError: () -> Unit
+    onAcceptMatterLoadError: () -> Unit,
+    onDismissUpdateNotification: () -> Unit = {}
 ) {
     var showChannelDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val fuelAnalyseRequester = remember { BringIntoViewRequester() }
+
+    LaunchedEffect(uiState.isFuelTableUpdated) {
+        if (uiState.isFuelTableUpdated) {
+            Toast.makeText(
+                context,
+                "Tabla de calibración actualizada correctamente",
+                Toast.LENGTH_SHORT
+            ).show()
+            onDismissUpdateNotification()
+        }
+    }
 
     LaunchedEffect(showChannelDialog) {
         if (showChannelDialog) {
@@ -248,6 +265,7 @@ fun DetectorScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 DetectorHeaderCard(
+                    onGetFuelTypes = onGetFuelTypes,
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 520.dp)
@@ -296,6 +314,7 @@ fun DetectorScreen(
 
 @Composable
 private fun DetectorHeaderCard(
+    onGetFuelTypes: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -333,7 +352,8 @@ private fun DetectorHeaderCard(
                 }
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(
                         text = "Detector de calidad",
@@ -347,6 +367,37 @@ private fun DetectorHeaderCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            HorizontalDivider(
+                thickness = DividerDefaults.Thickness,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                onClick = onGetFuelTypes,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Sync,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(modifier = Modifier.size(8.dp))
+
+                Text(
+                    text = "Actualizar tabla de calibración",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -576,7 +627,8 @@ fun DetectorSuccessAdulteratedPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -592,7 +644,8 @@ fun DetectorLoadingPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -608,7 +661,8 @@ fun DetectorNoTankPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -628,7 +682,8 @@ fun DetectorReadyPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -650,7 +705,8 @@ fun DetectorSuccessDieselPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -671,7 +727,8 @@ fun DetectorErrorPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
@@ -689,7 +746,8 @@ fun DetectorMatterLoadErrorPreview() {
             onDismissDetection = {},
             onPermissionRequest = {},
             onRefreshDetection = {},
-            onAcceptMatterLoadError = {}
+            onAcceptMatterLoadError = {},
+            onGetFuelTypes = {}
         )
     }
 }
