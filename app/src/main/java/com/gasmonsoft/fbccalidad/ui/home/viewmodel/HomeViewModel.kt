@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
             if (boxInfo.isNotEmpty() && boxId != null) {
                 QualityBox(
                     id = boxId,
-                    mac = "10:06:1C:6D:5C:8E",
+                    mac = "10:06:1C:71:80:8E",
                     name = "Caja $boxId"
                 )
             } else null

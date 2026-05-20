@@ -112,14 +112,14 @@ fun CalibrationContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (!isConnected && state.refineCalibration !is LoadState.Success) {
-            Text(
-                text = "Sensor desconectado. Por favor, conecte el sensor para continuar.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center
-            )
-        }
+//        if (!isConnected) {
+//            Text(
+//                text = "Sensor desconectado. Por favor, conecte el sensor para continuar.",
+//                style = MaterialTheme.typography.bodySmall,
+//                color = MaterialTheme.colorScheme.error,
+//                textAlign = TextAlign.Center
+//            )
+//        }
         when {
             state.refineCalibration is LoadState.Success -> {
                 SuccessStep(onDismissRequest)

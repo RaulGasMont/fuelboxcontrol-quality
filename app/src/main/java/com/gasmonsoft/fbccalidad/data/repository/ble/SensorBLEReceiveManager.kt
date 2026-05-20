@@ -601,7 +601,7 @@ class SensorBLEReceiveManager @Inject constructor(
 
                 9 -> "[CALI] $valor"
 
-                10 -> "[PRO_CALI] $valor"
+                10 -> "[PRO] $valor"
 
                 else -> null
             }

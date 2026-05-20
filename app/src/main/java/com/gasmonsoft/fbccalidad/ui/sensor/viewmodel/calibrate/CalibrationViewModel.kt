@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.math.floor
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
 data class CalibrationUiState(
@@ -51,44 +52,20 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun calibrate() {
-        if (!isConnected()) {
-            _uiState.update { it.copy(initialCalibration = LoadState.Error) }
-            return
-        }
         viewModelScope.launch {
             _uiState.update { it.copy(initialCalibration = LoadState.Loading) }
             tonSensorData.clear()
 
-            withTimeoutOrNull(10_000L) {
-                sensorData.map { it.sensor1 }.collect { data ->
-                    if (!data.error) {
-                        tonSensorData.add(data.calidad)
-                    }
-                }
-            }
-
-            val averageQuality = tonSensorData
-                .mapNotNull { it.toDoubleOrNull() }
-                .average()
-
-            if (!averageQuality.isNaN()) {
-                sensorReceiveManager.writeInitialValuese(
-                    valor = averageQuality.toString(),
-                    opcion = 9
-                )
-                delay(10.seconds)
-                _uiState.update { it.copy(initialCalibration = LoadState.Success) }
-            } else {
-                _uiState.update { it.copy(initialCalibration = LoadState.Error) }
-            }
+            sensorReceiveManager.writeInitialValuese(
+                valor = "",
+                opcion = 9
+            )
+            delay(10.seconds)
+            _uiState.update { it.copy(initialCalibration = LoadState.Success) }
         }
     }
 
     fun getQualityValue() {
-        if (!isConnected()) {
-            _uiState.update { it.copy(gettingQualityFuelValue = LoadState.Error) }
-            return
-        }
         viewModelScope.launch {
             _uiState.update { it.copy(gettingQualityFuelValue = LoadState.Loading) }
             tonSensorData.clear()
@@ -118,10 +95,6 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun getAirValue() {
-        if (!isConnected()) {
-            _uiState.update { it.copy(gettingAirValue = LoadState.Error) }
-            return
-        }
         viewModelScope.launch {
             _uiState.update { it.copy(gettingAirValue = LoadState.Loading) }
             tonAirData.clear()
@@ -147,10 +120,6 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
     }
 
     fun proCalibrate() {
-        if (!isConnected()) {
-            _uiState.update { it.copy(refineCalibration = LoadState.Error) }
-            return
-        }
         val quality = _uiState.value.qualityData
         val air = _uiState.value.aireData
 
@@ -163,7 +132,7 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
                 val a2 = (a1 / 5900.0) * 0.1
 
                 // a3 = redondeo a menos a un decimal (ej: 16.5485 -> 16.5)
-                val a3 = floor(a2 * 10) / 10.0
+                val a3 = (a2 * 10.0).roundToInt() / 10.0
 
                 sensorReceiveManager.writeInitialValuese(
                     valor = "C04 $a3",
@@ -177,7 +146,7 @@ class CalibrationViewModel @Inject constructor(private val sensorReceiveManager:
                 val finalValue = floor(b2).toInt()
 
                 sensorReceiveManager.writeInitialValuese(
-                    valor = "C09 $finalValue",
+                    valor = "C09 $finalValue $diferencia",
                     opcion = 10
                 )
                 delay(10.seconds)
