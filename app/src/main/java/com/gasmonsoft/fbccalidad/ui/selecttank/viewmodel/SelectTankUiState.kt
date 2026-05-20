@@ -1,7 +1,7 @@
 package com.gasmonsoft.fbccalidad.ui.selecttank.viewmodel
 
 import com.gasmonsoft.fbccalidad.data.model.selectvehicle.Tank
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 
 data class SelectTankUiState(
     val search: String = "",
@@ -9,8 +9,8 @@ data class SelectTankUiState(
     val screen: SelectVehicleScreen = SelectVehicleScreen.Vehicles(),
     val vehicles: List<Tank> = emptyList(),
     val otros: List<Tank> = emptyList(),
-    val seeTankEvent: ProcessingEvent = ProcessingEvent.Idle,
-    val saveTankEvent: ProcessingEvent = ProcessingEvent.Idle
+    val seeTankEvent: LoadState = LoadState.Idle,
+    val saveTankEvent: LoadState = LoadState.Idle
 )
 
 interface SelectTankScreen {

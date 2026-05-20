@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.gasmonsoft.fbccalidad.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
 import com.gasmonsoft.fbccalidad.domain.session.SessionUseCase
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ data class FbcState(
     val isCheckingSession: Boolean = true,
     val sessionExpired: Boolean = false,
     val hasBoxId: Boolean = false,
-    val sessionProcessEvent: ProcessingEvent = ProcessingEvent.Idle
+    val sessionProcessEvent: LoadState = LoadState.Idle
 )
 
 @HiltViewModel

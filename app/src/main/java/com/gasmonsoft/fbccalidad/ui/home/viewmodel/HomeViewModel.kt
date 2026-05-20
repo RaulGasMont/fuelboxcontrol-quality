@@ -9,7 +9,7 @@ import com.gasmonsoft.fbccalidad.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
 import com.gasmonsoft.fbccalidad.domain.session.SessionUseCase
 import com.gasmonsoft.fbccalidad.utils.NetworkConfig
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeState(
-    val logoutEvent: ProcessingEvent = ProcessingEvent.Idle,
+    val logoutEvent: LoadState = LoadState.Idle,
     val sessionExpired: Boolean = false,
     val boxes: List<QualityBox> = emptyList(),
     val connectingBoxName: String? = null,
@@ -38,7 +38,7 @@ class HomeViewModel @Inject constructor(
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
 
-    var logoutEvent: MutableStateFlow<ProcessingEvent> = MutableStateFlow(ProcessingEvent.Idle)
+    var logoutEvent: MutableStateFlow<LoadState> = MutableStateFlow(LoadState.Idle)
     val connectionStatus = sensorReceiveManager.connectionState
 
     init {
@@ -84,19 +84,19 @@ class HomeViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            logoutEvent.value = ProcessingEvent.Loading
+            logoutEvent.value = LoadState.Loading
             val deleteContainers = async { containerRepository.deleteContainer() }
             val deleteUsers = async { userRepository.deleteUser() }
             if (deleteContainers.await().isSuccess && deleteUsers.await().isSuccess) {
-                logoutEvent.value = ProcessingEvent.Success
+                logoutEvent.value = LoadState.Success
             } else {
-                logoutEvent.value = ProcessingEvent.Error
+                logoutEvent.value = LoadState.Error
             }
         }
     }
 
     fun dismissLogoutError() {
-        logoutEvent.value = ProcessingEvent.Idle
+        logoutEvent.value = LoadState.Idle
     }
 
     private fun rawBoxesToBoxes(rawBoxes: String): List<QualityBox> {
@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
             if (boxInfo.isNotEmpty() && boxId != null) {
                 QualityBox(
                     id = boxId,
-                    mac = mac,
+                    mac = "10:06:1C:71:80:16",
                     name = "Caja $boxId"
                 )
             } else null

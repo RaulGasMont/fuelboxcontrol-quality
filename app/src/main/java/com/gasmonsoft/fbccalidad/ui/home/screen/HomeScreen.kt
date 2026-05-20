@@ -65,7 +65,7 @@ import com.gasmonsoft.fbccalidad.ui.home.viewmodel.HomeState
 import com.gasmonsoft.fbccalidad.ui.home.viewmodel.HomeViewModel
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
 import com.gasmonsoft.fbccalidad.utils.NetworkConfig
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 
 @Composable
 fun HomeScreen(
@@ -101,7 +101,7 @@ fun HomeScreen(
 @Composable
 private fun HomeScreen(
     uiState: HomeState,
-    logoutEvent: ProcessingEvent,
+    logoutEvent: LoadState,
     connectionStatus: ConnectionState,
     hasConfiguration: Boolean,
     onScanDevices: () -> Unit,
@@ -115,13 +115,13 @@ private fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(uiState.sessionExpired, logoutEvent) {
-        if (uiState.sessionExpired && logoutEvent !is ProcessingEvent.Loading) {
+        if (uiState.sessionExpired && logoutEvent !is LoadState.Loading) {
             onNavToLogin()
         }
     }
 
     LaunchedEffect(logoutEvent) {
-        if (logoutEvent is ProcessingEvent.Success) {
+        if (logoutEvent is LoadState.Success) {
             onNavToLogin()
         }
     }
@@ -147,14 +147,14 @@ private fun HomeScreen(
     }
 
     when (logoutEvent) {
-        is ProcessingEvent.Error -> {
+        is LoadState.Error -> {
             ErrorDialog(
                 message = "No se pudo cerrar la sesión. Intente de nuevo.",
                 onDismiss = onDismissLogoutError
             )
         }
 
-        is ProcessingEvent.Loading -> {
+        is LoadState.Loading -> {
             LoadingDialog()
         }
 
@@ -544,7 +544,7 @@ fun HomeScreenWithDevicesPreview() {
                     QualityBox(2, "AA:BB:CC:DD:EE:FF", "Box Beta")
                 )
             ),
-            logoutEvent = ProcessingEvent.Idle,
+            logoutEvent = LoadState.Idle,
             connectionStatus = ConnectionState.Disconnected,
             hasConfiguration = true,
             onScanDevices = {},
@@ -563,7 +563,7 @@ fun HomeScreenEmptyPreview() {
     FuelBoxControlTheme {
         HomeScreen(
             uiState = HomeState(boxes = emptyList()),
-            logoutEvent = ProcessingEvent.Idle,
+            logoutEvent = LoadState.Idle,
             connectionStatus = ConnectionState.Disconnected,
             hasConfiguration = false,
             onScanDevices = {},
@@ -584,7 +584,7 @@ fun HomeScreenLoadingPreview() {
             uiState = HomeState(
                 boxes = listOf(QualityBox(1, "00:11:22:33:44:55", "Box Alpha"))
             ),
-            logoutEvent = ProcessingEvent.Idle,
+            logoutEvent = LoadState.Idle,
             connectionStatus = ConnectionState.CurrentlyInitializing,
             hasConfiguration = true,
             onScanDevices = {},
@@ -605,7 +605,7 @@ fun HomeScreenLogoutErrorPreview() {
             uiState = HomeState(
                 boxes = listOf(QualityBox(1, "00:11:22:33:44:55", "Box Alpha"))
             ),
-            logoutEvent = ProcessingEvent.Error,
+            logoutEvent = LoadState.Error,
             connectionStatus = ConnectionState.Disconnected,
             hasConfiguration = true,
             onScanDevices = {},

@@ -17,7 +17,7 @@ import com.gasmonsoft.fbccalidad.domain.usb.UsbConnectionMonitor
 import com.gasmonsoft.fbccalidad.domain.usb.UsbDeviceState
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionManager
 import com.gasmonsoft.fbccalidad.domain.usb.UsbPermissionResult
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 import com.gasmonsoft.fbccalidad.utils.getCurrentDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,20 +68,20 @@ class DetectorViewModel @Inject constructor(
 
     private fun getFuelTypes() {
         viewModelScope.launch {
-            _uiState.update { it.copy(loadScreen = ProcessingEvent.Loading) }
+            _uiState.update { it.copy(loadScreen = LoadState.Loading) }
             fscApiRepository.getMatters().onSuccess { matters ->
                 val allRanges = matters.flatMap { it.ranges }
                 _uiState.update {
                     it.copy(
                         fuelTypes = allRanges,
-                        loadScreen = ProcessingEvent.Success,
+                        loadScreen = LoadState.Success,
                         fuelType = null
                     )
                 }
             }.onFailure {
                 _uiState.update {
                     it.copy(
-                        loadScreen = ProcessingEvent.Error,
+                        loadScreen = LoadState.Error,
                         fuelTypes = QualityRange.entries
                     )
                 }
@@ -167,7 +167,7 @@ class DetectorViewModel @Inject constructor(
     }
 
     fun analyzeData(channel: DetectorChannelType) {
-        updateDetectionEvent(ProcessingEvent.Loading)
+        updateDetectionEvent(LoadState.Loading)
         viewModelScope.launch {
             val matterList = _uiState.value.fuelTypes
             val result = when (channel) {
@@ -209,13 +209,13 @@ class DetectorViewModel @Inject constructor(
                 )
             }
 
-            updateDetectionEvent(ProcessingEvent.Success)
+            updateDetectionEvent(LoadState.Success)
 
             if (channel == DetectorChannelType.USB) usbRepository.disconnect()
         }
     }
 
-    fun updateDetectionEvent(status: ProcessingEvent) {
+    fun updateDetectionEvent(status: LoadState) {
         _uiState.update { currentUiState ->
             currentUiState.copy(
                 detectionEvent = status
@@ -281,7 +281,7 @@ class DetectorViewModel @Inject constructor(
     fun acceptMatterLoadError() {
         _uiState.update { currentUiState ->
             currentUiState.copy(
-                loadScreen = ProcessingEvent.Success
+                loadScreen = LoadState.Success
             )
         }
     }

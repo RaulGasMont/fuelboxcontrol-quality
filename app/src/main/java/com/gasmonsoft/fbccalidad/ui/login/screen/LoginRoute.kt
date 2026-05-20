@@ -62,7 +62,7 @@ import com.gasmonsoft.fbccalidad.ui.commons.ErrorDialog
 import com.gasmonsoft.fbccalidad.ui.commons.LoadingDialog
 import com.gasmonsoft.fbccalidad.ui.login.viewmodel.LoginViewModel
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 
 
 @Composable
@@ -74,25 +74,25 @@ fun LoginRoute(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.loginEvent) {
-        if (uiState.loginEvent is ProcessingEvent.Success) {
+        if (uiState.loginEvent is LoadState.Success) {
             onHome()
         }
     }
 
     when (uiState.loginEvent) {
-        is ProcessingEvent.Error -> {
+        is LoadState.Error -> {
             ErrorDialog(
                 message = "No se pudo iniciar sesión. Intente de nuevo.",
                 onDismiss = viewModel::dismissLoginError
             )
         }
 
-        is ProcessingEvent.Loading -> LoadingDialog()
+        is LoadState.Loading -> LoadingDialog()
         else -> Unit
     }
 
     LoginScreen(
-        isLoading = uiState.loginEvent is ProcessingEvent.Loading,
+        isLoading = uiState.loginEvent is LoadState.Loading,
         onLogin = viewModel::login,
         modifier = modifier
     )

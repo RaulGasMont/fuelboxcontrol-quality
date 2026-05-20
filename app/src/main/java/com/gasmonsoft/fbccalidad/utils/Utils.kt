@@ -37,9 +37,9 @@ fun getCurrentDate(
     return sdf.format(date)
 }
 
-interface ProcessingEvent {
-    object Idle : ProcessingEvent
-    object Loading : ProcessingEvent
-    object Success: ProcessingEvent
-    object Error: ProcessingEvent
+interface LoadState {
+    object Idle : LoadState
+    object Loading : LoadState
+    object Success: LoadState
+    object Error: LoadState
 }

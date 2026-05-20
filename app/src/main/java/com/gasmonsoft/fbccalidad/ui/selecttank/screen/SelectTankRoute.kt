@@ -49,7 +49,7 @@ import com.gasmonsoft.fbccalidad.ui.selecttank.viewmodel.SelectTankUiState
 import com.gasmonsoft.fbccalidad.ui.selecttank.viewmodel.SelectTankViewModel
 import com.gasmonsoft.fbccalidad.ui.selecttank.viewmodel.SelectVehicleScreen
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 
 @Composable
 fun SelectTankRoute(
@@ -64,8 +64,8 @@ fun SelectTankRoute(
     }
 
     when (uiState.seeTankEvent) {
-        is ProcessingEvent.Loading -> LoadingDialog()
-        is ProcessingEvent.Error -> {
+        is LoadState.Loading -> LoadingDialog()
+        is LoadState.Error -> {
             ErrorDialog(
                 message = "No se pudo obtener la lista de tanques",
                 onDismiss = {

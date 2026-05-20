@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +35,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -54,6 +57,7 @@ import com.gasmonsoft.fbccalidad.ui.sensor.components.SectionHeader
 import com.gasmonsoft.fbccalidad.ui.sensor.components.SensorDataCaption
 import com.gasmonsoft.fbccalidad.ui.sensor.components.SensorDataCard
 import com.gasmonsoft.fbccalidad.ui.sensor.components.SensorSectionCard
+import com.gasmonsoft.fbccalidad.ui.sensor.ui.calibrate.CalibrationDialog
 import com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.SensorUiEvent
 import com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.SensorUiState
 import com.gasmonsoft.fbccalidad.ui.sensor.viewmodel.SensorViewModel
@@ -143,6 +147,14 @@ fun SensorScreenContent(
     onWriteEinc: (String) -> Unit,
     onWriteRTC: (String) -> Unit
 ) {
+    var showCalibrateDialog by remember { mutableStateOf(false) }
+
+    if (showCalibrateDialog) {
+        CalibrationDialog(
+            onDismissRequest = { showCalibrateDialog = false },
+        )
+    }
+
     BackHandler {
         onBack()
     }
@@ -217,14 +229,34 @@ fun SensorScreenContent(
                     }
 
                     item {
+                        SensorSectionCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 560.dp)
+                        ) {
+                            SectionHeader(
+                                title = "Calibrar sensor",
+                                subtitle = "Iniciar proceso de calibracion con base con los datos sensados"
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Button(
+                                onClick = { showCalibrateDialog = true },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(text = "Iniciar calibracion")
+                            }
+                        }
+                    }
+
+                    item {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .widthIn(max = 560.dp)
                         ) {
                             SectionHeader(
-                                title = "Lecturas de sensores",
-                                subtitle = "Consulte las lecturas recibidas de cada sensor."
+                                title = "Lecturas del sensor",
+                                subtitle = "Consulte las lecturas recibidas del sensor."
                             )
                         }
                     }

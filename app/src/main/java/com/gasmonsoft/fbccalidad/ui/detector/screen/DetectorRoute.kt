@@ -68,7 +68,7 @@ import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorUiState
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.DetectorViewModel
 import com.gasmonsoft.fbccalidad.ui.detector.viewmodel.TransferState
 import com.gasmonsoft.fbccalidad.ui.theme.FuelBoxControlTheme
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -85,7 +85,7 @@ fun DetectorRoute(
         modifier = modifier,
         onSelectTank = onSelectTank,
         onAnalyze = { viewModel.analyzeData(it) },
-        onDismissDetection = { viewModel.updateDetectionEvent(ProcessingEvent.Idle) },
+        onDismissDetection = { viewModel.updateDetectionEvent(LoadState.Idle) },
         onPermissionRequest = viewModel::onPermissionRequest,
         onRefreshDetection = viewModel::refreshDetection,
         onAcceptMatterLoadError = viewModel::acceptMatterLoadError,
@@ -152,7 +152,7 @@ fun DetectorScreen(
     }
 
     LaunchedEffect(uiState.detectionEvent) {
-        if (uiState.detectionEvent is ProcessingEvent.Success) {
+        if (uiState.detectionEvent is LoadState.Success) {
             coroutineScope.launch {
                 fuelAnalyseRequester.bringIntoView()
             }
@@ -161,14 +161,14 @@ fun DetectorScreen(
     }
 
     when (uiState.detectionEvent) {
-        is ProcessingEvent.Loading -> {
+        is LoadState.Loading -> {
             LoadingDialog(
                 title = "Analizando",
                 message = "Por favor espere mientras se analizan los datos..."
             )
         }
 
-        is ProcessingEvent.Error -> {
+        is LoadState.Error -> {
             ErrorDialog(
                 message = "Ocurrió un error al analizar los datos. Intente de nuevo.",
                 onDismiss = onDismissDetection
@@ -179,7 +179,7 @@ fun DetectorScreen(
     }
 
     val canAnalyze =
-        uiState.tankId != -1 && uiState.detectionEvent !is ProcessingEvent.Loading
+        uiState.tankId != -1 && uiState.detectionEvent !is LoadState.Loading
     val levelPercent = (uiState.valueDetection.coerceIn(0f, 1f) * 100f).roundToInt()
 
     Scaffold(
@@ -254,11 +254,11 @@ fun DetectorScreen(
                 )
 
                 when (uiState.loadScreen) {
-                    is ProcessingEvent.Loading -> {
+                    is LoadState.Loading -> {
                         LoadingDialog(message = "Por favor espere mientras se cargan las sustancias...")
                     }
 
-                    is ProcessingEvent.Success -> {
+                    is LoadState.Success -> {
                         TankSelectionCard(
                             tankId = uiState.tankId,
                             tankName = uiState.tankName,
@@ -269,7 +269,7 @@ fun DetectorScreen(
                         )
 
                         AnalysisSummaryCard(
-                            isLoading = uiState.detectionEvent == ProcessingEvent.Loading,
+                            isLoading = uiState.detectionEvent == LoadState.Loading,
                             fuelType = uiState.fuelType,
                             rawValue = uiState.valueDetection,
                             levelPercent = levelPercent,
@@ -280,7 +280,7 @@ fun DetectorScreen(
                         )
                     }
 
-                    is ProcessingEvent.Error -> {
+                    is LoadState.Error -> {
                         ErrorDialog(
                             message = "No se pudieron cargar las sustancias. Se cargaran las muestras por defecto.",
                             onDismiss = onAcceptMatterLoadError
@@ -569,7 +569,7 @@ fun DetectorSuccessAdulteratedPreview() {
                 tankName = "Tanque 02",
                 fuelType = QualityRange.ADULTERADO,
                 valueDetection = -0.5f,
-                loadScreen = ProcessingEvent.Success
+                loadScreen = LoadState.Success
             ),
             onSelectTank = {},
             onAnalyze = {},
@@ -586,7 +586,7 @@ fun DetectorSuccessAdulteratedPreview() {
 fun DetectorLoadingPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
-            uiState = DetectorUiState(loadScreen = ProcessingEvent.Loading),
+            uiState = DetectorUiState(loadScreen = LoadState.Loading),
             onSelectTank = {},
             onAnalyze = {},
             onDismissDetection = {},
@@ -602,7 +602,7 @@ fun DetectorLoadingPreview() {
 fun DetectorNoTankPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
-            uiState = DetectorUiState(loadScreen = ProcessingEvent.Success),
+            uiState = DetectorUiState(loadScreen = LoadState.Success),
             onSelectTank = {},
             onAnalyze = {},
             onDismissDetection = {},
@@ -621,7 +621,7 @@ fun DetectorReadyPreview() {
             uiState = DetectorUiState(
                 tankId = 1,
                 tankName = "Tanque 01",
-                loadScreen = ProcessingEvent.Success
+                loadScreen = LoadState.Success
             ),
             onSelectTank = {},
             onAnalyze = {},
@@ -643,7 +643,7 @@ fun DetectorSuccessDieselPreview() {
                 tankName = "Tanque Diesel 01",
                 fuelType = QualityRange.DIESEL,
                 valueDetection = 2.4f,
-                loadScreen = ProcessingEvent.Success
+                loadScreen = LoadState.Success
             ),
             onSelectTank = {},
             onAnalyze = {},
@@ -663,8 +663,8 @@ fun DetectorErrorPreview() {
             uiState = DetectorUiState(
                 tankId = 1,
                 tankName = "Tanque 01",
-                detectionEvent = ProcessingEvent.Error,
-                loadScreen = ProcessingEvent.Success
+                detectionEvent = LoadState.Error,
+                loadScreen = LoadState.Success
             ),
             onSelectTank = {},
             onAnalyze = {},
@@ -682,7 +682,7 @@ fun DetectorMatterLoadErrorPreview() {
     FuelBoxControlTheme {
         DetectorScreen(
             uiState = DetectorUiState(
-                loadScreen = ProcessingEvent.Error
+                loadScreen = LoadState.Error
             ),
             onSelectTank = {},
             onAnalyze = {},

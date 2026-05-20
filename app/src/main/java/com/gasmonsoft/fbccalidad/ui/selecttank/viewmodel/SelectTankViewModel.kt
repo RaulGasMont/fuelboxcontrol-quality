@@ -6,7 +6,7 @@ import com.gasmonsoft.fbccalidad.data.model.selectvehicle.Tank
 import com.gasmonsoft.fbccalidad.data.model.selectvehicle.toTankSelection
 import com.gasmonsoft.fbccalidad.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fbccalidad.domain.containers.ContainersUseCase
-import com.gasmonsoft.fbccalidad.utils.ProcessingEvent
+import com.gasmonsoft.fbccalidad.utils.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +28,7 @@ class SelectTankViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { currentUiState ->
                 currentUiState.copy(
-                    seeTankEvent = ProcessingEvent.Loading
+                    seeTankEvent = LoadState.Loading
                 )
             }
 
@@ -36,7 +36,7 @@ class SelectTankViewModel @Inject constructor(
                 onSuccess = {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
-                            seeTankEvent = ProcessingEvent.Success,
+                            seeTankEvent = LoadState.Success,
                             vehicles = it.vehicleList,
                             otros = it.othersList
                         )
@@ -45,7 +45,7 @@ class SelectTankViewModel @Inject constructor(
                 onFailure = {
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
-                            seeTankEvent = ProcessingEvent.Error
+                            seeTankEvent = LoadState.Error
                         )
                     }
                 }
@@ -56,7 +56,7 @@ class SelectTankViewModel @Inject constructor(
     fun dismissedError() {
         _uiState.update { currentUiState ->
             currentUiState.copy(
-                seeTankEvent = ProcessingEvent.Idle
+                seeTankEvent = LoadState.Idle
             )
         }
     }
@@ -65,7 +65,7 @@ class SelectTankViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { currentUiState ->
                 currentUiState.copy(
-                    saveTankEvent = ProcessingEvent.Loading
+                    saveTankEvent = LoadState.Loading
                 )
             }
 
@@ -75,7 +75,7 @@ class SelectTankViewModel @Inject constructor(
 
             _uiState.update { currentUiState ->
                 currentUiState.copy(
-                    saveTankEvent = ProcessingEvent.Success
+                    saveTankEvent = LoadState.Success
                 )
             }
         }
