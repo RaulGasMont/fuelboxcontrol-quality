@@ -8,8 +8,8 @@ import com.gasmonsoft.fbccalidad.data.repository.container.ContainerRepository
 import com.gasmonsoft.fbccalidad.data.repository.datastore.DataStoreRepository
 import com.gasmonsoft.fbccalidad.data.repository.user.UserRepository
 import com.gasmonsoft.fbccalidad.domain.session.SessionUseCase
-import com.gasmonsoft.fbccalidad.utils.NetworkConfig
 import com.gasmonsoft.fbccalidad.utils.LoadState
+import com.gasmonsoft.fbccalidad.utils.NetworkConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
             if (boxInfo.isNotEmpty() && boxId != null) {
                 QualityBox(
                     id = boxId,
-                    mac = "10:06:1C:71:80:16",
+                    mac = "10:06:1C:6D:5C:8E",
                     name = "Caja $boxId"
                 )
             } else null
