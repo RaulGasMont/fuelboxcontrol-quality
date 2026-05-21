@@ -125,6 +125,7 @@ fun SensorRoute(
         },
         onBack = {
             viewModelSensor.disconnect()
+            viewModelSensor.clearValores()
             onBack()
         },
         onReconnect = viewModelSensor::reconnect,

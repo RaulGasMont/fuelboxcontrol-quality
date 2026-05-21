@@ -37,7 +37,8 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
             )
         }
 
-    suspend fun getMatters() = networkRequestHelper {
-        fscService.getMatters()
-    }
+    suspend fun getMatters() =
+        networkRequestHelper {
+            fscService.getMatters()
+        }
 }
