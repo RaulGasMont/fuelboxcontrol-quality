@@ -41,4 +41,12 @@ class RemoteFscDataSource @Inject constructor(private val fscService: FuelSoftwa
         networkRequestHelper {
             fscService.getMatters()
         }
+
+    suspend fun getLastQualitySensorRecords(token: String, idCajaCalidad: Int) =
+        networkRequestHelper {
+            fscService.getLastQualitySensorRecords(
+                token = "Bearer $token",
+                idCajaCalidad = idCajaCalidad
+            )
+        }
 }

@@ -27,6 +27,9 @@ sealed interface ScreenRoute {
 
     @Serializable
     data class SelectTank(val idCaja: Int) : ScreenRoute
+
+    @Serializable
+    data class QualityHistory(val idCajaCalidad: Int) : ScreenRoute
 }
 
 data class ScreenDestination(

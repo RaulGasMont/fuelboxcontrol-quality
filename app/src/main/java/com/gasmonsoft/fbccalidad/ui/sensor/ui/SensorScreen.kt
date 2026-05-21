@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,12 +29,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,11 +74,13 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 @Composable
 fun SensorRoute(
     onBack: () -> Unit,
+    onNavigateToHistory: (Int) -> Unit,
     viewModelSensor: SensorViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModelSensor.uiState.collectAsStateWithLifecycle()
     val sensorInfoState by viewModelSensor.sensorInfoState.collectAsStateWithLifecycle()
+    val selectedCajaId by viewModelSensor.selectedCajaId.collectAsStateWithLifecycle()
 
     val permissions = remember {
         buildList {
@@ -128,6 +133,9 @@ fun SensorRoute(
             viewModelSensor.clearValores()
             onBack()
         },
+        onNavigateToHistory = {
+            onNavigateToHistory(selectedCajaId)
+        },
         onReconnect = viewModelSensor::reconnect,
         onInitializeConnection = viewModelSensor::initializeConnection,
         onWriteEinc = viewModelSensor::onWriteEinc,
@@ -143,6 +151,7 @@ fun SensorScreenContent(
     permissionState: MultiplePermissionsState,
     onDisconnect: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onReconnect: () -> Unit,
     onInitializeConnection: () -> Unit,
     onWriteEinc: (String) -> Unit,
@@ -199,6 +208,7 @@ fun SensorScreenContent(
                     item {
                         SensorTopBar(
                             onBack = onBack,
+                            onNavigateToHistory = onNavigateToHistory,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .widthIn(max = 560.dp)
@@ -313,6 +323,7 @@ private fun CommandActionButton(
 @Composable
 private fun SensorTopBar(
     onBack: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -358,6 +369,18 @@ private fun SensorTopBar(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            IconButton(
+                onClick = onNavigateToHistory,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.History,
+                    contentDescription = "Ver historial"
+                )
+            }
         }
     }
 }
@@ -385,6 +408,7 @@ fun SensorScreenContentPreview() {
             },
             onDisconnect = {},
             onBack = {},
+            onNavigateToHistory = {},
             onReconnect = {},
             onInitializeConnection = {},
             onWriteEinc = {},

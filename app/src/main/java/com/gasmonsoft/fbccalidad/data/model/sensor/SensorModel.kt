@@ -42,3 +42,12 @@ data class SensorCalidadUnitario(
     @SerializedName("fld_temperatura")
     val temperatura: Double
 )
+
+data class LastQualitySensorData(
+    @SerializedName("fechaRegistro")
+    val fechaRegistro: String,
+    @SerializedName("calidad")
+    val calidad: Double,
+    @SerializedName("temperatura")
+    val temperatura: Double
+)

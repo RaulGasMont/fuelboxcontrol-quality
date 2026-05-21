@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.gasmonsoft.fbccalidad.ui.detector.screen.DetectorRoute
 import com.gasmonsoft.fbccalidad.ui.home.screen.HomeScreen
 import com.gasmonsoft.fbccalidad.ui.login.screen.LoginRoute
@@ -22,6 +23,7 @@ import com.gasmonsoft.fbccalidad.ui.navigation.ScreenRoute
 import com.gasmonsoft.fbccalidad.ui.navigation.rememberAppState
 import com.gasmonsoft.fbccalidad.ui.permissions.PermissionsScreen
 import com.gasmonsoft.fbccalidad.ui.selecttank.screen.SelectTankRoute
+import com.gasmonsoft.fbccalidad.ui.sensor.history.QualityHistoryRoute
 import com.gasmonsoft.fbccalidad.ui.sensor.ui.SensorRoute
 import com.gasmonsoft.fbccalidad.ui.sensorconfig.SensorConfigBottomBar
 
@@ -82,9 +84,14 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
             }
 
             composable<ScreenRoute.Sensores> {
-                SensorRoute(onBack = {
-                    appState.navController.popBackStack()
-                })
+                SensorRoute(
+                    onBack = {
+                        appState.navController.popBackStack()
+                    },
+                    onNavigateToHistory = { id ->
+                        appState.navController.navigate(ScreenRoute.QualityHistory(id))
+                    }
+                )
             }
 
             composable<ScreenRoute.Deteccion> {
@@ -97,6 +104,16 @@ fun FuelBoxControlFlowNav(viewModel: FbcViewModel = hiltViewModel()) {
 
             composable<ScreenRoute.SelectTank> {
                 SelectTankRoute(
+                    onBack = {
+                        appState.navController.popBackStack()
+                    }
+                )
+            }
+
+            composable<ScreenRoute.QualityHistory> { backStackEntry ->
+                val route: ScreenRoute.QualityHistory = backStackEntry.toRoute()
+                QualityHistoryRoute(
+                    idCajaCalidad = route.idCajaCalidad,
                     onBack = {
                         appState.navController.popBackStack()
                     }

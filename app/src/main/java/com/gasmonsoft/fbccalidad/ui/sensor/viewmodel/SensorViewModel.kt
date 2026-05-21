@@ -61,6 +61,13 @@ class SensorViewModel @Inject constructor(
     private val _events = MutableSharedFlow<SensorUiEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<SensorUiEvent> = _events.asSharedFlow()
 
+    val selectedCajaId: StateFlow<Int> = dataStoreRepository.selectedCaja
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = -1
+        )
+
     val connectionState: StateFlow<ConnectionState> =
         uiState.map { it.connectionState }
             .stateIn(
@@ -85,7 +92,8 @@ class SensorViewModel @Inject constructor(
     fun initializeConnection() {
         ensureSubscription()
         if (uiState.value.connectionState == ConnectionState.Connected ||
-            uiState.value.connectionState == ConnectionState.CurrentlyInitializing) {
+            uiState.value.connectionState == ConnectionState.CurrentlyInitializing
+        ) {
             return
         }
         loadSavedMacAddress()
@@ -104,7 +112,7 @@ class SensorViewModel @Inject constructor(
     fun disconnect(onFinished: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.update { it.copy(isDisconnecting = true) }
-            
+
             stopPeriodicWriteTask()
             subscriptionJob?.cancel()
 
@@ -120,10 +128,10 @@ class SensorViewModel @Inject constructor(
             }
             dataStoreRepository.clearTank()
             sensorReceiveManager.disconnect()
-            
+
             // Un pequeño delay para asegurar que el Manager cerró los hilos
             delay(500)
-            
+
             _uiState.update { it.copy(isDisconnecting = false) }
             onFinished()
         }

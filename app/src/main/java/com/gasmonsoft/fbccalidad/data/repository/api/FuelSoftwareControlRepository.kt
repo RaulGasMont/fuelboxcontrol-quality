@@ -6,6 +6,8 @@ import com.gasmonsoft.fbccalidad.data.model.matter.toDomain
 import com.gasmonsoft.fbccalidad.data.model.login.Login
 import com.gasmonsoft.fbccalidad.data.model.login.LoginResponse
 import com.gasmonsoft.fbccalidad.data.model.login.toDto
+import com.gasmonsoft.fbccalidad.data.model.sensor.toDomain
+import com.gasmonsoft.fbccalidad.domain.model.QualitySensorRecord
 import com.gasmonsoft.fbccalidad.data.model.sensor.SensorCalidadData
 import com.gasmonsoft.fbccalidad.data.model.sensor.UploadSensorResponse
 import com.gasmonsoft.fbccalidad.data.model.sensor.toDto
@@ -70,6 +72,17 @@ class FuelSoftwareControlRepository @Inject constructor(
         return if (response.isSuccess) {
             val list = response.getOrNull() ?: emptyList()
             Result.success(list.map { it.toDomain(gson) })
+        } else {
+            Result.failure(response.exceptionOrNull() ?: Exception("Error desconocido"))
+        }
+    }
+
+    suspend fun getLastQualitySensorRecords(idCajaCalidad: Int): Result<List<QualitySensorRecord>> {
+        val user = userRepository.getUser().first() ?: return Result.failure(Exception("Usuario no encontrado"))
+        val response = remoteFscDataSource.getLastQualitySensorRecords(user.token, idCajaCalidad)
+        return if (response.isSuccess) {
+            val list = response.getOrNull() ?: emptyList()
+            Result.success(list.map { it.toDomain() })
         } else {
             Result.failure(response.exceptionOrNull() ?: Exception("Error desconocido"))
         }

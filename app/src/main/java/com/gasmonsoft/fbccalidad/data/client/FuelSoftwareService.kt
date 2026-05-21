@@ -1,11 +1,12 @@
 package com.gasmonsoft.fbccalidad.data.client
 
 import com.gasmonsoft.fbccalidad.data.model.alert.FuelAlertDto
-import com.gasmonsoft.fbccalidad.data.model.matter.MatterResponseDto
 import com.gasmonsoft.fbccalidad.data.model.login.CalidadLoginResponse
 import com.gasmonsoft.fbccalidad.data.model.login.LoginDto
 import com.gasmonsoft.fbccalidad.data.model.login.LoginResponse
+import com.gasmonsoft.fbccalidad.data.model.matter.MatterResponseDto
 import com.gasmonsoft.fbccalidad.data.model.selectvehicle.ContenedoresAMedirResponse
+import com.gasmonsoft.fbccalidad.data.model.sensor.LastQualitySensorData
 import com.gasmonsoft.fbccalidad.data.model.sensor.SensorCalidadUnitarioPkg
 import com.gasmonsoft.fbccalidad.data.model.sensor.UploadSensorResponse
 import com.gasmonsoft.fbccalidad.data.model.vehicle.ConfVehiclesResponse
@@ -49,6 +50,12 @@ interface FuelSoftwareService {
         @Body alertDto: FuelAlertDto
     ): Response<ResponseBody>
 
+
+    @GET("api/SensorCalidadCajaApi/UltimoDatoSensorCalidad")
+    suspend fun getLastQualitySensorRecords(
+        @Header("Authorization") token: String,
+        @Query("id_cajaCalidad") idCajaCalidad: Int
+    ): Response<List<LastQualitySensorData>>
 
     @GET("api/alertasExpo/GetListSustancias")
     suspend fun getMatters(): Response<List<MatterResponseDto>>
